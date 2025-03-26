@@ -4,8 +4,6 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
-import Login from "@/pages/login";
-import Register from "@/pages/register";
 import SupplyChain from "@/pages/supply-chain";
 import RiskAssessment from "@/pages/risk-assessment";
 import Documents from "@/pages/documents";
@@ -13,25 +11,12 @@ import Compliance from "@/pages/compliance";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import AppLayout from "@/layouts/app-layout";
-import AuthLayout from "@/layouts/auth-layout";
 import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
   return (
     <Switch>
-      {/* Auth Routes */}
-      <Route path="/login">
-        <AuthLayout>
-          <Login />
-        </AuthLayout>
-      </Route>
-      <Route path="/register">
-        <AuthLayout>
-          <Register />
-        </AuthLayout>
-      </Route>
-      
-      {/* App Routes */}
+      {/* App Routes - No authentication required */}
       <Route path="/">
         <AppLayout>
           <Dashboard />

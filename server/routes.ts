@@ -128,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Dashboard data routes
-  app.get("/api/dashboard", isAuthenticated, async (req, res) => {
+  app.get("/api/dashboard", async (req, res) => {
     try {
       const currentMetrics = await storage.getCurrentComplianceMetrics();
       const riskCategories = await storage.listRiskCategories();
@@ -149,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Compliance history data for chart
-  app.get("/api/compliance/history", isAuthenticated, async (req, res) => {
+  app.get("/api/compliance/history", async (req, res) => {
     try {
       const months = parseInt(req.query.months as string) || 6;
       const history = await storage.getComplianceHistory(months);
@@ -160,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Supplier routes
-  app.get("/api/suppliers", isAuthenticated, async (req, res) => {
+  app.get("/api/suppliers", async (req, res) => {
     try {
       const suppliers = await storage.listSuppliers();
       res.json(suppliers);
@@ -169,7 +169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/suppliers/:id", isAuthenticated, async (req, res) => {
+  app.get("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const supplier = await storage.getSupplier(id);
@@ -184,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/suppliers", isAuthenticated, async (req, res) => {
+  app.post("/api/suppliers", async (req, res) => {
     try {
       const supplierInput = insertSupplierSchema.parse(req.body);
       const supplier = await storage.createSupplier(supplierInput);
@@ -193,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createActivity({
         type: "supplier",
         description: `New supplier ${supplier.name} was added`,
-        userId: (req.user as any).id,
+        userId: 1, // Mock user ID
         entityType: "supplier",
         entityId: supplier.id,
         metadata: null
@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put("/api/suppliers/:id", isAuthenticated, async (req, res) => {
+  app.put("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const supplierInput = insertSupplierSchema.partial().parse(req.body);
@@ -224,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createActivity({
         type: "supplier",
         description: `Supplier ${updatedSupplier.name} was updated`,
-        userId: (req.user as any).id,
+        userId: 1, // Mock user ID
         entityType: "supplier",
         entityId: updatedSupplier.id,
         metadata: null
@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Document routes
-  app.get("/api/documents", isAuthenticated, async (req, res) => {
+  app.get("/api/documents", async (req, res) => {
     try {
       const documents = await storage.listDocuments();
       res.json(documents);
@@ -250,7 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/suppliers/:id/documents", isAuthenticated, async (req, res) => {
+  app.get("/api/suppliers/:id/documents", async (req, res) => {
     try {
       const supplierId = parseInt(req.params.id);
       const documents = await storage.listDocumentsBySupplier(supplierId);
@@ -260,12 +260,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/documents", isAuthenticated, async (req, res) => {
+  app.post("/api/documents", async (req, res) => {
     try {
       const documentInput = insertDocumentSchema.parse(req.body);
       
-      // Set uploaded by to current user
-      documentInput.uploadedBy = (req.user as any).id;
+      // Set uploaded by to mock user
+      documentInput.uploadedBy = 1;
       
       const document = await storage.createDocument(documentInput);
       
@@ -273,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createActivity({
         type: "document",
         description: `Document ${document.title} was uploaded`,
-        userId: (req.user as any).id,
+        userId: 1, // Mock user ID
         entityType: "document",
         entityId: document.id,
         metadata: null
@@ -290,9 +290,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Task routes
-  app.get("/api/tasks", isAuthenticated, async (req, res) => {
+  app.get("/api/tasks", async (req, res) => {
     try {
-      const userId = (req.user as any).id;
+      const userId = 1; // Mock user ID
       const tasks = await storage.listTasksByAssignee(userId);
       res.json(tasks);
     } catch (error) {
@@ -300,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/tasks", isAuthenticated, async (req, res) => {
+  app.post("/api/tasks", async (req, res) => {
     try {
       const taskInput = insertTaskSchema.parse(req.body);
       const task = await storage.createTask(taskInput);
@@ -309,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createActivity({
         type: "task",
         description: `New task "${task.title}" was created`,
-        userId: (req.user as any).id,
+        userId: 1, // Mock user ID
         entityType: "task",
         entityId: task.id,
         metadata: null
@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put("/api/tasks/:id", isAuthenticated, async (req, res) => {
+  app.put("/api/tasks/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const taskInput = insertTaskSchema.partial().extend({
@@ -343,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createActivity({
           type: "task",
           description: `Task "${updatedTask.title}" was completed`,
-          userId: (req.user as any).id,
+          userId: 1, // Mock user ID
           entityType: "task",
           entityId: updatedTask.id,
           metadata: null
@@ -361,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Activities routes
-  app.get("/api/activities", isAuthenticated, async (req, res) => {
+  app.get("/api/activities", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const activities = await storage.listRecentActivities(limit);
@@ -372,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Risk categories routes
-  app.get("/api/risk-categories", isAuthenticated, async (req, res) => {
+  app.get("/api/risk-categories", async (req, res) => {
     try {
       const categories = await storage.listRiskCategories();
       res.json(categories);

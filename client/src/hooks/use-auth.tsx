@@ -22,9 +22,19 @@ interface AuthContextType {
   register: (username: string, email: string, password: string, fullName?: string) => Promise<void>;
 }
 
+// Create a mock user for demo purposes
+const mockUser: User = {
+  id: 1,
+  username: "demo_user",
+  email: "demo@example.com",
+  fullName: "Demo User",
+  role: "Admin",
+  avatar: ""
+};
+
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  isLoading: true,
+  isLoading: false,
   isAuthenticated: false,
   login: async () => {},
   logout: async () => {},
@@ -34,130 +44,33 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(mockUser);
+  const isAuthenticated = true; // Always authenticated in this demo
   
-  // Fetch current user data
-  const { data: user, isLoading, refetch } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/auth/user", {
-          credentials: "include",
-        });
-        
-        if (res.status === 401) {
-          return null;
-        }
-        
-        if (!res.ok) {
-          throw new Error("Failed to fetch user data");
-        }
-        
-        return await res.json();
-      } catch (error) {
-        console.error("Error fetching user:", error);
-        return null;
-      }
-    },
-    staleTime: Infinity,
-  });
-  
-  const isAuthenticated = !!user;
-  
-  // Login mutation
-  const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: { username: string, password: string }) => {
-      const res = await apiRequest("POST", "/api/auth/login", { username, password });
-      return res.json();
-    },
-    onSuccess: async () => {
-      await refetch();
-      setLocation("/");
-      toast({
-        title: "Login successful",
-        description: "Welcome back to EUDR Compliance Dashboard",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid username or password",
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/auth/logout", {});
-      return res.json();
-    },
-    onSuccess: () => {
-      refetch();
-      setLocation("/login");
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Logout failed",
-        description: error.message || "An error occurred during logout",
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Register mutation
-  const registerMutation = useMutation({
-    mutationFn: async (userData: { username: string, email: string, password: string, fullName?: string }) => {
-      const res = await apiRequest("POST", "/api/auth/register", userData);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created. You can now log in.",
-      });
-      setLocation("/login");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Registration failed",
-        description: error.message || "An error occurred during registration",
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Login function
+  // Simplified login function (not actually used since we removed login screens)
   const login = async (username: string, password: string) => {
-    await loginMutation.mutateAsync({ username, password });
+    // No actual login - just for interface compatibility
+    setUser(mockUser);
   };
   
-  // Logout function
+  // Simplified logout function
   const logout = async () => {
-    await logoutMutation.mutateAsync();
+    // No actual logout - just for interface compatibility
+    toast({
+      title: "User session",
+      description: "This is a demo application with no authentication",
+    });
   };
   
-  // Register function
+  // Simplified register function (not actually used since we removed registration)
   const register = async (username: string, email: string, password: string, fullName?: string) => {
-    await registerMutation.mutateAsync({ username, email, password, fullName });
+    // No actual registration - just for interface compatibility
   };
-  
-  // Redirect unauthenticated users to login
-  useEffect(() => {
-    const currentPath = window.location.pathname;
-    if (!isLoading && !isAuthenticated && !currentPath.startsWith("/login") && !currentPath.startsWith("/register")) {
-      setLocation("/login");
-    }
-  }, [isLoading, isAuthenticated, setLocation]);
   
   return (
     <AuthContext.Provider value={{
       user, 
-      isLoading, 
+      isLoading: false, 
       isAuthenticated, 
       login, 
       logout, 
