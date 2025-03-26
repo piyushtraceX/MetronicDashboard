@@ -63,6 +63,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private suppliers: Map<number, Supplier>;
+  private declarations: Map<number, Declaration>;
   private documents: Map<number, Document>;
   private activities: Map<number, Activity>;
   private tasks: Map<number, Task>;
@@ -71,6 +72,7 @@ export class MemStorage implements IStorage {
   
   private userIdCounter: number;
   private supplierIdCounter: number;
+  private declarationIdCounter: number;
   private documentIdCounter: number;
   private activityIdCounter: number;
   private taskIdCounter: number;
@@ -80,6 +82,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.suppliers = new Map();
+    this.declarations = new Map();
     this.documents = new Map();
     this.activities = new Map();
     this.tasks = new Map();
@@ -88,6 +91,7 @@ export class MemStorage implements IStorage {
     
     this.userIdCounter = 1;
     this.supplierIdCounter = 1;
+    this.declarationIdCounter = 1;
     this.documentIdCounter = 1;
     this.activityIdCounter = 1;
     this.taskIdCounter = 1;
@@ -172,6 +176,70 @@ export class MemStorage implements IStorage {
   
   async listSuppliers(): Promise<Supplier[]> {
     return Array.from(this.suppliers.values());
+  }
+  
+  // Declaration methods
+  async getDeclaration(id: number): Promise<Declaration | undefined> {
+    return this.declarations.get(id);
+  }
+  
+  async createDeclaration(insertDeclaration: InsertDeclaration): Promise<Declaration> {
+    const id = this.declarationIdCounter++;
+    const now = new Date();
+    const declaration: Declaration = { 
+      ...insertDeclaration, 
+      id, 
+      createdAt: now,
+      lastUpdated: now
+    };
+    this.declarations.set(id, declaration);
+    return declaration;
+  }
+  
+  async updateDeclaration(id: number, updateData: Partial<InsertDeclaration>): Promise<Declaration | undefined> {
+    const declaration = this.declarations.get(id);
+    if (!declaration) {
+      return undefined;
+    }
+    
+    const updatedDeclaration: Declaration = {
+      ...declaration,
+      ...updateData,
+      lastUpdated: new Date()
+    };
+    
+    this.declarations.set(id, updatedDeclaration);
+    return updatedDeclaration;
+  }
+  
+  async listDeclarations(type?: string): Promise<Declaration[]> {
+    let declarations = Array.from(this.declarations.values());
+    
+    if (type && type !== "all") {
+      declarations = declarations.filter(declaration => declaration.type === type);
+    }
+    
+    return declarations.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async listDeclarationsBySupplier(supplierId: number): Promise<Declaration[]> {
+    return Array.from(this.declarations.values())
+      .filter(declaration => declaration.supplierId === supplierId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getDeclarationStats(): Promise<{ total: number, inbound: number, outbound: number, approved: number, pending: number, review: number, rejected: number }> {
+    const declarations = Array.from(this.declarations.values());
+    
+    return {
+      total: declarations.length,
+      inbound: declarations.filter(d => d.type === "inbound").length,
+      outbound: declarations.filter(d => d.type === "outbound").length,
+      approved: declarations.filter(d => d.status === "approved").length,
+      pending: declarations.filter(d => d.status === "pending").length,
+      review: declarations.filter(d => d.status === "review").length,
+      rejected: declarations.filter(d => d.status === "rejected").length
+    };
   }
   
   // Document methods
@@ -335,6 +403,99 @@ export class MemStorage implements IStorage {
     
     suppliers.forEach(supplier => {
       this.createSupplier(supplier);
+    });
+
+    // Declarations
+    const currentDate = new Date();
+    const oneMonthAgo = new Date(currentDate);
+    oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+    
+    const twoMonthsAgo = new Date(currentDate);
+    twoMonthsAgo.setMonth(currentDate.getMonth() - 2);
+    
+    const threeMonthsAgo = new Date(currentDate);
+    threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
+    
+    const declarations = [
+      { 
+        type: "inbound", 
+        supplierId: 1, 
+        productName: "Arabica Coffee Beans", 
+        productDescription: "Shade-grown coffee beans from Guatemala highlands", 
+        hsnCode: "0901.21.00", 
+        quantity: 2500, 
+        unit: "kg", 
+        status: "approved", 
+        riskLevel: "low", 
+        startDate: threeMonthsAgo, 
+        endDate: oneMonthAgo, 
+        createdBy: 1,
+        industry: "Food & Beverage"
+      },
+      { 
+        type: "outbound", 
+        supplierId: 1, 
+        productName: "Roasted Coffee Blend", 
+        productDescription: "Medium roast coffee blend for export", 
+        hsnCode: "0901.22.00", 
+        quantity: 1800, 
+        unit: "kg", 
+        status: "pending", 
+        riskLevel: "medium", 
+        startDate: twoMonthsAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Food & Beverage"
+      },
+      { 
+        type: "inbound", 
+        supplierId: 2, 
+        productName: "Crude Palm Oil", 
+        productDescription: "Unrefined palm oil from sustainable plantations", 
+        hsnCode: "1511.10.00", 
+        quantity: 15000, 
+        unit: "liters", 
+        status: "review", 
+        riskLevel: "medium", 
+        startDate: oneMonthAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Agriculture"
+      },
+      { 
+        type: "inbound", 
+        supplierId: 3, 
+        productName: "Tropical Hardwood", 
+        productDescription: "FSC-certified mahogany timber", 
+        hsnCode: "4407.21.00", 
+        quantity: 85, 
+        unit: "m³", 
+        status: "rejected", 
+        riskLevel: "high", 
+        startDate: twoMonthsAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Forestry"
+      },
+      { 
+        type: "outbound", 
+        supplierId: 4, 
+        productName: "Organic Soy Protein", 
+        productDescription: "Plant-based protein isolate", 
+        hsnCode: "2106.10.00", 
+        quantity: 5000, 
+        unit: "kg", 
+        status: "approved", 
+        riskLevel: "low", 
+        startDate: threeMonthsAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Food & Beverage"
+      }
+    ];
+    
+    declarations.forEach(declaration => {
+      this.createDeclaration(declaration);
     });
     
     // Documents
