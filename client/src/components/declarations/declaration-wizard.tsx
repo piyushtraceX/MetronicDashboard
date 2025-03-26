@@ -79,6 +79,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   
   // Step 4: Customer Selection (for outbound only)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
   
   // Create declaration mutation
   const createDeclaration = useMutation({
@@ -163,7 +164,17 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   };
   
   // Handle file upload simulation
-  const handleFileUpload = () => {
+  const handleFileUpload = (isGeoJSON = false) => {
+    if (isGeoJSON) {
+      setHasUploadedGeoJSON(true);
+      toast({
+        title: "GeoJSON uploaded",
+        description: "GeoJSON file has been uploaded successfully",
+        variant: "default",
+      });
+      return;
+    }
+
     const filename = `document_${uploadedFiles.length + 1}.pdf`;
     setUploadedFiles(prev => [...prev, filename]);
     toast({
@@ -339,15 +350,15 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const getStepLabels = () => {
     if (declarationType === "inbound") {
       return [
-        "Declaration Type", 
-        "Details & Items", 
+        "Items & Supplier", 
+        "GeoJSON Upload", 
         "Evidence Documents", 
         "Review"
       ];
     } else {
       return [
-        "Declaration Type", 
-        "Details & Items", 
+        "Items & Supplier", 
+        "GeoJSON Upload", 
         "Evidence Documents", 
         "Customer Selection",
         "Review"
@@ -371,35 +382,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
         </div>
         
         <div className="py-4">
-          {/* Step 1: Declaration Type */}
-          {currentStep === 1 && (
-            <Tabs 
-              defaultValue={declarationType} 
-              onValueChange={(value) => setDeclarationType(value as DeclarationType)}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
-                <TabsTrigger value="outbound">Outbound Declaration</TabsTrigger>
-              </TabsList>
-              
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-medium">
-                  {declarationType === "inbound" ? 
-                    "Create declaration for goods received from supplier" : 
-                    "Create declaration for goods shipped to customer"}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {declarationType === "inbound" ? 
-                    "Used for material sourcing compliance" : 
-                    "Used for reporting outbound shipments to customers"}
-                </p>
-              </div>
-            </Tabs>
-          )}
+          {/* Step removed - Declaration Type is now set by the main buttons */}
           
-          {/* Step 2: Declaration Details - Items */}
-          {currentStep === 2 && (
+          {/* Step 1: Declaration Details - Items */}
+          {currentStep === 1 && (
             <div>
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
@@ -607,6 +593,50 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Step 2: GeoJSON Upload */}
+          {currentStep === 2 && (
+            <div>
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-4">GeoJSON Upload</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Please upload a GeoJSON file containing the geographical data associated with this declaration.
+                </p>
+                
+                <div 
+                  className={cn(
+                    "border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50",
+                    hasUploadedGeoJSON ? "border-green-300 bg-green-50" : "border-gray-300"
+                  )}
+                  onClick={() => handleFileUpload(true)}
+                >
+                  <div className="mx-auto flex justify-center">
+                    <Upload className={cn(
+                      "h-12 w-12",
+                      hasUploadedGeoJSON ? "text-green-500" : "text-gray-400"
+                    )} />
+                  </div>
+                  <p className="mt-4 text-sm text-gray-600">
+                    {hasUploadedGeoJSON ? 
+                      "GeoJSON file uploaded successfully" : 
+                      "Drag and drop your GeoJSON file here, or click to browse"}
+                  </p>
+                  {!hasUploadedGeoJSON && (
+                    <Button 
+                      variant="secondary" 
+                      className="mt-4"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFileUpload();
+                      }}
+                    >
+                      Browse Files
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

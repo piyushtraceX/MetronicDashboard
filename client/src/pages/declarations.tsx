@@ -268,18 +268,24 @@ export default function Declarations() {
         </div>
         <div className="mt-4 md:mt-0 flex space-x-2">
           <Button 
-            className="bg-primary" 
-            onClick={() => setSimpleModalOpen(true)}
+            className="bg-green-600 hover:bg-green-700" 
+            onClick={() => {
+              setDeclarationType("inbound");
+              setWizardModalOpen(true);
+            }}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Quick Add
+            Inbound Declaration
           </Button>
           <Button 
-            variant="outline" 
-            onClick={() => setWizardModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => {
+              setDeclarationType("outbound");
+              setWizardModalOpen(true);
+            }}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Advanced
+            Outbound Declaration
           </Button>
         </div>
       </div>
