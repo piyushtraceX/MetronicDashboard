@@ -164,17 +164,18 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   };
   
   // Handle file upload simulation
-  const handleFileUpload = (isGeoJSON = false) => {
-    if (isGeoJSON) {
-      setHasUploadedGeoJSON(true);
-      toast({
-        title: "GeoJSON uploaded",
-        description: "GeoJSON file has been uploaded successfully",
-        variant: "default",
-      });
-      return;
-    }
+  const handleGeoJSONUpload = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setHasUploadedGeoJSON(true);
+    toast({
+      title: "GeoJSON uploaded",
+      description: "GeoJSON file has been uploaded successfully",
+      variant: "default",
+    });
+  };
 
+  const handleDocumentUpload = (e: React.MouseEvent) => {
+    e.preventDefault();
     const filename = `document_${uploadedFiles.length + 1}.pdf`;
     setUploadedFiles(prev => [...prev, filename]);
     toast({
@@ -524,8 +525,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                      <div className="flex flex-wrap gap-3 items-end">
+                        <div className="w-44">
                           <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
                           <Input 
                             id={`hsn-code-${item.id}`} 
@@ -536,7 +537,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           />
                         </div>
                         
-                        <div>
+                        <div className="w-44">
                           <Label htmlFor={`product-name-${item.id}`} className="text-sm">Product Name *</Label>
                           <Input 
                             id={`product-name-${item.id}`} 
@@ -547,7 +548,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           />
                         </div>
                         
-                        <div>
+                        <div className="w-44">
                           <Label htmlFor={`scientific-name-${item.id}`} className="text-sm">Scientific Name</Label>
                           <Input 
                             id={`scientific-name-${item.id}`} 
@@ -558,37 +559,36 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           />
                         </div>
                         
-                        <div className="flex gap-2 items-start">
-                          <div className="flex-1">
-                            <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity *</Label>
-                            <Input 
-                              id={`quantity-${item.id}`} 
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="e.g. 5000"
-                              value={item.quantity}
-                              onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div className="w-1/3">
-                            <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
-                            <Select 
-                              value={item.unit} 
-                              onValueChange={(value) => updateItem(item.id, 'unit', value)}
-                            >
-                              <SelectTrigger id={`unit-${item.id}`} className="mt-1">
-                                <SelectValue placeholder="Select unit" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="kg">kg</SelectItem>
-                                <SelectItem value="tons">tons</SelectItem>
-                                <SelectItem value="liters">liters</SelectItem>
-                                <SelectItem value="m³">m³</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                        <div className="w-28">
+                          <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity *</Label>
+                          <Input 
+                            id={`quantity-${item.id}`} 
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="e.g. 5000"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div className="w-28">
+                          <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
+                          <Select 
+                            value={item.unit} 
+                            onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                          >
+                            <SelectTrigger id={`unit-${item.id}`} className="mt-1">
+                              <SelectValue placeholder="Select unit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="kg">kg</SelectItem>
+                              <SelectItem value="tons">tons</SelectItem>
+                              <SelectItem value="liters">liters</SelectItem>
+                              <SelectItem value="m³">m³</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
@@ -612,7 +612,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     "border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50",
                     hasUploadedGeoJSON ? "border-green-300 bg-green-50" : "border-gray-300"
                   )}
-                  onClick={() => handleFileUpload(true)}
+                  onClick={handleGeoJSONUpload}
                 >
                   <div className="mx-auto flex justify-center">
                     <Upload className={cn(
@@ -631,7 +631,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       className="mt-4"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleFileUpload();
+                        handleGeoJSONUpload(e);
                       }}
                     >
                       Browse Files
@@ -654,7 +654,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 
                 <div 
                   className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50"
-                  onClick={handleFileUpload}
+                  onClick={handleDocumentUpload}
                 >
                   <div className="mx-auto flex justify-center">
                     <Upload className="h-12 w-12 text-gray-400" />
@@ -670,7 +670,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     className="mt-4"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleFileUpload();
+                      handleDocumentUpload(e);
                     }}
                   >
                     Browse Files
