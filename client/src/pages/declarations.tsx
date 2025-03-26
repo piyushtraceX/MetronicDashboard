@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import DeclarationWizard from "@/components/declarations/declaration-wizard";
 
 interface Declaration {
   id: number;
@@ -131,7 +132,8 @@ interface NewDeclarationForm {
 export default function Declarations() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [declarationModalOpen, setDeclarationModalOpen] = useState(false);
+  const [simpleModalOpen, setSimpleModalOpen] = useState(false);
+  const [wizardModalOpen, setWizardModalOpen] = useState(false);
   const [declarationType, setDeclarationType] = useState<"inbound" | "outbound">("inbound");
   const { toast } = useToast();
   
@@ -188,7 +190,7 @@ export default function Declarations() {
       });
       
       // Close modal
-      setDeclarationModalOpen(false);
+      setSimpleModalOpen(false);
       
       // Show success toast
       toast({
@@ -264,16 +266,32 @@ export default function Declarations() {
           <h1 className="text-2xl font-bold text-gray-900">Declarations</h1>
           <p className="mt-1 text-sm text-gray-500">Manage inbound and outbound declarations for EUDR compliance</p>
         </div>
-        <div className="mt-4 md:mt-0">
-          <Button className="bg-primary" onClick={() => setDeclarationModalOpen(true)}>
+        <div className="mt-4 md:mt-0 flex space-x-2">
+          <Button 
+            className="bg-primary" 
+            onClick={() => setSimpleModalOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Add Declaration
+            Quick Add
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setWizardModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Advanced
           </Button>
         </div>
       </div>
       
-      {/* Create Declaration Modal */}
-      <Dialog open={declarationModalOpen} onOpenChange={setDeclarationModalOpen}>
+      {/* Simple Declaration Modal */}
+      <Dialog open={simpleModalOpen} onOpenChange={setSimpleModalOpen}>
+        
+      {/* Advanced Declaration Wizard */}
+      <DeclarationWizard 
+        open={wizardModalOpen} 
+        onOpenChange={setWizardModalOpen} 
+      />
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Create Declaration</DialogTitle>
@@ -496,7 +514,7 @@ export default function Declarations() {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeclarationModalOpen(false)}>
+            <Button variant="outline" onClick={() => setSimpleModalOpen(false)}>
               Cancel
             </Button>
             <Button variant="outline">
