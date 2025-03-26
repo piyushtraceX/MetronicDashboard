@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, Plus, Search, Trash2, Upload, User, X } from "lucide-react";
+import { CalendarIcon, Plus, Search, Trash2, Upload, User, X, FileText, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Label } from "@/components/ui/label";
@@ -346,19 +346,28 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
   );
+  
+  // Declaration creation modes
+  const [creationMode, setCreationMode] = useState<"fresh" | "existing">("fresh");
+  const [showCreationOptions, setShowCreationOptions] = useState(true);
+  
+  // Declaration selection for "Based on Existing" mode
+  const [selectedExistingDeclaration, setSelectedExistingDeclaration] = useState<number | null>(null);
 
   // Get step labels based on declaration type
   const getStepLabels = () => {
     if (declarationType === "inbound") {
       return [
-        "Items & Supplier",
+        "Select Type",
+        "Details & Supplier",
         "GeoJSON Upload",
         "Evidence Documents",
         "Review"
       ];
     } else {
       return [
-        "Items & Supplier",
+        "Select Type",
+        "Details & Supplier",
         "GeoJSON Upload",
         "Evidence Documents",
         "Customer Selection",
@@ -383,10 +392,86 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
         </div>
 
         <div className="py-4">
-          {/* Step removed - Declaration Type is now set by the main buttons */}
-
-          {/* Step 1: Declaration Details - Items */}
+          {/* Step 1: Select Declaration Type */}
           {currentStep === 1 && (
+            <div>
+              <h3 className="text-lg font-medium mb-6">Select Declaration Type</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div 
+                  className={cn(
+                    "border rounded-lg p-6 cursor-pointer transition-all",
+                    creationMode === "existing" ? "border-primary bg-primary/5" : "hover:bg-gray-50"
+                  )}
+                  onClick={() => setCreationMode("existing")}
+                >
+                  <div className="flex items-center mb-3">
+                    <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <Copy className="h-5 w-5" />
+                    </div>
+                    <h4 className="text-lg font-medium ml-3">Based on Existing Declaration</h4>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Use approved inbound declarations as reference
+                  </p>
+                </div>
+                
+                <div 
+                  className={cn(
+                    "border rounded-lg p-6 cursor-pointer transition-all",
+                    creationMode === "fresh" ? "border-primary bg-primary/5" : "hover:bg-gray-50"
+                  )}
+                  onClick={() => setCreationMode("fresh")}
+                >
+                  <div className="flex items-center mb-3">
+                    <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <h4 className="text-lg font-medium ml-3">Create Fresh Declaration</h4>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Start a new declaration from scratch
+                  </p>
+                </div>
+              </div>
+
+              {creationMode === "existing" && (
+                <div className="mt-6">
+                  <h4 className="text-base font-medium mb-3">Select Source Declaration</h4>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {/* Mock existing declarations */}
+                    {[1, 2, 3].map((id) => (
+                      <div 
+                        key={id}
+                        className={cn(
+                          "p-4 border rounded-lg flex items-center justify-between cursor-pointer",
+                          selectedExistingDeclaration === id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
+                        )}
+                        onClick={() => setSelectedExistingDeclaration(id)}
+                      >
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
+                            <FileText className="h-5 w-5" />
+                          </div>
+                          <div className="ml-3">
+                            <div className="font-medium">Declaration #{id}</div>
+                            <div className="text-sm text-gray-500">
+                              {id === 1 ? "Palm Oil - 5000kg" : id === 2 ? "Coffee Beans - 2000kg" : "Cacao - 3500kg"}
+                            </div>
+                          </div>
+                        </div>
+                        {selectedExistingDeclaration === id && (
+                          <Badge className="bg-primary">Selected</Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Declaration Details - Items */}
+          {currentStep === 2 && (
             <div>
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
@@ -614,8 +699,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             </div>
           )}
 
-          {/* Step 2: GeoJSON Upload */}
-          {currentStep === 2 && (
+          {/* Step 3: GeoJSON Upload */}
+          {currentStep === 3 && (
             <div>
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">GeoJSON Upload</h3>
@@ -658,8 +743,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             </div>
           )}
 
-          {/* Step 3: Upload Evidence Documents */}
-          {currentStep === 3 && (
+          {/* Step 4: Upload Evidence Documents */}
+          {currentStep === 4 && (
             <div>
               <div className="mb-6">
                 <Label className="text-base font-medium">Upload Evidence Documents</Label>
