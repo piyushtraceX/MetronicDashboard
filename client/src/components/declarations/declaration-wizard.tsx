@@ -465,9 +465,39 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     placeholder="Search suppliers..." 
                     className="pl-9"
                     value={supplierSearchTerm}
-                    onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      setSupplierSearchTerm(e.target.value);
+                      if (!e.target.value) {
+                        setSelectedSupplierId(null);
+                      }
+                    }}
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  {supplierSearchTerm && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border">
+                      <div className="max-h-60 overflow-auto">
+                        {filteredSuppliers.length === 0 ? (
+                          <div className="px-4 py-2 text-sm text-gray-500">No suppliers found</div>
+                        ) : (
+                          filteredSuppliers.map((supplier) => (
+                            <div
+                              key={supplier.id}
+                              className={`px-4 py-2 cursor-pointer hover:bg-gray-50 ${
+                                selectedSupplierId === supplier.id ? 'bg-primary/5' : ''
+                              }`}
+                              onClick={() => {
+                                setSelectedSupplierId(supplier.id);
+                                setSupplierSearchTerm(supplier.name);
+                              }}
+                            >
+                              <div className="font-medium">{supplier.name}</div>
+                              <div className="text-xs text-gray-500">{supplier.location}, {supplier.country}</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2 max-h-60 overflow-y-auto">
