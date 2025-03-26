@@ -26,6 +26,8 @@ export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   products: text("products").notNull(),
+  location: text("location").notNull(),
+  country: text("country").notNull(),
   category: text("category").notNull(),
   status: text("status").notNull(),
   riskLevel: text("risk_level").notNull(),

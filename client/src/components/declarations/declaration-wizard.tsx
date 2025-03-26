@@ -482,7 +482,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           </div>
                           <div className="ml-3">
                             <div className="font-medium">{supplier.name}</div>
-                            <div className="text-sm text-gray-500">{supplier.products}</div>
+                            <div className="text-xs text-gray-400">{supplier.location}, {supplier.country}</div>
                           </div>
                         </div>
                         {selectedSupplierId === supplier.id && (
@@ -494,6 +494,51 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 </div>
               </div>
               
+              <div className="space-y-6 mb-6">
+                <div>
+                  <Label htmlFor="po-number" className="text-sm font-medium">
+                    PO Number <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="po-number"
+                    type="text"
+                    placeholder="Enter PO number"
+                    className="mt-1"
+                    value={poNumber}
+                    onChange={(e) => setPoNumber(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="supplier-so" className="text-sm font-medium">
+                    Supplier SO Number
+                  </Label>
+                  <Input
+                    id="supplier-so"
+                    type="text"
+                    placeholder="Enter supplier SO number"
+                    className="mt-1"
+                    value={supplierSoNumber}
+                    onChange={(e) => setSupplierSoNumber(e.target.value)}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="shipment-number" className="text-sm font-medium">
+                    Shipment Number (BL, LR etc.)
+                  </Label>
+                  <Input
+                    id="shipment-number"
+                    type="text"
+                    placeholder="Enter shipment number"
+                    className="mt-1"
+                    value={shipmentNumber}
+                    onChange={(e) => setShipmentNumber(e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium">Declaration Items</h3>
