@@ -42,6 +42,44 @@ export const insertSupplierSchema = createInsertSchema(suppliers).pick({
   riskScore: true,
 });
 
+// Declarations
+export const declarations = pgTable("declarations", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // "inbound" or "outbound"
+  supplierId: integer("supplier_id").notNull(),
+  productName: text("product_name").notNull(),
+  productDescription: text("product_description"),
+  hsnCode: text("hsn_code"),
+  quantity: integer("quantity"),
+  unit: text("unit"),
+  status: text("status").notNull().default("pending"), // "approved", "review", "rejected", "pending"
+  riskLevel: text("risk_level").notNull().default("medium"), // "low", "medium", "high"
+  geojsonData: json("geojson_data"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  industry: text("industry"),
+});
+
+export const insertDeclarationSchema = createInsertSchema(declarations).pick({
+  type: true,
+  supplierId: true,
+  productName: true,
+  productDescription: true,
+  hsnCode: true,
+  quantity: true,
+  unit: true,
+  status: true,
+  riskLevel: true,
+  geojsonData: true,
+  startDate: true,
+  endDate: true,
+  createdBy: true,
+  industry: true,
+});
+
 // Documents
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
@@ -147,6 +185,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+
+export type Declaration = typeof declarations.$inferSelect;
+export type InsertDeclaration = z.infer<typeof insertDeclarationSchema>;
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;

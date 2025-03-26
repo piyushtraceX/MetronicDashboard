@@ -1,6 +1,7 @@
 import {
   users, type User, type InsertUser,
   suppliers, type Supplier, type InsertSupplier,
+  declarations, type Declaration, type InsertDeclaration,
   documents, type Document, type InsertDocument,
   activities, type Activity, type InsertActivity,
   tasks, type Task, type InsertTask,
@@ -22,6 +23,14 @@ export interface IStorage {
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
   updateSupplier(id: number, supplier: Partial<InsertSupplier>): Promise<Supplier | undefined>;
   listSuppliers(): Promise<Supplier[]>;
+  
+  // Declaration management
+  getDeclaration(id: number): Promise<Declaration | undefined>;
+  createDeclaration(declaration: InsertDeclaration): Promise<Declaration>;
+  updateDeclaration(id: number, declaration: Partial<InsertDeclaration>): Promise<Declaration | undefined>;
+  listDeclarations(type?: string): Promise<Declaration[]>;
+  listDeclarationsBySupplier(supplierId: number): Promise<Declaration[]>;
+  getDeclarationStats(): Promise<{ total: number, inbound: number, outbound: number, approved: number, pending: number, review: number, rejected: number }>;
   
   // Document management
   getDocument(id: number): Promise<Document | undefined>;

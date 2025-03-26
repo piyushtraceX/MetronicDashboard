@@ -2,7 +2,7 @@ import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertUserSchema, insertSupplierSchema, insertDocumentSchema, insertTaskSchema } from "@shared/schema";
+import { insertUserSchema, insertSupplierSchema, insertDocumentSchema, insertTaskSchema, insertDeclarationSchema } from "@shared/schema";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
@@ -371,6 +371,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Declaration routes
+  app.get("/api/declarations", async (req, res) => {
+    try {
+      const type = req.query.type as string || "all"; // "inbound", "outbound", or "all"
+      const declarations = await storage.listDeclarations(type);
+      res.json(declarations);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching declarations" });
+    }
+  });
+
+  app.get("/api/declarations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const declaration = await storage.getDeclaration(id);
+      
+      if (!declaration) {
+        return res.status(404).json({ message: "Declaration not found" });
+      }
+      
+      res.json(declaration);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching declaration" });
+    }
+  });
+
+  app.post("/api/declarations", async (req, res) => {
+    try {
+      const declarationInput = insertDeclarationSchema.parse(req.body);
+      
+      // Set created by to mock user
+      declarationInput.createdBy = 1;
+      
+      const declaration = await storage.createDeclaration(declarationInput);
+      
+      // Create activity record
+      await storage.createActivity({
+        type: "declaration",
+        description: `New ${declaration.type} declaration for product "${declaration.productName}" was created`,
+        userId: 1, // Mock user ID
+        entityType: "declaration",
+        entityId: declaration.id,
+        metadata: null
+      });
+      
+      res.status(201).json(declaration);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Error creating declaration" });
+      }
+    }
+  });
+
+  app.put("/api/declarations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const declarationInput = insertDeclarationSchema.partial().parse(req.body);
+      
+      const updatedDeclaration = await storage.updateDeclaration(id, declarationInput);
+      
+      if (!updatedDeclaration) {
+        return res.status(404).json({ message: "Declaration not found" });
+      }
+      
+      // Create activity record
+      await storage.createActivity({
+        type: "declaration",
+        description: `Declaration for product "${updatedDeclaration.productName}" was updated`,
+        userId: 1, // Mock user ID
+        entityType: "declaration",
+        entityId: updatedDeclaration.id,
+        metadata: null
+      });
+      
+      res.json(updatedDeclaration);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Error updating declaration" });
+      }
+    }
+  });
+
+  app.get("/api/declarations/stats", async (req, res) => {
+    try {
+      const stats = await storage.getDeclarationStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching declaration statistics" });
+    }
+  });
+
   // Risk categories routes
   app.get("/api/risk-categories", async (req, res) => {
     try {
