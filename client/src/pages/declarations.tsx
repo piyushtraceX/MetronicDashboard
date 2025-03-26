@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import DeclarationWizard from "@/components/declarations/declaration-wizard";
+import OutboundDeclarationWizard from "@/components/declarations/outbound-declaration-wizard";
 
 interface Declaration {
   id: number;
@@ -294,10 +295,17 @@ export default function Declarations() {
       <Dialog open={simpleModalOpen} onOpenChange={setSimpleModalOpen}>
         
       {/* Advanced Declaration Wizard */}
-      <DeclarationWizard 
-        open={wizardModalOpen} 
-        onOpenChange={setWizardModalOpen} 
-      />
+      {declarationType === "inbound" ? (
+        <DeclarationWizard 
+          open={wizardModalOpen} 
+          onOpenChange={setWizardModalOpen} 
+        />
+      ) : (
+        <OutboundDeclarationWizard 
+          open={wizardModalOpen} 
+          onOpenChange={setWizardModalOpen}
+        />
+      )}
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Create Declaration</DialogTitle>
