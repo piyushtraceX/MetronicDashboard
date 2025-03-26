@@ -52,10 +52,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  
+
   // Step 1: Declaration Type
   const [declarationType, setDeclarationType] = useState<DeclarationType>("inbound");
-  
+
   // Step 2: Declaration Details - Items
   const [items, setItems] = useState<DeclarationItem[]>([
     {
@@ -67,20 +67,23 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       unit: "kg"
     }
   ]);
-  
+
   // Step 3: Upload Evidence Documents
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
-  
+
   // Form data - Dates and Supplier
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
   const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
-  
+  const [poNumber, setPoNumber] = useState("");
+  const [supplierSoNumber, setSupplierSoNumber] = useState("");
+  const [shipmentNumber, setShipmentNumber] = useState("");
+
   // Step 4: Customer Selection (for outbound only)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
-  
+
   // Create declaration mutation
   const createDeclaration = useMutation({
     mutationFn: async (data: any) => {
@@ -90,18 +93,18 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     onSuccess: () => {
       // Close modal
       onOpenChange(false);
-      
+
       // Show success toast
       toast({
         title: "Declaration created",
         description: "Your declaration has been successfully submitted",
         variant: "default",
       });
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/declarations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/declarations/stats'] });
-      
+
       // Reset form
       resetForm();
     },
@@ -113,13 +116,13 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       });
     }
   });
-  
+
   // Fetch suppliers
   const { data: suppliers = [] } = useQuery<Supplier[]>({
     queryKey: ['/api/suppliers'],
     refetchOnWindowFocus: false,
   });
-  
+
   // Mock customers for the example
   const customers: Customer[] = [
     { id: 1, name: "Euro Foods GmbH", type: "EU-Based Entity" },
@@ -127,14 +130,14 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     { id: 3, name: "Organic Distributors Ltd", type: "EU-Based Entity" },
     { id: 4, name: "Pacific Wholesale Inc", type: "Non-EU Entity" },
   ];
-  
+
   // Handle form input changes for items
   const updateItem = (id: string, field: keyof DeclarationItem, value: string) => {
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
-  
+
   // Add a new item
   const addItem = () => {
     setItems(prev => [
@@ -149,7 +152,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       }
     ]);
   };
-  
+
   // Remove an item
   const removeItem = (id: string) => {
     if (items.length > 1) {
@@ -162,7 +165,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       });
     }
   };
-  
+
   // Handle file upload simulation
   const handleGeoJSONUpload = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -184,12 +187,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       variant: "default",
     });
   };
-  
+
   // Remove uploaded file
   const removeFile = (filename: string) => {
-    setUploadedFiles(prev => prev.filter(file => file !== filename));
+    setUploadedFiles(prev => prev.filter(file => file !== file));
   };
-  
+
   // Navigate to next step
   const goToNextStep = () => {
     // Validate current step before proceeding
@@ -198,18 +201,18 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       setCurrentStep(prev => prev + 1);
     }
   };
-  
+
   // Navigate to previous step
   const goToPreviousStep = () => {
     setCurrentStep(prev => prev - 1);
   };
-  
+
   // Validate current step
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
       case 1: // Declaration Type
         return true; // Always valid as we have a default
-        
+
       case 2: // Declaration Details - Items
         // Check if at least one item has required fields
         const validItems = items.some(item => 
@@ -218,7 +221,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           item.quantity.trim() !== "" && 
           parseFloat(item.quantity) > 0
         );
-        
+
         if (!validItems) {
           toast({
             title: "Required fields missing",
@@ -227,7 +230,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         // Check if dates are selected
         if (!startDate || !endDate) {
           toast({
@@ -237,7 +240,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         // Check if supplier is selected
         if (!selectedSupplierId) {
           toast({
@@ -247,9 +250,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         return true;
-        
+
       case 3: // Upload Evidence
         // Check if at least one file is uploaded
         if (uploadedFiles.length === 0) {
@@ -261,7 +264,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           return false;
         }
         return true;
-        
+
       case 4: // Customer Selection (outbound only)
         if (declarationType === "outbound" && !selectedCustomer) {
           toast({
@@ -272,16 +275,16 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           return false;
         }
         return true;
-        
+
       default:
         return true;
     }
   };
-  
+
   // Submit declaration
   const submitDeclaration = () => {
     if (!validateCurrentStep()) return;
-    
+
     // Format items for submission
     const formattedItems = items.filter(item => 
       item.hsnCode.trim() !== "" && 
@@ -294,7 +297,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       quantity: parseFloat(item.quantity),
       unit: item.unit
     }));
-    
+
     // Prepare payload
     const payload = {
       type: declarationType,
@@ -305,12 +308,15 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       supplierId: selectedSupplierId,
       customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
       status: "pending",
-      riskLevel: "medium"
+      riskLevel: "medium",
+      poNumber: poNumber,
+      supplierSoNumber: supplierSoNumber,
+      shipmentNumber: shipmentNumber
     };
-    
+
     createDeclaration.mutate(payload);
   };
-  
+
   // Reset form state
   const resetForm = () => {
     setCurrentStep(1);
@@ -331,9 +337,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setEndDate(undefined);
     setSelectedSupplierId(null);
     setSupplierSearchTerm("");
+    setPoNumber("");
+    setSupplierSoNumber("");
+    setShipmentNumber("");
     setSelectedCustomer(null);
   };
-  
+
   // Handle dialog close
   const handleDialogClose = (open: boolean) => {
     if (!open) {
@@ -341,12 +350,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     }
     onOpenChange(open);
   };
-  
+
   // Filter suppliers based on search term
   const filteredSuppliers = suppliers.filter(supplier => 
     supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
   );
-  
+
   // Get step labels based on declaration type
   const getStepLabels = () => {
     if (declarationType === "inbound") {
@@ -366,14 +375,14 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       ];
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>Create Declaration</DialogTitle>
         </DialogHeader>
-        
+
         <div className="mb-8">
           <Stepper 
             steps={getStepLabels()}
@@ -381,10 +390,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             completedSteps={completedSteps}
           />
         </div>
-        
+
         <div className="py-4">
           {/* Step removed - Declaration Type is now set by the main buttons */}
-          
+
           {/* Step 1: Declaration Details - Items */}
           {currentStep === 1 && (
             <div>
@@ -417,7 +426,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="end-date">End Date</Label>
                     <Popover>
@@ -447,7 +456,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Supplier Selection</h3>
                 <div className="relative mb-4">
@@ -460,7 +469,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                 </div>
-                
+
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {filteredSuppliers.length === 0 ? (
                     <div className="text-center py-4 text-gray-500">
@@ -493,7 +502,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-6 mb-6">
                 <div>
                   <Label htmlFor="po-number" className="text-sm font-medium">
@@ -509,7 +518,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="supplier-so" className="text-sm font-medium">
                     Supplier SO Number
@@ -523,7 +532,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     onChange={(e) => setSupplierSoNumber(e.target.value)}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="shipment-number" className="text-sm font-medium">
                     Shipment Number (BL, LR etc.)
@@ -552,7 +561,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     Add Item
                   </Button>
                 </div>
-                
+
                 <div className="space-y-6">
                   {items.map((item, index) => (
                     <div key={item.id} className="p-4 border rounded-lg">
@@ -569,7 +578,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           </Button>
                         )}
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-3 items-end">
                         <div className="w-44">
                           <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
@@ -581,7 +590,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             className="mt-1"
                           />
                         </div>
-                        
+
                         <div className="w-44">
                           <Label htmlFor={`product-name-${item.id}`} className="text-sm">Product Name *</Label>
                           <Input 
@@ -592,7 +601,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             className="mt-1"
                           />
                         </div>
-                        
+
                         <div className="w-44">
                           <Label htmlFor={`scientific-name-${item.id}`} className="text-sm">Scientific Name</Label>
                           <Input 
@@ -603,7 +612,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             className="mt-1"
                           />
                         </div>
-                        
+
                         <div className="w-28">
                           <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity *</Label>
                           <Input 
@@ -642,7 +651,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               </div>
             </div>
           )}
-          
+
           {/* Step 2: GeoJSON Upload */}
           {currentStep === 2 && (
             <div>
@@ -651,7 +660,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 <p className="text-sm text-gray-500 mb-4">
                   Please upload a GeoJSON file containing the geographical data associated with this declaration.
                 </p>
-                
+
                 <div 
                   className={cn(
                     "border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50",
@@ -686,7 +695,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               </div>
             </div>
           )}
-          
+
           {/* Step 3: Upload Evidence Documents */}
           {currentStep === 3 && (
             <div>
@@ -696,7 +705,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   Please upload all relevant documentation to support your declaration, including:
                   GeoJSON data, certificates, shipping documents, and any other evidence.
                 </p>
-                
+
                 <div 
                   className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50"
                   onClick={handleDocumentUpload}
@@ -722,7 +731,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </Button>
                 </div>
               </div>
-              
+
               {uploadedFiles.length > 0 && (
                 <div>
                   <h3 className="text-base font-medium mb-2">Uploaded Files</h3>
@@ -757,7 +766,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               )}
             </div>
           )}
-          
+
           {/* Step 4: Customer Selection (for outbound only) */}
           {currentStep === 4 && declarationType === "outbound" && (
             <div>
@@ -770,7 +779,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 />
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               </div>
-              
+
               <div className="space-y-3">
                 {customers.map((customer) => (
                   <div 
@@ -796,20 +805,20 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               </div>
             </div>
           )}
-          
+
           {/* Step 4/5: Review (Final Step) */}
           {((currentStep === 4 && declarationType === "inbound") || 
             (currentStep === 5 && declarationType === "outbound")) && (
             <div>
               <h3 className="text-lg font-medium mb-6">Review Declaration</h3>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Declaration Type</h4>
                     <p className="mt-1">{declarationType === "inbound" ? "Inbound" : "Outbound"}</p>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Validity Period</h4>
                     <p className="mt-1">
@@ -818,7 +827,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         "Not specified"}
                     </p>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Supplier</h4>
                     <p className="mt-1">
@@ -827,14 +836,14 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         "Not selected"}
                     </p>
                   </div>
-                  
+
                   {declarationType === "outbound" && (
                     <div>
                       <h4 className="text-sm font-medium text-gray-500">Customer</h4>
                       <p className="mt-1">{selectedCustomer?.name || "Not selected"}</p>
                     </div>
                   )}
-                  
+
                   <div className="col-span-2">
                     <h4 className="text-sm font-medium text-gray-500">Items</h4>
                     <div className="mt-1 space-y-2">
@@ -846,7 +855,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="col-span-2">
                     <h4 className="text-sm font-medium text-gray-500">Evidence Documents</h4>
                     <div className="mt-1">
@@ -862,9 +871,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     </div>
                   </div>
                 </div>
-                
+
                 <Separator className="my-6" />
-                
+
                 <div className="flex items-start space-x-2">
                   <div className="flex-shrink-0 mt-0.5">
                     <svg 
@@ -893,7 +902,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             </div>
           )}
         </div>
-        
+
         <DialogFooter>
           {currentStep > 1 && (
             <Button 
@@ -904,7 +913,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               Back
             </Button>
           )}
-          
+
           {((currentStep < 4 && declarationType === "inbound") || 
             (currentStep < 5 && declarationType === "outbound")) ? (
             <Button onClick={goToNextStep}>
