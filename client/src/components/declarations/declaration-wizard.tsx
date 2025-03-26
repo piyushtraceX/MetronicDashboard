@@ -1,37 +1,46 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Stepper from "@/components/ui/stepper";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Database, FileText, Upload, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { CalendarIcon, Plus, Search, Trash2, Upload, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Declaration types
 type DeclarationType = "inbound" | "outbound";
-type DeclarationSource = "new" | "existing";
-
-interface Declaration {
-  id: number;
-  type: DeclarationType;
-  productName: string;
-  quantity: number;
-  unit: string;
-  code?: string;
-  status: string;
-}
 
 interface Customer {
   id: number;
   name: string;
   type: string;
+}
+
+interface Supplier {
+  id: number;
+  name: string;
+  products?: string;
+  countries?: string[];
+}
+
+interface DeclarationItem {
+  id: string;
+  hsnCode: string;
+  productName: string;
+  scientificName: string;
+  quantity: string;
+  unit: string;
 }
 
 interface WizardProps {
@@ -47,40 +56,29 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   // Step 1: Declaration Type
   const [declarationType, setDeclarationType] = useState<DeclarationType>("inbound");
   
-  // Step 2: Declaration Source
-  const [declarationSource, setDeclarationSource] = useState<DeclarationSource>("new");
-  const [selectedDeclaration, setSelectedDeclaration] = useState<Declaration | null>(null);
+  // Step 2: Declaration Details - Items
+  const [items, setItems] = useState<DeclarationItem[]>([
+    {
+      id: "item-1",
+      hsnCode: "",
+      productName: "",
+      scientificName: "",
+      quantity: "",
+      unit: "kg"
+    }
+  ]);
   
-  // Step 3: Upload Data
-  const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
+  // Step 3: Upload Evidence Documents
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  
+  // Form data - Dates and Supplier
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
   
   // Step 4: Customer Selection (for outbound only)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  
-  // Form data for new declaration
-  const [formData, setFormData] = useState({
-    productName: "",
-    productDescription: "",
-    hsnCode: "",
-    quantity: "",
-    unit: "kg",
-    supplierId: 1,
-    industry: "Food & Beverage",
-    customerId: null as number | null,
-    geoJsonData: null as any
-  });
-  
-  // Mock declarations for the example
-  const existingDeclarations: Declaration[] = [
-    { id: 1, type: "inbound", productName: "Palm Oil", quantity: 5000, unit: "Tons", code: "#A12345", status: "approved" },
-    { id: 2, type: "inbound", productName: "Rubber", quantity: 2000, unit: "Tons", code: "#B67890", status: "approved" },
-  ];
-  
-  // Mock customers for the example
-  const customers: Customer[] = [
-    { id: 1, name: "Customer 1", type: "EU-Based Entity" },
-    { id: 2, name: "Customer 2", type: "Non-EU Entity" },
-  ];
   
   // Create declaration mutation
   const createDeclaration = useMutation({
@@ -115,9 +113,69 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     }
   });
   
-  // Handle form input changes
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  // Fetch suppliers
+  const { data: suppliers = [] } = useQuery<Supplier[]>({
+    queryKey: ['/api/suppliers'],
+    refetchOnWindowFocus: false,
+  });
+  
+  // Mock customers for the example
+  const customers: Customer[] = [
+    { id: 1, name: "Euro Foods GmbH", type: "EU-Based Entity" },
+    { id: 2, name: "Global Trade Partners", type: "Non-EU Entity" },
+    { id: 3, name: "Organic Distributors Ltd", type: "EU-Based Entity" },
+    { id: 4, name: "Pacific Wholesale Inc", type: "Non-EU Entity" },
+  ];
+  
+  // Handle form input changes for items
+  const updateItem = (id: string, field: keyof DeclarationItem, value: string) => {
+    setItems(prev => prev.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+  
+  // Add a new item
+  const addItem = () => {
+    setItems(prev => [
+      ...prev, 
+      {
+        id: `item-${prev.length + 1}`,
+        hsnCode: "",
+        productName: "",
+        scientificName: "",
+        quantity: "",
+        unit: "kg"
+      }
+    ]);
+  };
+  
+  // Remove an item
+  const removeItem = (id: string) => {
+    if (items.length > 1) {
+      setItems(prev => prev.filter(item => item.id !== id));
+    } else {
+      toast({
+        title: "Cannot remove item",
+        description: "At least one item is required",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle file upload simulation
+  const handleFileUpload = () => {
+    const filename = `document_${uploadedFiles.length + 1}.pdf`;
+    setUploadedFiles(prev => [...prev, filename]);
+    toast({
+      title: "File uploaded",
+      description: `${filename} has been uploaded successfully`,
+      variant: "default",
+    });
+  };
+  
+  // Remove uploaded file
+  const removeFile = (filename: string) => {
+    setUploadedFiles(prev => prev.filter(file => file !== filename));
   };
   
   // Navigate to next step
@@ -140,20 +198,56 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       case 1: // Declaration Type
         return true; // Always valid as we have a default
         
-      case 2: // Declaration Source
-        if (declarationSource === "existing" && !selectedDeclaration) {
+      case 2: // Declaration Details - Items
+        // Check if at least one item has required fields
+        const validItems = items.some(item => 
+          item.hsnCode.trim() !== "" && 
+          item.productName.trim() !== "" && 
+          item.quantity.trim() !== "" && 
+          parseFloat(item.quantity) > 0
+        );
+        
+        if (!validItems) {
           toast({
-            title: "Selection required",
-            description: "Please select an existing declaration to continue",
+            title: "Required fields missing",
+            description: "Please fill in HSN Code, Product Name and Quantity for at least one item",
             variant: "destructive",
           });
           return false;
         }
+        
+        // Check if dates are selected
+        if (!startDate || !endDate) {
+          toast({
+            title: "Dates required",
+            description: "Please select both start and end dates for the declaration validity period",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        // Check if supplier is selected
+        if (!selectedSupplierId) {
+          toast({
+            title: "Supplier selection required",
+            description: "Please select a supplier for the declaration",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
         return true;
         
-      case 3: // Upload Data
-        // In a real app, we'd validate the GeoJSON data
-        // For this example, we'll always return true
+      case 3: // Upload Evidence
+        // Check if at least one file is uploaded
+        if (uploadedFiles.length === 0) {
+          toast({
+            title: "Evidence required",
+            description: "Please upload at least one document as evidence",
+            variant: "destructive",
+          });
+          return false;
+        }
         return true;
         
       case 4: // Customer Selection (outbound only)
@@ -176,19 +270,28 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const submitDeclaration = () => {
     if (!validateCurrentStep()) return;
     
-    // Prepare payload based on declaration type and source
+    // Format items for submission
+    const formattedItems = items.filter(item => 
+      item.hsnCode.trim() !== "" && 
+      item.productName.trim() !== "" && 
+      item.quantity.trim() !== ""
+    ).map(item => ({
+      hsnCode: item.hsnCode,
+      productName: item.productName,
+      scientificName: item.scientificName,
+      quantity: parseFloat(item.quantity),
+      unit: item.unit
+    }));
+    
+    // Prepare payload
     const payload = {
       type: declarationType,
-      productName: declarationSource === "existing" && selectedDeclaration ? 
-        selectedDeclaration.productName : formData.productName,
-      productDescription: formData.productDescription,
-      hsnCode: formData.hsnCode,
-      quantity: parseInt(formData.quantity) || 0,
-      unit: formData.unit,
-      supplierId: formData.supplierId,
-      industry: formData.industry,
-      customerId: declarationType === "outbound" ? (selectedCustomer?.id || null) : null,
-      geoJsonData: formData.geoJsonData,
+      items: formattedItems,
+      documents: uploadedFiles,
+      startDate: startDate ? startDate.toISOString() : null,
+      endDate: endDate ? endDate.toISOString() : null,
+      supplierId: selectedSupplierId,
+      customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
       status: "pending",
       riskLevel: "medium"
     };
@@ -201,21 +304,22 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setCurrentStep(1);
     setCompletedSteps([]);
     setDeclarationType("inbound");
-    setDeclarationSource("new");
-    setSelectedDeclaration(null);
-    setHasUploadedGeoJSON(false);
+    setItems([
+      {
+        id: "item-1",
+        hsnCode: "",
+        productName: "",
+        scientificName: "",
+        quantity: "",
+        unit: "kg"
+      }
+    ]);
+    setUploadedFiles([]);
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setSelectedSupplierId(null);
+    setSupplierSearchTerm("");
     setSelectedCustomer(null);
-    setFormData({
-      productName: "",
-      productDescription: "",
-      hsnCode: "",
-      quantity: "",
-      unit: "kg",
-      supplierId: 1,
-      industry: "Food & Beverage",
-      customerId: null,
-      geoJsonData: null
-    });
   };
   
   // Handle dialog close
@@ -226,14 +330,29 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     onOpenChange(open);
   };
   
-  // Handle file upload simulation
-  const handleFileUpload = () => {
-    setHasUploadedGeoJSON(true);
-    toast({
-      title: "File uploaded",
-      description: "GeoJSON file has been uploaded successfully",
-      variant: "default",
-    });
+  // Filter suppliers based on search term
+  const filteredSuppliers = suppliers.filter(supplier => 
+    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+  );
+  
+  // Get step labels based on declaration type
+  const getStepLabels = () => {
+    if (declarationType === "inbound") {
+      return [
+        "Declaration Type", 
+        "Details & Items", 
+        "Evidence Documents", 
+        "Review"
+      ];
+    } else {
+      return [
+        "Declaration Type", 
+        "Details & Items", 
+        "Evidence Documents", 
+        "Customer Selection",
+        "Review"
+      ];
+    }
   };
   
   return (
@@ -245,12 +364,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
         
         <div className="mb-8">
           <Stepper 
-            steps={[
-              "Declaration Type", 
-              "Select Declaration", 
-              "Upload Data", 
-              declarationType === "outbound" ? "Customer Selection" : "Review"
-            ]}
+            steps={getStepLabels()}
             currentStep={currentStep}
             completedSteps={completedSteps}
           />
@@ -284,223 +398,285 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             </Tabs>
           )}
           
-          {/* Step 2: Declaration Source */}
+          {/* Step 2: Declaration Details - Items */}
           {currentStep === 2 && (
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Card 
-                  className={cn(
-                    "cursor-pointer transition-all border-2", 
-                    declarationSource === "existing" ? "border-primary" : "hover:border-gray-300"
-                  )} 
-                  onClick={() => setDeclarationSource("existing")}
-                >
-                  <CardContent className="p-6 flex flex-col items-center text-center">
-                    <Database className="h-10 w-10 text-primary mb-4" />
-                    <h3 className="text-lg font-medium">Based on Existing Declaration</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Use approved inbound declarations as reference
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card 
-                  className={cn(
-                    "cursor-pointer transition-all border-2", 
-                    declarationSource === "new" ? "border-primary" : "hover:border-gray-300"
-                  )} 
-                  onClick={() => setDeclarationSource("new")}
-                >
-                  <CardContent className="p-6 flex flex-col items-center text-center">
-                    <FileText className="h-10 w-10 text-primary mb-4" />
-                    <h3 className="text-lg font-medium">Create Fresh Declaration</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Start a new declaration from scratch
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {declarationSource === "existing" && (
-                <div className="mt-6">
-                  <div className="relative mb-4">
-                    <Input 
-                      type="text" 
-                      placeholder="Search declarations..." 
-                      className="pl-9"
-                    />
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="start-date">Start Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="start-date"
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal mt-1",
+                            !startDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "PPP") : "Select start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Declaration Name
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Code
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Product
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Quantity
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {existingDeclarations.map((declaration) => (
-                          <tr 
-                            key={declaration.id} 
-                            className={cn(
-                              "cursor-pointer hover:bg-gray-50",
-                              selectedDeclaration?.id === declaration.id ? "bg-primary/5" : ""
-                            )}
-                            onClick={() => setSelectedDeclaration(declaration)}
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {declaration.id === 1 ? "ABC Declaration" : "XYZ Declaration"}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">{declaration.code}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{declaration.productName}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">
-                                {declaration.quantity} {declaration.unit}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge 
-                                variant="outline" 
-                                className="bg-green-50 text-green-700 border-green-200"
-                              >
-                                {declaration.status}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div>
+                    <Label htmlFor="end-date">End Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="end-date"
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal mt-1",
+                            !endDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, "PPP") : "Select end date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          fromDate={startDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
-              )}
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-4">Supplier Selection</h3>
+                <div className="relative mb-4">
+                  <Input 
+                    type="text" 
+                    placeholder="Search suppliers..." 
+                    className="pl-9"
+                    value={supplierSearchTerm}
+                    onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                  />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                </div>
+                
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {filteredSuppliers.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      No suppliers found matching your search
+                    </div>
+                  ) : (
+                    filteredSuppliers.map((supplier) => (
+                      <div 
+                        key={supplier.id}
+                        className={cn(
+                          "p-3 border rounded-lg flex items-center justify-between cursor-pointer",
+                          selectedSupplierId === supplier.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
+                        )}
+                        onClick={() => setSelectedSupplierId(supplier.id)}
+                      >
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                            {supplier.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="ml-3">
+                            <div className="font-medium">{supplier.name}</div>
+                            <div className="text-sm text-gray-500">{supplier.products}</div>
+                          </div>
+                        </div>
+                        {selectedSupplierId === supplier.id && (
+                          <Badge className="bg-primary">Selected</Badge>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Declaration Items</h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-primary border-primary"
+                    onClick={addItem}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
+                
+                <div className="space-y-6">
+                  {items.map((item, index) => (
+                    <div key={item.id} className="p-4 border rounded-lg">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-medium">Item {index + 1}</h4>
+                        {items.length > 1 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700 h-8 px-2"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
+                          <Input 
+                            id={`hsn-code-${item.id}`} 
+                            placeholder="e.g. 1511.10.00"
+                            value={item.hsnCode}
+                            onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor={`product-name-${item.id}`} className="text-sm">Product Name *</Label>
+                          <Input 
+                            id={`product-name-${item.id}`} 
+                            placeholder="e.g. Palm Oil"
+                            value={item.productName}
+                            onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor={`scientific-name-${item.id}`} className="text-sm">Scientific Name</Label>
+                          <Input 
+                            id={`scientific-name-${item.id}`} 
+                            placeholder="e.g. Elaeis guineensis"
+                            value={item.scientificName}
+                            onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div className="flex gap-2 items-start">
+                          <div className="flex-1">
+                            <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity *</Label>
+                            <Input 
+                              id={`quantity-${item.id}`} 
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="e.g. 5000"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="w-1/3">
+                            <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
+                            <Select 
+                              value={item.unit} 
+                              onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                            >
+                              <SelectTrigger id={`unit-${item.id}`} className="mt-1">
+                                <SelectValue placeholder="Select unit" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="kg">kg</SelectItem>
+                                <SelectItem value="tons">tons</SelectItem>
+                                <SelectItem value="liters">liters</SelectItem>
+                                <SelectItem value="m³">m³</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
           
-          {/* Step 3: Upload Data */}
+          {/* Step 3: Upload Evidence Documents */}
           {currentStep === 3 && (
             <div>
               <div className="mb-6">
-                <Label className="text-base font-medium">GeoJSON Upload</Label>
+                <Label className="text-base font-medium">Upload Evidence Documents</Label>
+                <p className="text-sm text-gray-500 mb-4">
+                  Please upload all relevant documentation to support your declaration, including:
+                  GeoJSON data, certificates, shipping documents, and any other evidence.
+                </p>
+                
                 <div 
-                  className={cn(
-                    "mt-2 border-2 border-dashed rounded-md p-8 text-center",
-                    hasUploadedGeoJSON ? "border-green-300 bg-green-50" : "border-gray-300"
-                  )}
+                  className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50"
+                  onClick={handleFileUpload}
                 >
                   <div className="mx-auto flex justify-center">
-                    <Upload className={cn(
-                      "h-12 w-12",
-                      hasUploadedGeoJSON ? "text-green-500" : "text-gray-400"
-                    )} />
+                    <Upload className="h-12 w-12 text-gray-400" />
                   </div>
                   <p className="mt-4 text-sm text-gray-600">
-                    {hasUploadedGeoJSON ? 
-                      "GeoJSON file uploaded successfully" : 
-                      "Drag and drop your GeoJSON file here, or click to browse"}
+                    Drag and drop your files here, or click to browse
                   </p>
-                  {!hasUploadedGeoJSON && (
-                    <Button 
-                      variant="secondary" 
-                      className="mt-4"
-                      onClick={handleFileUpload}
-                    >
-                      Browse Files
-                    </Button>
-                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Accepted formats: PDF, JPG, PNG, GeoJSON (max 10MB)
+                  </p>
+                  <Button 
+                    variant="secondary" 
+                    className="mt-4"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFileUpload();
+                    }}
+                  >
+                    Browse Files
+                  </Button>
                 </div>
               </div>
               
-              {declarationSource === "new" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                  <div>
-                    <Label htmlFor="product-name">Product Name</Label>
-                    <Input 
-                      id="product-name" 
-                      placeholder="Enter product name" 
-                      value={formData.productName}
-                      onChange={(e) => handleInputChange('productName', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="hsn-code">HSN Code</Label>
-                    <Input 
-                      id="hsn-code" 
-                      placeholder="Enter HSN code" 
-                      value={formData.hsnCode}
-                      onChange={(e) => handleInputChange('hsnCode', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div className="flex gap-2 items-start">
-                    <div className="flex-1">
-                      <Label htmlFor="quantity">Quantity</Label>
-                      <Input 
-                        id="quantity" 
-                        type="number" 
-                        placeholder="Enter quantity" 
-                        value={formData.quantity}
-                        onChange={(e) => handleInputChange('quantity', e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="w-1/3">
-                      <Label htmlFor="unit">Unit</Label>
-                      <Input 
-                        id="unit" 
-                        placeholder="kg, tons, etc." 
-                        value={formData.unit}
-                        onChange={(e) => handleInputChange('unit', e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="industry">Industry</Label>
-                    <Input 
-                      id="industry" 
-                      placeholder="Industry" 
-                      value={formData.industry}
-                      onChange={(e) => handleInputChange('industry', e.target.value)}
-                      className="mt-1"
-                    />
+              {uploadedFiles.length > 0 && (
+                <div>
+                  <h3 className="text-base font-medium mb-2">Uploaded Files</h3>
+                  <div className="space-y-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 bg-primary/10 rounded-md flex items-center justify-center">
+                            <svg 
+                              className="h-4 w-4 text-primary" 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              viewBox="0 0 20 20" 
+                              fill="currentColor"
+                            >
+                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="ml-2 text-sm font-medium">{file}</span>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-gray-500"
+                          onClick={() => removeFile(file)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -517,20 +693,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   placeholder="Search customers..." 
                   className="pl-9"
                 />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               </div>
               
               <div className="space-y-3">
@@ -551,18 +714,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       </div>
                     </div>
                     {selectedCustomer?.id === customer.id && (
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-5 w-5 text-primary" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                      >
-                        <path 
-                          fillRule="evenodd" 
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" 
-                          clipRule="evenodd" 
-                        />
-                      </svg>
+                      <Badge className="bg-primary">Selected</Badge>
                     )}
                   </div>
                 ))}
@@ -584,66 +736,56 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500">Declaration Source</h4>
-                    <p className="mt-1">{declarationSource === "new" ? "New Declaration" : "Based on Existing"}</p>
+                    <h4 className="text-sm font-medium text-gray-500">Validity Period</h4>
+                    <p className="mt-1">
+                      {startDate && endDate ? 
+                        `${format(startDate, "PP")} to ${format(endDate, "PP")}` : 
+                        "Not specified"}
+                    </p>
                   </div>
-                  
-                  {declarationSource === "existing" && selectedDeclaration && (
-                    <>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500">Base Declaration</h4>
-                        <p className="mt-1">{selectedDeclaration.id === 1 ? "ABC Declaration" : "XYZ Declaration"}</p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500">Product</h4>
-                        <p className="mt-1">{selectedDeclaration.productName}</p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500">Quantity</h4>
-                        <p className="mt-1">{selectedDeclaration.quantity} {selectedDeclaration.unit}</p>
-                      </div>
-                    </>
-                  )}
-                  
-                  {declarationSource === "new" && (
-                    <>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500">Product Name</h4>
-                        <p className="mt-1">{formData.productName || "Not specified"}</p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500">HSN Code</h4>
-                        <p className="mt-1">{formData.hsnCode || "Not specified"}</p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500">Quantity</h4>
-                        <p className="mt-1">
-                          {formData.quantity ? `${formData.quantity} ${formData.unit}` : "Not specified"}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500">Industry</h4>
-                        <p className="mt-1">{formData.industry}</p>
-                      </div>
-                    </>
-                  )}
                   
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500">GeoJSON Data</h4>
-                    <p className="mt-1">{hasUploadedGeoJSON ? "Uploaded" : "Not uploaded"}</p>
+                    <h4 className="text-sm font-medium text-gray-500">Supplier</h4>
+                    <p className="mt-1">
+                      {selectedSupplierId ? 
+                        suppliers.find(s => s.id === selectedSupplierId)?.name || "Unknown supplier" : 
+                        "Not selected"}
+                    </p>
                   </div>
                   
-                  {declarationType === "outbound" && selectedCustomer && (
+                  {declarationType === "outbound" && (
                     <div>
                       <h4 className="text-sm font-medium text-gray-500">Customer</h4>
-                      <p className="mt-1">{selectedCustomer.name}</p>
+                      <p className="mt-1">{selectedCustomer?.name || "Not selected"}</p>
                     </div>
                   )}
+                  
+                  <div className="col-span-2">
+                    <h4 className="text-sm font-medium text-gray-500">Items</h4>
+                    <div className="mt-1 space-y-2">
+                      {items.filter(item => item.productName).map((item, index) => (
+                        <div key={item.id} className="text-sm">
+                          {index + 1}. {item.productName} ({item.quantity} {item.unit}) - HSN: {item.hsnCode}
+                          {item.scientificName && ` - ${item.scientificName}`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <h4 className="text-sm font-medium text-gray-500">Evidence Documents</h4>
+                    <div className="mt-1">
+                      {uploadedFiles.length === 0 ? (
+                        <span className="text-red-500">No documents uploaded</span>
+                      ) : (
+                        <ul className="list-disc list-inside text-sm space-y-1">
+                          {uploadedFiles.map((file, index) => (
+                            <li key={index}>{file}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 
                 <Separator className="my-6" />
