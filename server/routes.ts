@@ -372,6 +372,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Declaration routes
+  app.get("/api/declarations/stats", async (req, res) => {
+    try {
+      const stats = await storage.getDeclarationStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching declaration statistics" });
+    }
+  });
+  
   app.get("/api/declarations", async (req, res) => {
     try {
       const type = req.query.type as string || "all"; // "inbound", "outbound", or "all"
@@ -454,15 +463,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Error updating declaration" });
       }
-    }
-  });
-
-  app.get("/api/declarations/stats", async (req, res) => {
-    try {
-      const stats = await storage.getDeclarationStats();
-      res.json(stats);
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching declaration statistics" });
     }
   });
 
