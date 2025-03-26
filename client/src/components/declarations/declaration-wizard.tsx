@@ -814,8 +814,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             </div>
           )}
 
-          {/* Step 4: Customer Selection (for outbound only) */}
-          {currentStep === 4 && declarationType === "outbound" && (
+          {/* Step 5: Customer Selection (for outbound only) */}
+          {currentStep === 5 && declarationType === "outbound" && (
             <div>
               <h3 className="text-lg font-medium mb-4">Customer Selection</h3>
               <div className="relative mb-4">
@@ -853,9 +853,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             </div>
           )}
 
-          {/* Step 4/5: Review (Final Step) */}
-          {((currentStep === 4 && declarationType === "inbound") ||
-            (currentStep === 5 && declarationType === "outbound")) && (
+          {/* Step 5/6: Review (Final Step) */}
+          {((currentStep === 5 && declarationType === "inbound") ||
+            (currentStep === 6 && declarationType === "outbound")) && (
             <div>
               <h3 className="text-lg font-medium mb-6">Review Declaration</h3>
 
@@ -961,8 +961,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             </Button>
           )}
 
-          {((currentStep < 4 && declarationType === "inbound") ||
-            (currentStep < 5 && declarationType === "outbound")) ? (
+          {((currentStep < 5 && declarationType === "inbound") ||
+            (currentStep < 6 && declarationType === "outbound")) ? (
             <Button onClick={goToNextStep}>
               Continue
             </Button>
