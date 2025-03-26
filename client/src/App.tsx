@@ -7,6 +7,7 @@ import Dashboard from "@/pages/dashboard";
 import SupplyChain from "@/pages/supply-chain";
 import RiskAssessment from "@/pages/risk-assessment";
 import Documents from "@/pages/documents";
+import Declarations from "@/pages/declarations";
 import Compliance from "@/pages/compliance";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
@@ -35,6 +36,11 @@ function Router() {
       <Route path="/documents">
         <AppLayout>
           <Documents />
+        </AppLayout>
+      </Route>
+      <Route path="/declarations">
+        <AppLayout>
+          <Declarations />
         </AppLayout>
       </Route>
       <Route path="/compliance">

@@ -110,6 +110,14 @@ export default function Sidebar() {
             active={location === "/documents"}
           />
           
+          {/* Declarations */}
+          <SidebarSection
+            icon="fa-file-signature"
+            label="Declarations"
+            href="/declarations"
+            active={location === "/declarations"}
+          />
+          
           {/* Compliance */}
           <SidebarSection
             icon="fa-check-circle"
