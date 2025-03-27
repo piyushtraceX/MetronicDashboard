@@ -395,10 +395,62 @@ export class MemStorage implements IStorage {
     
     // Suppliers
     const suppliers = [
-      { name: "EcoFarm Industries", products: "Coffee, Cocoa", category: "Tier 1", status: "Compliant", riskLevel: "Low", riskScore: 85 },
-      { name: "Tropical Harvest Ltd", products: "Palm Oil", category: "Tier 1", status: "Pending Review", riskLevel: "Medium", riskScore: 65 },
-      { name: "Global Forestry Co.", products: "Timber, Rubber", category: "Tier 2", status: "Non-Compliant", riskLevel: "High", riskScore: 30 },
-      { name: "Natural Nutrients Inc.", products: "Soy, Corn", category: "Tier 1", status: "Compliant", riskLevel: "Low", riskScore: 90 }
+      { 
+        name: "EcoFarm Industries", 
+        products: "Coffee, Cocoa", 
+        category: "Tier 1", 
+        status: "Compliant", 
+        riskLevel: "Low", 
+        riskScore: 85,
+        country: "Colombia",
+        registrationNumber: "REGCOL1234567",
+        contactPerson: "Maria Rodriguez",
+        email: "maria@ecofarm.example",
+        phone: "+571234567890",
+        complianceScore: 92
+      },
+      { 
+        name: "Tropical Harvest Ltd", 
+        products: "Palm Oil", 
+        category: "Tier 1", 
+        status: "Pending Review", 
+        riskLevel: "Medium", 
+        riskScore: 65,
+        country: "Indonesia",
+        registrationNumber: "REGIDN7654321",
+        contactPerson: "Budi Santoso",
+        email: "budi@tropical.example",
+        phone: "+62123456789",
+        complianceScore: 78
+      },
+      { 
+        name: "Global Forestry Co.", 
+        products: "Timber, Rubber", 
+        category: "Tier 2", 
+        status: "Non-Compliant", 
+        riskLevel: "High", 
+        riskScore: 30,
+        country: "Brazil",
+        registrationNumber: "REGBRA9876543",
+        contactPerson: "Carlos Silva",
+        email: "carlos@globalforestry.example",
+        phone: "+5521987654321",
+        complianceScore: 45
+      },
+      { 
+        name: "Natural Nutrients Inc.", 
+        products: "Soy, Corn", 
+        category: "Tier 1", 
+        status: "Compliant", 
+        riskLevel: "Low", 
+        riskScore: 90,
+        country: "USA",
+        registrationNumber: "REGUSA1122334",
+        contactPerson: "Jennifer Adams",
+        email: "jennifer@nutrients.example",
+        phone: "+1234567890",
+        complianceScore: 95
+      }
     ];
     
     suppliers.forEach(supplier => {

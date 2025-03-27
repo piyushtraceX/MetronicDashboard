@@ -400,6 +400,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Declaration not found" });
       }
       
+      // Add additional fields for outbound declarations (for demo)
+      if (declaration.type === "outbound") {
+        const enhancedDeclaration = {
+          ...declaration,
+          customerPONumber: declaration.id % 2 === 0 ? `PO-${10000 + declaration.id}` : null,
+          soNumber: declaration.id % 2 === 0 ? `SO-${20000 + declaration.id}` : null,
+          shipmentNumber: declaration.id % 2 === 0 ? `SHM-${30000 + declaration.id}` : null,
+          customerId: declaration.id % 4 + 1, // Mock customer ID between 1-4
+          documents: [
+            "Compliance Certificate.pdf",
+            "Origin Documentation.pdf",
+            declaration.id % 2 === 0 ? "Shipment Manifest.pdf" : null
+          ].filter(Boolean),
+          hasGeoJSON: !!declaration.geojsonData
+        };
+        return res.json(enhancedDeclaration);
+      }
+      
       res.json(declaration);
     } catch (error) {
       res.status(500).json({ message: "Error fetching declaration" });
@@ -463,6 +481,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Error updating declaration" });
       }
+    }
+  });
+
+  // Customer routes for outbound declarations
+  app.get("/api/customers", async (req, res) => {
+    // Mock customers for demo purposes
+    const customers = [
+      { id: 1, name: "EU Retail Group", type: "retailer" },
+      { id: 2, name: "Global Food Distributors", type: "distributor" },
+      { id: 3, name: "Sustainable Products Co", type: "manufacturer" },
+      { id: 4, name: "EcoBrands Inc", type: "retailer" }
+    ];
+    res.json(customers);
+  });
+  
+  app.get("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Mock customer data for demo
+      const customers = [
+        { id: 1, name: "EU Retail Group", type: "retailer", country: "Germany", contactPerson: "Anne Schmidt", email: "anne@euretail.example" },
+        { id: 2, name: "Global Food Distributors", type: "distributor", country: "France", contactPerson: "Jean Dupont", email: "jean@gfd.example" },
+        { id: 3, name: "Sustainable Products Co", type: "manufacturer", country: "Netherlands", contactPerson: "Jan de Vries", email: "jan@sustainable.example" },
+        { id: 4, name: "EcoBrands Inc", type: "retailer", country: "Belgium", contactPerson: "Eva Dubois", email: "eva@ecobrands.example" }
+      ];
+      
+      const customer = customers.find(c => c.id === id);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching customer" });
     }
   });
 

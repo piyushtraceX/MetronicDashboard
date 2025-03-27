@@ -27,6 +27,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import DeclarationWizard from "@/components/declarations/declaration-wizard";
 import OutboundDeclarationWizard from "@/components/declarations/outbound-declaration-wizard";
+import DeclarationDetailView from "@/components/declarations/declaration-detail-view";
 
 interface Declaration {
   id: number;
@@ -74,7 +75,10 @@ function RiskSummaryCard({ color, label, count, icon }: { color: string; label: 
   );
 }
 
-function DeclarationRow({ declaration }: { declaration: Declaration }) {
+function DeclarationRow({ declaration, onViewClick }: { 
+  declaration: Declaration; 
+  onViewClick: (id: number) => void;
+}) {
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-50">
       <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
@@ -106,7 +110,12 @@ function DeclarationRow({ declaration }: { declaration: Declaration }) {
         {formatDate(declaration.lastUpdated)}
       </td>
       <td className="px-3 py-4 text-sm text-right whitespace-nowrap">
-        <Button variant="ghost" size="sm" className="text-primary">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-primary"
+          onClick={() => onViewClick(declaration.id)}
+        >
           <Eye className="h-4 w-4 mr-1" />
           View
         </Button>
@@ -136,6 +145,8 @@ export default function Declarations() {
   const [simpleModalOpen, setSimpleModalOpen] = useState(false);
   const [wizardModalOpen, setWizardModalOpen] = useState(false);
   const [declarationType, setDeclarationType] = useState<"inbound" | "outbound">("inbound");
+  const [detailViewOpen, setDetailViewOpen] = useState(false);
+  const [selectedDeclarationId, setSelectedDeclarationId] = useState<number | null>(null);
   const { toast } = useToast();
   
   // New declaration form state
@@ -661,7 +672,14 @@ export default function Declarations() {
                   </tr>
                 ) : (
                   filteredDeclarations.map((declaration: Declaration) => (
-                    <DeclarationRow key={declaration.id} declaration={declaration} />
+                    <DeclarationRow 
+                      key={declaration.id} 
+                      declaration={declaration} 
+                      onViewClick={(id) => {
+                        setSelectedDeclarationId(id);
+                        setDetailViewOpen(true);
+                      }}
+                    />
                   ))
                 )}
               </tbody>
@@ -669,6 +687,13 @@ export default function Declarations() {
           </div>
         </div>
       </Tabs>
+      
+      {/* Declaration Detail View Modal */}
+      <DeclarationDetailView
+        open={detailViewOpen}
+        onOpenChange={setDetailViewOpen}
+        declarationId={selectedDeclarationId}
+      />
     </div>
   );
 }
