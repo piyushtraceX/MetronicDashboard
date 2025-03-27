@@ -75,10 +75,18 @@ function RiskSummaryCard({ color, label, count, icon }: { color: string; label: 
 }
 
 function DeclarationRow({ declaration }: { declaration: Declaration }) {
+  // Find supplier name using the declaration.supplierId
+  const { data: suppliers = [] } = useQuery<any[]>({
+    queryKey: ['/api/suppliers'],
+    refetchOnWindowFocus: false,
+  });
+  
+  const supplierName = suppliers.find((s: any) => s.id === declaration.supplierId)?.name || `Supplier ${declaration.supplierId}`;
+  
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-50">
       <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
-        <div className="font-medium text-gray-900">Supplier {declaration.supplierId}</div>
+        <div className="font-medium text-gray-900">{supplierName}</div>
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {declaration.industry || "Not specified"} / {declaration.productName}
@@ -251,7 +259,7 @@ export default function Declarations() {
   });
   
   // Fetch suppliers (simplified for this example)
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliers = [] } = useQuery<any[]>({
     queryKey: ['/api/suppliers'],
     refetchOnWindowFocus: false,
   });

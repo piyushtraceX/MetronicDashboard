@@ -5,7 +5,7 @@ import Stepper from "@/components/ui/stepper";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, Plus, Search, Trash2, Upload, User } from "lucide-react";
+import { CalendarIcon, Check, Plus, Search, Trash2, Upload, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
 type DeclarationSourceType = "existing" | "fresh";
 
@@ -43,6 +45,15 @@ interface Customer {
   id: number;
   name: string;
   type: string;
+}
+
+// Define the interface for supplier objects
+interface Supplier {
+  id: number;
+  name: string;
+  products?: string;
+  countries?: string[];
+  risk?: string;
 }
 
 interface OutboundDeclarationWizardProps {
@@ -90,6 +101,11 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   
+  // Supplier selection state
+  const [selectedSuppliers, setSelectedSuppliers] = useState<number[]>([]);
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
+  const [comments, setComments] = useState("");
+  
   // Mock data - in a real app, this would come from API requests
   const existingDeclarations: ExistingDeclaration[] = [
     { id: 1, name: "ABC Declaration", code: "#A12345", product: "Palm Oil", quantity: "5,000 Tons", status: "Approved" },
@@ -100,6 +116,14 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     { id: 1, name: "Customer 1", type: "EU-Based Entity" },
     { id: 2, name: "Customer 2", type: "Non-EU Distributor" },
     { id: 3, name: "Customer 3", type: "Retail Chain" }
+  ];
+  
+  const suppliers: Supplier[] = [
+    { id: 1, name: "Acme Farms", products: "Palm Oil, Coffee", countries: ["Indonesia", "Malaysia"], risk: "low" },
+    { id: 2, name: "EcoWood Inc.", products: "Timber, Rubber", countries: ["Brazil", "Colombia"], risk: "medium" },
+    { id: 3, name: "Green Valley Co.", products: "Soy, Cattle", countries: ["Argentina", "Paraguay"], risk: "high" },
+    { id: 4, name: "Natural Resources Ltd.", products: "Cocoa, Coffee", countries: ["Ghana", "Ivory Coast"], risk: "medium" },
+    { id: 5, name: "Sustainable Harvest", products: "Timber, Palm Kernel", countries: ["Indonesia", "Papua New Guinea"], risk: "low" }
   ];
   
   // Query to get available inbound declarations (would be replaced with actual API call)
@@ -350,6 +374,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     setEndDate(undefined);
     setSelectedCustomer(null);
     setCustomerSearchTerm("");
+    setSelectedSuppliers([]);
+    setSupplierSearchTerm("");
+    setComments("");
     setHasUploadedGeoJSON(false);
   };
 
@@ -371,6 +398,11 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   // Filter customers based on search term
   const filteredCustomers = customers.filter(customer => 
     customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase())
+  );
+  
+  // Filter suppliers based on search term
+  const filteredSuppliers = suppliers.filter(supplier => 
+    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
   );
 
   // Get step labels
@@ -759,7 +791,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
               
               {/* Uploaded files list */}
               {uploadedFiles.length > 0 && (
-                <div>
+                <div className="mb-6">
                   <h3 className="text-base font-medium mb-2">Uploaded Files</h3>
                   <div className="space-y-2">
                     {uploadedFiles.map((file, index) => (
@@ -790,6 +822,79 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   </div>
                 </div>
               )}
+              
+              {/* Supplier Selection with Checkboxes */}
+              <div>
+                <h3 className="text-base font-medium mb-2">Select Suppliers</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Select the suppliers that contributed to this declaration. You can select multiple suppliers.
+                </p>
+                
+                <div className="relative mb-4">
+                  <Input 
+                    type="text" 
+                    placeholder="Search suppliers by name..." 
+                    className="pl-9"
+                    value={supplierSearchTerm}
+                    onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                  />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                </div>
+                
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                  {filteredSuppliers.length === 0 ? (
+                    <div className="text-center p-4 bg-gray-50 rounded-md text-sm text-gray-500">
+                      {supplierSearchTerm.length > 0 
+                        ? "No suppliers found matching your search" 
+                        : "Type at least 2 characters to search for suppliers"}
+                    </div>
+                  ) : (
+                    filteredSuppliers.map((supplier) => (
+                      <div 
+                        key={supplier.id}
+                        className="p-4 border rounded-md flex items-start hover:bg-gray-50"
+                      >
+                        <Checkbox
+                          id={`supplier-${supplier.id}`}
+                          checked={selectedSuppliers.includes(supplier.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedSuppliers(prev => [...prev, supplier.id]);
+                            } else {
+                              setSelectedSuppliers(prev => prev.filter(id => id !== supplier.id));
+                            }
+                          }}
+                          className="mt-1"
+                        />
+                        <div className="ml-3 flex-grow">
+                          <Label 
+                            htmlFor={`supplier-${supplier.id}`} 
+                            className="font-medium cursor-pointer"
+                          >
+                            {supplier.name}
+                          </Label>
+                          <div className="text-sm text-gray-500 mt-1">
+                            <div>Products: {supplier.products}</div>
+                            <div>Origin: {supplier.countries?.join(", ")}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <span className={cn(
+                            "text-xs inline-flex items-center rounded-full px-2.5 py-0.5",
+                            supplier.risk === "low" ? "bg-green-100 text-green-800" : 
+                            supplier.risk === "medium" ? "bg-yellow-100 text-yellow-800" : 
+                            "bg-red-100 text-red-800"
+                          )}>
+                            {supplier.risk && typeof supplier.risk === 'string' ? 
+                              (supplier.risk.charAt(0).toUpperCase() + supplier.risk.slice(1) + " Risk") : 
+                              "Unknown Risk"}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           )}
           
@@ -809,27 +914,37 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
               </div>
               
               <div className="space-y-3">
-                {filteredCustomers.map((customer) => (
-                  <div 
-                    key={customer.id}
-                    className={cn(
-                      "p-4 border rounded-lg flex items-center justify-between cursor-pointer",
-                      selectedCustomer?.id === customer.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
-                    )}
-                    onClick={() => setSelectedCustomer(customer)}
-                  >
-                    <div className="flex items-center">
-                      <User className="h-5 w-5 text-gray-500 mr-3" />
-                      <div>
-                        <div className="font-medium">{customer.name}</div>
-                        <div className="text-sm text-gray-500">{customer.type}</div>
-                      </div>
-                    </div>
-                    {selectedCustomer?.id === customer.id && (
-                      <Badge className="bg-primary">Selected</Badge>
-                    )}
+                {customerSearchTerm.length < 2 ? (
+                  <div className="text-center p-6 bg-gray-50 rounded-md text-sm text-gray-500">
+                    Type at least 2 characters to search for customers
                   </div>
-                ))}
+                ) : filteredCustomers.length === 0 ? (
+                  <div className="text-center p-6 bg-gray-50 rounded-md text-sm text-gray-500">
+                    No customers found matching your search
+                  </div>
+                ) : (
+                  filteredCustomers.map((customer) => (
+                    <div 
+                      key={customer.id}
+                      className={cn(
+                        "p-4 border rounded-lg flex items-center justify-between cursor-pointer",
+                        selectedCustomer?.id === customer.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
+                      )}
+                      onClick={() => setSelectedCustomer(customer)}
+                    >
+                      <div className="flex items-center">
+                        <User className="h-5 w-5 text-gray-500 mr-3" />
+                        <div>
+                          <div className="font-medium">{customer.name}</div>
+                          <div className="text-sm text-gray-500">{customer.type}</div>
+                        </div>
+                      </div>
+                      {selectedCustomer?.id === customer.id && (
+                        <Badge className="bg-primary">Selected</Badge>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -909,6 +1024,22 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                       )}
                     </div>
                   </div>
+                </div>
+                
+                <Separator className="my-6" />
+                
+                {/* Comments Section */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium mb-2">Comments</h4>
+                  <Textarea 
+                    placeholder="Add any additional comments or notes about this declaration..."
+                    className="min-h-[100px]"
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    These comments will be visible to reviewers and attached to the declaration record.
+                  </p>
                 </div>
                 
                 <Separator className="my-6" />
