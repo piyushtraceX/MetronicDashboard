@@ -8,9 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import SAQResponseViewer from "@/components/supply-chain/saq-response-viewer";
 
 export default function SupplyChain() {
   const [activeTab, setActiveTab] = useState("onboarding");
+  const [viewResponseOpen, setViewResponseOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState("");
+  const [selectedResponseId, setSelectedResponseId] = useState("");
 
   // Mock suppliers data for the onboarding tab
   const suppliers = [
@@ -282,7 +286,15 @@ export default function SupplyChain() {
                       <TableCell>{response.address}</TableCell>
                       <TableCell>{response.industry}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" className="text-blue-600 hover:text-blue-800">
+                        <Button 
+                          variant="ghost" 
+                          className="text-blue-600 hover:text-blue-800"
+                          onClick={() => {
+                            setSelectedSupplier(response.supplier);
+                            setSelectedResponseId(response.id);
+                            setViewResponseOpen(true);
+                          }}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View Response
                         </Button>
@@ -335,6 +347,14 @@ export default function SupplyChain() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* SAQ Response Viewer Modal */}
+      <SAQResponseViewer 
+        open={viewResponseOpen}
+        onClose={() => setViewResponseOpen(false)}
+        supplierName={selectedSupplier}
+        responseId={selectedResponseId}
+      />
     </div>
   );
 }

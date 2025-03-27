@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, CheckCircle, XCircle, HelpCircle } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle, XCircle, HelpCircle, Check } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
@@ -202,7 +202,9 @@ export default function SAQResponseViewer({ open, onClose, supplierName, respons
             {Array.isArray(question.answer) ? 
               question.answer.map((item: string, i: number) => (
                 <div key={i} className="flex items-center">
-                  <Checkbox checked readOnly className="mr-2" />
+                  <div className="h-4 w-4 mr-2 rounded-sm bg-primary flex items-center justify-center text-white">
+                    <Check className="h-3 w-3" />
+                  </div>
                   <span>{item}</span>
                 </div>
               )) : 
