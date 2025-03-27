@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Stepper from "@/components/ui/stepper";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -60,9 +61,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   // Declaration source type state (existing or fresh)
   const [declarationSource, setDeclarationSource] = useState<DeclarationSourceType>("existing");
   
-  // State for selected existing declaration
-  const [selectedDeclarationId, setSelectedDeclarationId] = useState<number | null>(null);
+  // State for selected existing declarations (now supports multiple selections)
+  const [selectedDeclarationIds, setSelectedDeclarationIds] = useState<number[]>([]);
   const [declarationSearchTerm, setDeclarationSearchTerm] = useState("");
+  const [showDeclarationsList, setShowDeclarationsList] = useState(false);
   
   // State for fresh declaration details
   const [items, setItems] = useState<DeclarationItem[]>([
@@ -207,10 +209,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         
       case 2: // Select Declaration or Fresh Declaration Details
         if (declarationSource === "existing") {
-          if (!selectedDeclarationId) {
+          if (selectedDeclarationIds.length === 0) {
             toast({
               title: "Selection required",
-              description: "Please select an existing inbound declaration",
+              description: "Please select at least one existing inbound declaration",
               variant: "destructive",
             });
             return false;
@@ -290,10 +292,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     let payload;
     
     if (declarationSource === "existing") {
-      // Prepare payload for declaration based on existing one
+      // Prepare payload for declaration based on existing ones
       payload = {
         type: "outbound",
-        basedOnDeclarationId: selectedDeclarationId,
+        basedOnDeclarationIds: selectedDeclarationIds,
         customerId: selectedCustomer?.id || null,
         documents: uploadedFiles,
         status: "pending"
@@ -343,8 +345,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         unit: "kg"
       }
     ]);
-    setSelectedDeclarationId(null);
+    setSelectedDeclarationIds([]);
     setDeclarationSearchTerm("");
+    setShowDeclarationsList(false);
     setUploadedFiles([]);
     setStartDate(undefined);
     setEndDate(undefined);
@@ -489,11 +492,35 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                               key={declaration.id}
                               className={cn(
                                 "border-b cursor-pointer hover:bg-gray-50",
-                                selectedDeclarationId === declaration.id ? "bg-primary/5" : ""
+                                selectedDeclarationIds.includes(declaration.id) ? "bg-primary/5" : ""
                               )}
-                              onClick={() => setSelectedDeclarationId(declaration.id)}
+                              onClick={() => {
+                                if (selectedDeclarationIds.includes(declaration.id)) {
+                                  // Remove if already selected
+                                  setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
+                                } else {
+                                  // Add to selection if not already selected
+                                  setSelectedDeclarationIds(prev => [...prev, declaration.id]);
+                                }
+                              }}
                             >
-                              <td className="py-3 px-4">{declaration.name}</td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center">
+                                  <Checkbox 
+                                    className="mr-2" 
+                                    checked={selectedDeclarationIds.includes(declaration.id)} 
+                                    onCheckedChange={(checked: boolean) => {
+                                      if (checked) {
+                                        setSelectedDeclarationIds(prev => [...prev, declaration.id]);
+                                      } else {
+                                        setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
+                                      }
+                                    }}
+                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                  />
+                                  {declaration.name}
+                                </div>
+                              </td>
                               <td className="py-3 px-4">{declaration.code}</td>
                               <td className="py-3 px-4">{declaration.product}</td>
                               <td className="py-3 px-4">{declaration.quantity}</td>
@@ -852,13 +879,19 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   </div>
                   
                   {declarationSource === "existing" ? (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Based On</h4>
-                      <p className="mt-1">
-                        {selectedDeclarationId ? 
-                          existingDeclarations.find(d => d.id === selectedDeclarationId)?.name || "Unknown declaration" : 
-                          "Not selected"}
-                      </p>
+                    <div className="col-span-2">
+                      <h4 className="text-sm font-medium text-gray-500">Based On ({selectedDeclarationIds.length})</h4>
+                      <div className="mt-1 space-y-2">
+                        {selectedDeclarationIds.length > 0 ? (
+                          selectedDeclarationIds.map(id => (
+                            <div key={id} className="p-2 bg-gray-50 rounded-md">
+                              {existingDeclarations.find(d => d.id === id)?.name || "Unknown declaration"}
+                            </div>
+                          ))
+                        ) : (
+                          <p>No declarations selected</p>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <>
