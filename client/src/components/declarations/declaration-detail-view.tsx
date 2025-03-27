@@ -132,7 +132,9 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
                   declaration.status === "rejected" ? "bg-red-500" :
                   "bg-blue-500"
                 }>
-                  {declaration.status.charAt(0).toUpperCase() + declaration.status.slice(1)}
+                  {declaration.status ? 
+                    `${declaration.status.charAt(0).toUpperCase()}${declaration.status.slice(1)}` : 
+                    "Unknown"}
                 </Badge>
               </div>
               
@@ -150,7 +152,11 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
                       declaration.riskLevel === "medium" ? "bg-yellow-500" :
                       "bg-red-500"
                     }`}></span>
-                    <span>{declaration.riskLevel.charAt(0).toUpperCase() + declaration.riskLevel.slice(1)} Risk</span>
+                    <span>
+                      {declaration.riskLevel ? 
+                        `${declaration.riskLevel.charAt(0).toUpperCase()}${declaration.riskLevel.slice(1)} Risk` : 
+                        "Unknown Risk"}
+                    </span>
                   </div>
                 </div>
                 
@@ -192,7 +198,11 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
                 
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Quantity</h3>
-                  <p className="mt-1">{declaration.quantity} {declaration.unit}</p>
+                  <p className="mt-1">
+                    {declaration.quantity ? 
+                      `${declaration.quantity} ${declaration.unit || ''}` : 
+                      "Not specified"}
+                  </p>
                 </div>
                 
                 <div>
