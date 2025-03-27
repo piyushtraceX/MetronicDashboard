@@ -1,0 +1,74 @@
+EUDR Compliance and Due Diligence (Article 9)
+13. 1. Do you conduct due diligence to ensure that your products are not linked to deforestation or forest degradation?   *
+Yes - Please provide details on the system, process you follow. For e.g. Traceability Systems and Processes used, in use certification schemes such as RSPO, EUTR, RFA, supply chain audits, satellite monitoring
+No
+14. 2. Do you have a documented deforestation-free policy for your supply chain?
+Yes
+No
+15. 3. Are your raw materials sourced from high-risk areas for deforestation?
+Yes (Specify regions below)
+No
+I am not aware
+16. 4. Do you require your suppliers to provide evidence of deforestation-free sourcing (e.g., certifications like RFA, FSC, RSPO, or other third-party verifications)?
+Yes (Give details below)
+No
+17. 5. Do you have a supply chain traceability system in place?
+Yes (Provide details below on how far back in the supply chain you can Trace)
+No
+18. 6. How ready are you to register farms, identify polygons/geolocations?
+Ready
+Somewhat Ready
+Not Ready
+My supplier does this for me
+19. 7. How ready are you to implement traceability systems in your supply chain?
+Ready
+Somewhat Ready
+Not Ready
+My supplier does this for me
+20. 8. How ready are you to monitor deforestation risk at the plot level?
+Ready
+Somewhat Ready
+Not Ready
+My supplier does this for me
+21. 9. How ready are you to submit relevant information (DDS) via geoJson to your down stream customer?
+Ready
+Somewhat Ready
+Not Ready
+I don’t know what it means
+22. 10. Do you use any of the tools as below to prove your compliance to EUDR?
+Certificate of Origin
+DDS template via geojson
+3rd Party Certificate
+Self certification
+I don’t use any tools
+23. 11. Do you have any farmer/plot registration system in use currently?
+Yes
+No
+My supplier does this for me
+24. 12. Do you hold any certifications related to sustainable sourcing (e.g., RFA, FSC, PEFC, RSPO, FairTrade, or similar)?
+Yes (Give details below)
+No
+25. 13. Do you report on your deforestation impact or sustainable sourcing in any public reports (e.g., annual sustainability reports)?
+Yes (Give details below/Link to the report)
+No
+26. 14. Do you have any future plans to enhance your deforestation risk management practices?
+Yes (Give details below)
+No
+27. 15. Are you willing to collaborate with us to improve deforestation-related practices and supply chain transparency?
+Yes
+No
+28. 16. Are you segregating your inventory from EU to non EU markets?
+Yes
+No
+Not possible for us to do
+29. 17. Are you processing your inventory separately for EU to non EU markets?
+Yes
+No
+Not possible for us to do
+30. 18. What assistance would you require to comply with EUDR?
+Nothing, I am all sorted
+I have no idea how to implement EUDR
+Training and Capacity building
+Technology Solutions
+Capturing geolocation/polygon for farmers
+
