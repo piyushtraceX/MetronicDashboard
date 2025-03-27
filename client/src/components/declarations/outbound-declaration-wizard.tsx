@@ -89,10 +89,13 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   // Documents state
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   
-  // Customer selection state
+  // Customer selection and additional data state
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showCustomerResults, setShowCustomerResults] = useState(false);
+  const [customerPONumber, setCustomerPONumber] = useState("");
+  const [soNumber, setSONumber] = useState("");
+  const [shipmentNumber, setShipmentNumber] = useState("");
   
   // Comments state for review
   const [comments, setComments] = useState("");
@@ -274,7 +277,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         }
         return true;
         
-      case 4: // Customer Selection
+      case 4: // Additional Data
         if (!selectedCustomer) {
           toast({
             title: "Selection required",
@@ -283,6 +286,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
           });
           return false;
         }
+        
+        // Optional validation for reference numbers if needed
+        // For now, we make these fields optional but you can add validation here
+        
         return true;
         
       default:
@@ -302,6 +309,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         type: "outbound",
         basedOnDeclarationIds: selectedDeclarationIds,
         customerId: selectedCustomer?.id || null,
+        customerPONumber: customerPONumber.trim() || null,
+        soNumber: soNumber.trim() || null,
+        shipmentNumber: shipmentNumber.trim() || null,
         documents: uploadedFiles,
         comments: comments.trim() || null,
         status: "pending"
@@ -327,6 +337,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         startDate: startDate ? startDate.toISOString() : null,
         endDate: endDate ? endDate.toISOString() : null,
         customerId: selectedCustomer?.id || null,
+        customerPONumber: customerPONumber.trim() || null,
+        soNumber: soNumber.trim() || null,
+        shipmentNumber: shipmentNumber.trim() || null,
         hasGeoJSON: hasUploadedGeoJSON,
         comments: comments.trim() || null,
         status: "pending",
@@ -361,6 +374,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     setSelectedCustomer(null);
     setCustomerSearchTerm("");
     setShowCustomerResults(false);
+    setCustomerPONumber("");
+    setSONumber("");
+    setShipmentNumber("");
     setHasUploadedGeoJSON(false);
     setComments("");
   };
@@ -390,7 +406,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     "Declaration Type", 
     declarationSource === "existing" ? "Select Declaration" : "Declaration Details", 
     "Upload Data", 
-    "Customer Selection",
+    "Additional Data",
     "Review"
   ];
 
@@ -829,83 +845,127 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
             </div>
           )}
           
-          {/* Step 4: Customer Selection */}
+          {/* Step 4: Additional Data */}
           {currentStep === 4 && (
             <div>
-              <h3 className="text-lg font-medium mb-4">Customer Selection</h3>
-              <div className="relative mb-4">
-                <Input 
-                  type="text" 
-                  placeholder="Search for a customer..." 
-                  className="pl-9"
-                  value={customerSearchTerm}
-                  onChange={(e) => {
-                    setCustomerSearchTerm(e.target.value);
-                    if (e.target.value) {
-                      setShowCustomerResults(true);
-                    }
-                  }}
-                  onFocus={() => setShowCustomerResults(true)}
-                />
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <h3 className="text-lg font-medium mb-4">Additional Data</h3>
+              
+              {/* Customer Selection */}
+              <div className="mb-6">
+                <h4 className="text-base font-medium mb-3">Customer Selection</h4>
+                <div className="relative mb-4">
+                  <Input 
+                    type="text" 
+                    placeholder="Search for a customer..." 
+                    className="pl-9"
+                    value={customerSearchTerm}
+                    onChange={(e) => {
+                      setCustomerSearchTerm(e.target.value);
+                      if (e.target.value) {
+                        setShowCustomerResults(true);
+                      }
+                    }}
+                    onFocus={() => setShowCustomerResults(true)}
+                  />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                </div>
+                
+                {showCustomerResults && customerSearchTerm && (
+                  <div className="border rounded-md overflow-hidden mb-4 shadow-sm">
+                    {filteredCustomers.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">
+                        No customers found. Try a different search term.
+                      </div>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        {filteredCustomers.map((customer) => (
+                          <div 
+                            key={customer.id}
+                            className="p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
+                            onClick={() => {
+                              setSelectedCustomer(customer);
+                              setShowCustomerResults(false);
+                              setCustomerSearchTerm('');
+                            }}
+                          >
+                            <div className="font-medium">{customer.name}</div>
+                            <div className="text-sm text-gray-500">{customer.type}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {selectedCustomer && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium mb-2">Selected Customer</h4>
+                    <div className="p-4 border rounded-lg flex items-center justify-between bg-primary/5 border-primary">
+                      <div>
+                        <div className="font-medium">{selectedCustomer.name}</div>
+                        <div className="text-sm text-gray-500">{selectedCustomer.type}</div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => setSelectedCustomer(null)}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {!selectedCustomer && (
+                  <div className="flex items-center justify-center p-6 border border-dashed rounded-lg mb-6">
+                    <div className="text-center text-gray-500">
+                      <UserPlus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p>Please select a customer to continue</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
-              {showCustomerResults && customerSearchTerm && (
-                <div className="border rounded-md overflow-hidden mb-4 shadow-sm">
-                  {filteredCustomers.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      No customers found. Try a different search term.
-                    </div>
-                  ) : (
-                    <div className="max-h-64 overflow-y-auto">
-                      {filteredCustomers.map((customer) => (
-                        <div 
-                          key={customer.id}
-                          className="p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
-                          onClick={() => {
-                            setSelectedCustomer(customer);
-                            setShowCustomerResults(false);
-                            setCustomerSearchTerm('');
-                          }}
-                        >
-                          <div className="font-medium">{customer.name}</div>
-                          <div className="text-sm text-gray-500">{customer.type}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {selectedCustomer && (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">Selected Customer</h4>
-                  <div className="p-4 border rounded-lg flex items-center justify-between bg-primary/5 border-primary">
-                    <div>
-                      <div className="font-medium">{selectedCustomer.name}</div>
-                      <div className="text-sm text-gray-500">{selectedCustomer.type}</div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => setSelectedCustomer(null)}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
+              {/* Reference Numbers */}
+              <div className="mb-6">
+                <h4 className="text-base font-medium mb-3">Reference Numbers</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="customer-po-number">Customer PO Number</Label>
+                    <Input 
+                      id="customer-po-number" 
+                      placeholder="Enter PO number"
+                      value={customerPONumber}
+                      onChange={(e) => setCustomerPONumber(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="so-number">SO Number</Label>
+                    <Input 
+                      id="so-number" 
+                      placeholder="Enter SO number"
+                      value={soNumber}
+                      onChange={(e) => setSONumber(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="shipment-number">Shipment Number</Label>
+                    <Input 
+                      id="shipment-number" 
+                      placeholder="Enter shipment number"
+                      value={shipmentNumber}
+                      onChange={(e) => setShipmentNumber(e.target.value)}
+                      className="mt-1"
+                    />
                   </div>
                 </div>
-              )}
-              
-              {!selectedCustomer && (
-                <div className="flex items-center justify-center p-6 border border-dashed rounded-lg mt-4">
-                  <div className="text-center text-gray-500">
-                    <UserPlus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p>Please select a customer to continue</p>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           )}
           
@@ -981,6 +1041,15 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                       ) : (
                         <p>No customer selected</p>
                       )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Reference Numbers</h4>
+                    <div className="mt-1 space-y-1">
+                      <p>PO Number: {customerPONumber || 'Not specified'}</p>
+                      <p>SO Number: {soNumber || 'Not specified'}</p>
+                      <p>Shipment Number: {shipmentNumber || 'Not specified'}</p>
                     </div>
                   </div>
                   
