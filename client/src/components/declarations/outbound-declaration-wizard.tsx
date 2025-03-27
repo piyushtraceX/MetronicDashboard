@@ -5,6 +5,7 @@ import Stepper from "@/components/ui/stepper";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { CalendarIcon, Plus, Search, Trash2, Upload, User, X, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -92,6 +93,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showCustomerResults, setShowCustomerResults] = useState(false);
+  
+  // Comments state for review
+  const [comments, setComments] = useState("");
   
   // Mock data - in a real app, this would come from API requests
   const existingDeclarations: ExistingDeclaration[] = [
@@ -299,6 +303,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         basedOnDeclarationIds: selectedDeclarationIds,
         customerId: selectedCustomer?.id || null,
         documents: uploadedFiles,
+        comments: comments.trim() || null,
         status: "pending"
       };
     } else {
@@ -323,6 +328,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         endDate: endDate ? endDate.toISOString() : null,
         customerId: selectedCustomer?.id || null,
         hasGeoJSON: hasUploadedGeoJSON,
+        comments: comments.trim() || null,
         status: "pending",
         riskLevel: "medium"
       };
@@ -356,6 +362,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     setCustomerSearchTerm("");
     setShowCustomerResults(false);
     setHasUploadedGeoJSON(false);
+    setComments("");
   };
 
   // Handle dialog close
@@ -994,6 +1001,17 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                 </div>
                 
                 <Separator className="my-6" />
+
+                {/* Comments Section */}
+                <div className="mb-6">
+                  <h4 className="font-medium mb-2">Comments</h4>
+                  <Textarea 
+                    placeholder="Add any additional comments, notes, or special instructions related to this declaration..."
+                    value={comments}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComments(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
                 
                 <div className="flex items-start space-x-2">
                   <div className="flex-shrink-0 mt-0.5">
