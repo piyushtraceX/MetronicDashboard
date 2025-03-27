@@ -86,8 +86,24 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
     });
   };
 
-  if (!declaration) {
+  // Return early if dialog is not open
+  if (!open) {
     return null;
+  }
+  
+  // Show loading dialog while data is fetching
+  if (!declaration || isLoadingDeclaration) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl">
+          <div className="py-8 text-center">
+            <div className="animate-pulse h-6 w-1/3 bg-gray-200 rounded mb-4 mx-auto"></div>
+            <div className="animate-pulse h-32 w-full bg-gray-100 rounded mb-4"></div>
+            <div className="animate-pulse h-20 w-full bg-gray-100 rounded"></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   return (
@@ -98,9 +114,7 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
         </DialogHeader>
         
         <div className="py-4">
-          {isLoadingDeclaration ? (
-            <div className="text-center py-6">Loading declaration details...</div>
-          ) : (
+          {(
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
