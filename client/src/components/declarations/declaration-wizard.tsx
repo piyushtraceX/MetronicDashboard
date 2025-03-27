@@ -75,10 +75,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
   const [poNumber, setPoNumber] = useState("");
   const [supplierSoNumber, setSupplierSoNumber] = useState("");
   const [shipmentNumber, setShipmentNumber] = useState("");
+  const [comments, setComments] = useState("");
 
   // Step 4: Customer Selection (for outbound only)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -307,11 +309,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       endDate: endDate ? endDate.toISOString() : null,
       supplierId: selectedSupplierId,
       customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
-      status: "pending",
+      status: declarationType === "inbound" ? "validating" : "pending",
       riskLevel: "medium",
       poNumber: poNumber,
       supplierSoNumber: supplierSoNumber,
-      shipmentNumber: shipmentNumber
+      shipmentNumber: shipmentNumber,
+      comments: comments
     };
 
     createDeclaration.mutate(payload);
@@ -336,11 +339,13 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setStartDate(undefined);
     setEndDate(undefined);
     setSelectedSupplierId(null);
+    setSelectedSupplier(null);
     setSupplierSearchTerm("");
     setPoNumber("");
     setSupplierSoNumber("");
     setShipmentNumber("");
     setSelectedCustomer(null);
+    setComments("");
   };
 
   // Handle dialog close
@@ -491,7 +496,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                               }}
                             >
                               <div className="font-medium">{supplier.name}</div>
-                              <div className="text-xs text-gray-500">{supplier.location}, {supplier.country}</div>
+                              <div className="text-xs text-gray-500">{supplier.products || 'No products specified'}</div>
                             </div>
                           ))
                         )}
@@ -521,7 +526,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           </div>
                           <div className="ml-3">
                             <div className="font-medium">{supplier.name}</div>
-                            <div className="text-xs text-gray-400">{supplier.location}, {supplier.country}</div>
+                            <div className="text-xs text-gray-400">{supplier.products || 'No products specified'}</div>
                           </div>
                         </div>
                         {selectedSupplierId === supplier.id && (
@@ -842,6 +847,19 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             <div>
               <h3 className="text-lg font-medium mb-6">Review Declaration</h3>
 
+              {declarationType === "inbound" && (
+                <div className="mb-6">
+                  <Label htmlFor="comments" className="text-base font-medium">Add Comments</Label>
+                  <Textarea
+                    id="comments"
+                    placeholder="Add any notes or comments about this declaration"
+                    className="min-h-[100px] mt-2"
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                  />
+                </div>
+              )}
+              
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
