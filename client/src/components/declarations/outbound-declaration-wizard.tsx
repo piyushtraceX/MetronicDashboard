@@ -88,8 +88,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   // Documents state
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   
-  // Customer selection state
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  // Customer selection state - updated to support multiple selections
+  const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([]);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   
   // Mock data - in a real app, this would come from API requests
@@ -270,10 +270,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         return true;
         
       case 4: // Customer Selection
-        if (!selectedCustomer) {
+        if (selectedCustomers.length === 0) {
           toast({
             title: "Selection required",
-            description: "Please select a customer to continue",
+            description: "Please select at least one customer to continue",
             variant: "destructive",
           });
           return false;
@@ -296,7 +296,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       payload = {
         type: "outbound",
         basedOnDeclarationIds: selectedDeclarationIds,
-        customerId: selectedCustomer?.id || null,
+        customerIds: selectedCustomers.map(customer => customer.id),
         documents: uploadedFiles,
         status: "pending"
       };
@@ -320,7 +320,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         documents: uploadedFiles,
         startDate: startDate ? startDate.toISOString() : null,
         endDate: endDate ? endDate.toISOString() : null,
-        customerId: selectedCustomer?.id || null,
+        customerIds: selectedCustomers.map(customer => customer.id),
         hasGeoJSON: hasUploadedGeoJSON,
         status: "pending",
         riskLevel: "medium"
@@ -351,7 +351,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     setUploadedFiles([]);
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedCustomer(null);
+    setSelectedCustomers([]);
     setCustomerSearchTerm("");
     setHasUploadedGeoJSON(false);
   };
@@ -841,18 +841,39 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                     key={customer.id}
                     className={cn(
                       "p-4 border rounded-lg flex items-center justify-between cursor-pointer",
-                      selectedCustomer?.id === customer.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
+                      selectedCustomers.some(c => c.id === customer.id) ? "border-primary bg-primary/5" : "hover:bg-gray-50"
                     )}
-                    onClick={() => setSelectedCustomer(customer)}
+                    onClick={() => {
+                      // Check if customer is already selected
+                      if (selectedCustomers.some(c => c.id === customer.id)) {
+                        // If selected, remove it
+                        setSelectedCustomers(prev => prev.filter(c => c.id !== customer.id));
+                      } else {
+                        // If not selected, add it
+                        setSelectedCustomers(prev => [...prev, customer]);
+                      }
+                    }}
                   >
                     <div className="flex items-center">
-                      <User className="h-5 w-5 text-gray-500 mr-3" />
+                      <div className="mr-3">
+                        <Checkbox 
+                          checked={selectedCustomers.some(c => c.id === customer.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedCustomers(prev => [...prev, customer]);
+                            } else {
+                              setSelectedCustomers(prev => prev.filter(c => c.id !== customer.id));
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
                       <div>
                         <div className="font-medium">{customer.name}</div>
                         <div className="text-sm text-gray-500">{customer.type}</div>
                       </div>
                     </div>
-                    {selectedCustomer?.id === customer.id && (
+                    {selectedCustomers.some(c => c.id === customer.id) && (
                       <Badge className="bg-primary">Selected</Badge>
                     )}
                   </div>
@@ -923,9 +944,19 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                     </>
                   )}
                   
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Customer</h4>
-                    <p className="mt-1">{selectedCustomer?.name || "Not selected"}</p>
+                  <div className="col-span-2">
+                    <h4 className="text-sm font-medium text-gray-500">Customers ({selectedCustomers.length})</h4>
+                    <div className="mt-1 space-y-2">
+                      {selectedCustomers.length > 0 ? (
+                        selectedCustomers.map(customer => (
+                          <div key={customer.id} className="p-2 bg-gray-50 rounded-md">
+                            {customer.name} - {customer.type}
+                          </div>
+                        ))
+                      ) : (
+                        <p>No customers selected</p>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="col-span-2">
