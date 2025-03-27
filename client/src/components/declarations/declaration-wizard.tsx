@@ -357,9 +357,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   };
 
   // Filter suppliers based on search term
-  const filteredSuppliers = suppliers.filter(supplier => 
-    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
-  );
+  // Only show suppliers when there's an active search with at least 2 characters
+  const filteredSuppliers = supplierSearchTerm.length >= 2 
+    ? suppliers.filter(supplier => 
+        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+      )
+    : [];
 
   // Get step labels based on declaration type
   const getStepLabels = () => {
@@ -467,7 +470,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 <div className="relative mb-4">
                   <Input 
                     type="text" 
-                    placeholder="Search suppliers..." 
+                    placeholder="Type at least 2 characters to search suppliers..." 
                     className="pl-9"
                     value={supplierSearchTerm}
                     onChange={(e) => {
@@ -478,7 +481,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     }}
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  {supplierSearchTerm && (
+                  {supplierSearchTerm.length >= 2 && (
                     <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border">
                       <div className="max-h-60 overflow-auto">
                         {filteredSuppliers.length === 0 ? (
@@ -492,6 +495,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                               }`}
                               onClick={() => {
                                 setSelectedSupplierId(supplier.id);
+                                setSelectedSupplier(supplier);
                                 setSupplierSearchTerm(supplier.name);
                               }}
                             >
@@ -505,37 +509,21 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   )}
                 </div>
 
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {filteredSuppliers.length === 0 ? (
-                    <div className="text-center py-4 text-gray-500">
-                      No suppliers found matching your search
-                    </div>
-                  ) : (
-                    filteredSuppliers.map((supplier) => (
-                      <div 
-                        key={supplier.id}
-                        className={cn(
-                          "p-3 border rounded-lg flex items-center justify-between cursor-pointer",
-                          selectedSupplierId === supplier.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
-                        )}
-                        onClick={() => setSelectedSupplierId(supplier.id)}
-                      >
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                            {supplier.name.substring(0, 2).toUpperCase()}
-                          </div>
-                          <div className="ml-3">
-                            <div className="font-medium">{supplier.name}</div>
-                            <div className="text-xs text-gray-400">{supplier.products || 'No products specified'}</div>
-                          </div>
-                        </div>
-                        {selectedSupplierId === supplier.id && (
-                          <Badge className="bg-primary">Selected</Badge>
-                        )}
+                {/* Show selected supplier card only if a supplier is selected */}
+                {selectedSupplierId && (
+                  <div className="p-3 border rounded-lg flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                        {suppliers.find(s => s.id === selectedSupplierId)?.name.substring(0, 2).toUpperCase() || 'SP'}
                       </div>
-                    ))
-                  )}
-                </div>
+                      <div className="ml-3">
+                        <div className="font-medium">{suppliers.find(s => s.id === selectedSupplierId)?.name}</div>
+                        <div className="text-xs text-gray-400">{suppliers.find(s => s.id === selectedSupplierId)?.products || 'No products specified'}</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-primary">Selected</Badge>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6 mb-6">
