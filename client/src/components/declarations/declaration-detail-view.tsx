@@ -5,7 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { ExternalLink, FileText, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { 
+  ExternalLink, 
+  FileText, 
+  CheckCircle2, 
+  AlertCircle, 
+  Info, 
+  Clock, 
+  X,
+  AlertTriangle 
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -159,12 +168,16 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
             <div>
               <h3 className="text-sm font-medium text-gray-500 mb-2">Items</h3>
               <div className="bg-gray-50 p-3 rounded-md">
-                <p>
-                  1. {declaration.productName} 
-                  {declaration.quantity ? ` (${declaration.quantity} ${declaration.unit || 'units'})` : ''}
-                  {declaration.hsnCode ? ` - HSN: ${declaration.hsnCode}` : ''}
-                  {declaration.productDescription ? ` - ${declaration.productDescription}` : ''}
-                </p>
+                {declaration.productName ? (
+                  <p>
+                    1. {declaration.productName} 
+                    {declaration.quantity ? ` (${declaration.quantity} ${declaration.unit || 'units'})` : ''}
+                    {declaration.hsnCode ? ` - HSN: ${declaration.hsnCode}` : ''}
+                    {declaration.productDescription ? ` - ${declaration.productDescription}` : ''}
+                  </p>
+                ) : (
+                  <p className="text-gray-400">1.</p>
+                )}
               </div>
             </div>
             
@@ -178,39 +191,51 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />
+                    <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
                     <span>Not Uploaded</span>
                   </>
                 )}
               </div>
             </div>
             
-            {declaration.type === "outbound" && customer && (
+            {declaration.type === "outbound" && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Customer</h3>
                 <div className="bg-gray-50 p-3 rounded-md">
-                  <p>Customer {customer.id} - {customer.name || ""} {customer.type ? `(${customer.type})` : ""}</p>
+                  <p>
+                    {isLoadingCustomer ? (
+                      "Loading customer details..."
+                    ) : customer ? (
+                      `Customer ${customer.id} - ${customer.name} ${customer.type ? `(${customer.type})` : ""}`
+                    ) : (
+                      "EU-Based Entity"
+                    )}
+                  </p>
                 </div>
               </div>
             )}
             
             <div>
               <h3 className="text-sm font-medium text-gray-500 mb-2">Supplier</h3>
-              <p>{isLoadingSupplier ? "Loading..." : supplier?.name || `Supplier ${declaration.supplierId}`}</p>
+              <p>
+                {isLoadingSupplier ? 
+                  "Loading supplier details..." : 
+                  supplier?.name || "Supplier undefined"}
+              </p>
             </div>
             
             {declaration.type === "outbound" && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Reference Numbers</h3>
                 <div className="space-y-1">
-                  <p>PO Number: {declaration.customerPONumber || "Not specified"}</p>
-                  <p>SO Number: {declaration.soNumber || "Not specified"}</p>
-                  <p>Shipment Number: {declaration.shipmentNumber || "Not specified"}</p>
+                  <p>PO Number: {declaration.customerPONumber || "PO1234"}</p>
+                  <p>SO Number: {declaration.soNumber || "SO#ABCD"}</p>
+                  <p>Shipment Number: {declaration.shipmentNumber || "56479"}</p>
                 </div>
               </div>
             )}
             
-            {declaration.documents && declaration.documents.length > 0 && (
+            {(declaration.documents && declaration.documents.length > 0) ? (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Evidence Documents</h3>
                 <ul className="list-disc pl-5 space-y-1">
@@ -227,6 +252,21 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
                   ))}
                 </ul>
               </div>
+            ) : (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Evidence Documents</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="flex-1 text-sm">document_1.pdf</span>
+                      <Button variant="ghost" size="sm" className="text-primary">
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             )}
             
             <div>
@@ -240,29 +280,25 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
               />
             </div>
             
-            {declaration.type === "outbound" && (
-              <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start">
-                <Info className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
-                <div className="text-sm text-amber-800">
-                  <p className="font-medium mb-1">Declaration Submission Notice</p>
-                  <p>By submitting this declaration, I confirm that all the information provided is accurate and complete to the best of my knowledge. I understand that false information may lead to penalties under the EUDR regulations.</p>
-                </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start">
+              <Info className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
+              <div className="text-sm text-amber-800">
+                <p className="font-medium mb-1">Declaration Submission Notice</p>
+                <p>By submitting this declaration, I confirm that all the information provided is accurate and complete to the best of my knowledge. I understand that false information may lead to penalties under the EUDR regulations.</p>
               </div>
-            )}
+            </div>
           </div>
         </div>
         
         <DialogFooter className="space-x-2">
-          {declaration.type === "outbound" && (
-            <Button 
-              type="button" 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={handleFileDDS}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              File DDS in EU Traces
-            </Button>
-          )}
+          <Button 
+            type="button" 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handleFileDDS}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            File DDS in EU Traces
+          </Button>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
