@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useAuth } from "@/hooks/use-auth";
+import { personas } from "@/components/persona-switcher";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -14,7 +15,7 @@ import { getInitials } from "@/lib/utils";
 
 export default function Header() {
   const { toggle } = useSidebar();
-  const { user, logout } = useAuth();
+  const { user, logout, switchPersona } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   
   const handleLogout = async () => {
@@ -66,9 +67,14 @@ export default function Header() {
                   <AvatarImage src={user?.avatar} alt={user?.fullName || user?.username} />
                   <AvatarFallback>{user?.fullName ? getInitials(user.fullName) : user?.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="ml-2 hidden md:block text-sm font-medium text-gray-700">
-                  {user?.fullName || user?.username}
-                </span>
+                <div className="ml-2 hidden md:block">
+                  <div className="text-sm font-medium text-gray-700">
+                    {user?.fullName || user?.username}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {user?.role?.replace('_', ' ')}
+                  </div>
+                </div>
                 <i className="fas fa-chevron-down ml-1 text-xs text-gray-500"></i>
               </button>
             </DropdownMenuTrigger>
@@ -83,6 +89,33 @@ export default function Header() {
                 <i className="fas fa-cog mr-2"></i>
                 Settings
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="cursor-default mt-2">
+                <div className="flex items-center">
+                  <i className="fas fa-user-friends mr-2"></i>
+                  Switch Persona
+                  <span className="ml-2 py-0.5 px-1.5 bg-primary/10 text-primary rounded-md text-xs">
+                    Test
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+              {personas.map(persona => (
+                <DropdownMenuItem 
+                  key={persona.id}
+                  className="cursor-pointer pl-6 flex items-center"
+                  onClick={() => switchPersona(persona.id)}
+                >
+                  <div className={`h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs mr-2 ${user?.email === persona.email ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                    {persona.avatar}
+                  </div>
+                  {persona.name}
+                  {user?.email === persona.email && (
+                    <span className="ml-auto text-primary">
+                      <i className="fas fa-check"></i>
+                    </span>
+                  )}
+                </DropdownMenuItem>
+              ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
                 <i className="fas fa-sign-out-alt mr-2"></i>

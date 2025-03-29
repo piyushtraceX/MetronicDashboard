@@ -5,6 +5,7 @@ import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import PersonaSwitcher from "@/components/persona-switcher";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -63,6 +64,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <main className="flex-1 overflow-y-auto p-5">
             {children}
           </main>
+          {/* Add persona switcher */}
+          <PersonaSwitcher />
         </div>
       </div>
     </SidebarContext.Provider>
