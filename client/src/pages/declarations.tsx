@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import DeclarationWizard from "@/components/declarations/declaration-wizard";
 import OutboundDeclarationWizard from "@/components/declarations/outbound-declaration-wizard";
 import DeclarationDetailView from "@/components/declarations/declaration-detail-view";
@@ -140,11 +141,16 @@ interface NewDeclarationForm {
 }
 
 export default function Declarations() {
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const { user } = useAuth();
+  const isSupplier = user?.role === 'supplier';
+  
+  // For suppliers, default to outbound tab
+  const [activeTab, setActiveTab] = useState<string>(isSupplier ? "outbound" : "all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [simpleModalOpen, setSimpleModalOpen] = useState(false);
   const [wizardModalOpen, setWizardModalOpen] = useState(false);
-  const [declarationType, setDeclarationType] = useState<"inbound" | "outbound">("inbound");
+  // For suppliers, always set declarationType to outbound
+  const [declarationType, setDeclarationType] = useState<"inbound" | "outbound">(isSupplier ? "outbound" : "inbound");
   const [detailViewOpen, setDetailViewOpen] = useState(false);
   const [selectedDeclarationId, setSelectedDeclarationId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -267,9 +273,12 @@ export default function Declarations() {
     refetchOnWindowFocus: false,
   });
   
-  const filteredDeclarations = activeTab === 'all' 
-    ? declarations 
-    : declarations.filter((d) => d.type === activeTab);
+  // For suppliers, always filter to show outbound declarations regardless of tab
+  const filteredDeclarations = isSupplier 
+    ? declarations.filter((d) => d.type === "outbound")
+    : (activeTab === 'all' 
+        ? declarations 
+        : declarations.filter((d) => d.type === activeTab));
 
   return (
     <div className="space-y-6">
@@ -279,16 +288,19 @@ export default function Declarations() {
           <p className="mt-1 text-sm text-gray-500">Manage inbound and outbound declarations for EUDR compliance</p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-2">
-          <Button 
-            className="bg-green-600 hover:bg-green-700" 
-            onClick={() => {
-              setDeclarationType("inbound");
-              setWizardModalOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Inbound Declaration
-          </Button>
+          {/* Only show Inbound Declaration button for non-supplier users */}
+          {!isSupplier && (
+            <Button 
+              className="bg-green-600 hover:bg-green-700" 
+              onClick={() => {
+                setDeclarationType("inbound");
+                setWizardModalOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Inbound Declaration
+            </Button>
+          )}
           <Button 
             className="bg-blue-600 hover:bg-blue-700"
             onClick={() => {
@@ -498,20 +510,28 @@ export default function Declarations() {
                 <div>
                   <Label htmlFor="type">Declaration Type</Label>
                   <Select 
-                    value={form.type} 
+                    value={isSupplier ? "outbound" : form.type} 
                     onValueChange={(value: "inbound" | "outbound") => {
-                      handleInputChange('type', value);
-                      setDeclarationType(value);
+                      if (!isSupplier) {
+                        handleInputChange('type', value);
+                        setDeclarationType(value);
+                      }
                     }}
+                    disabled={isSupplier}
                   >
                     <SelectTrigger id="type" className="mt-1">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="inbound">Inbound</SelectItem>
+                      {!isSupplier && <SelectItem value="inbound">Inbound</SelectItem>}
                       <SelectItem value="outbound">Outbound</SelectItem>
                     </SelectContent>
                   </Select>
+                  {isSupplier && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      As a supplier, you can only create outbound declarations
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -556,11 +576,18 @@ export default function Declarations() {
         </DialogContent>
       </Dialog>
       
-      <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
-          <TabsTrigger value="outbound">Outbound Declaration</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue={isSupplier ? "outbound" : "all"} className="w-full" onValueChange={setActiveTab}>
+        {isSupplier ? (
+          <TabsList className="grid w-full grid-cols-1 mb-4">
+            <TabsTrigger value="outbound">Outbound Declaration</TabsTrigger>
+          </TabsList>
+        ) : (
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="all">All Declarations</TabsTrigger>
+            <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
+            <TabsTrigger value="outbound">Outbound Declaration</TabsTrigger>
+          </TabsList>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <RiskSummaryCard 

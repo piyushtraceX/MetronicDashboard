@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SidebarItemProps {
   icon: string;
@@ -56,6 +57,10 @@ const SidebarSection = ({ icon, label, href, active }: SidebarSectionProps) => {
 export default function Sidebar() {
   const [location] = useLocation();
   const { isOpen } = useSidebar();
+  const { user } = useAuth();
+  
+  // Check if user is a supplier
+  const isSupplier = user?.role === 'supplier';
   
   if (!isOpen) return null;
   
@@ -78,7 +83,7 @@ export default function Sidebar() {
       {/* Navigation Menu */}
       <nav className="mt-5 px-2">
         <div className="space-y-1">
-          {/* Dashboard */}
+          {/* Dashboard - Available to all users */}
           <SidebarItem
             icon="fa-home"
             label="Dashboard"
@@ -86,47 +91,55 @@ export default function Sidebar() {
             active={location === "/"}
           />
           
-          {/* Supply Chain */}
-          <SidebarSection
-            icon="fa-sitemap"
-            label="Supply Chain"
-            href="/supply-chain"
-            active={location === "/supply-chain"}
-          />
+          {/* Supply Chain - Not available to suppliers */}
+          {!isSupplier && (
+            <SidebarSection
+              icon="fa-sitemap"
+              label="Supply Chain"
+              href="/supply-chain"
+              active={location === "/supply-chain"}
+            />
+          )}
           
-          {/* Risk Assessment */}
-          <SidebarSection
-            icon="fa-exclamation-triangle"
-            label="Risk Assessment"
-            href="/risk-assessment"
-            active={location === "/risk-assessment"}
-          />
+          {/* Risk Assessment - Not available to suppliers */}
+          {!isSupplier && (
+            <SidebarSection
+              icon="fa-exclamation-triangle"
+              label="Risk Assessment"
+              href="/risk-assessment"
+              active={location === "/risk-assessment"}
+            />
+          )}
           
-          {/* Documents */}
-          <SidebarSection
-            icon="fa-file-alt"
-            label="Documents"
-            href="/documents"
-            active={location === "/documents"}
-          />
+          {/* Documents - Not available to suppliers */}
+          {!isSupplier && (
+            <SidebarSection
+              icon="fa-file-alt"
+              label="Documents"
+              href="/documents"
+              active={location === "/documents"}
+            />
+          )}
           
-          {/* Declarations */}
+          {/* Declarations - Available to all */}
           <SidebarSection
             icon="fa-file-signature"
-            label="Declarations"
+            label={isSupplier ? "Outbound Declarations" : "Declarations"}
             href="/declarations"
             active={location === "/declarations"}
           />
           
-          {/* Compliance */}
-          <SidebarSection
-            icon="fa-check-circle"
-            label="Compliance"
-            href="/compliance"
-            active={location === "/compliance"}
-          />
+          {/* Compliance - Not available to suppliers */}
+          {!isSupplier && (
+            <SidebarSection
+              icon="fa-check-circle"
+              label="Compliance"
+              href="/compliance"
+              active={location === "/compliance"}
+            />
+          )}
           
-          {/* Reports */}
+          {/* Reports - Available to all */}
           <SidebarSection
             icon="fa-chart-bar"
             label="Reports"
@@ -134,7 +147,7 @@ export default function Sidebar() {
             active={location === "/reports"}
           />
           
-          {/* Settings */}
+          {/* Settings - Available to all */}
           <SidebarSection
             icon="fa-cog"
             label="Settings"
