@@ -205,3 +205,32 @@ export type InsertRiskCategory = z.infer<typeof insertRiskCategorySchema>;
 
 export type ComplianceMetric = typeof complianceMetrics.$inferSelect;
 export type InsertComplianceMetric = z.infer<typeof insertComplianceMetricSchema>;
+
+// Self-Assessment Questionnaires (SAQs)
+export const saqs = pgTable("saqs", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  customerId: integer("customer_id").notNull(),
+  supplierId: integer("supplier_id").notNull(),
+  status: text("status").notNull(), // "pending", "in-progress", "completed"
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  completedAt: timestamp("completed_at"),
+  score: integer("score"),
+  answers: json("answers"), // Store answers as JSON
+});
+
+export const insertSaqSchema = createInsertSchema(saqs).pick({
+  title: true,
+  description: true,
+  customerId: true,
+  supplierId: true,
+  status: true,
+  completedAt: true,
+  score: true,
+  answers: true,
+});
+
+export type Saq = typeof saqs.$inferSelect;
+export type InsertSaq = z.infer<typeof insertSaqSchema>;

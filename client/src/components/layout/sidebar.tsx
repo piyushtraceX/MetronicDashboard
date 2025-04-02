@@ -12,17 +12,19 @@ interface SidebarItemProps {
 
 const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => {
   return (
-    <Link href={href}>
-      <a
-        className={cn(
-          "group flex items-center px-4 py-3 text-sm font-medium rounded-md hover:bg-[#1b1b28]",
-          active ? "bg-[#1b1b28] text-white" : "text-[#9899ac]"
-        )}
-      >
-        <i className={cn(`fas ${icon} w-5 h-5 mr-3`)}></i>
-        {label}
-      </a>
-    </Link>
+    <div className="sidebar-item">
+      <Link href={href}>
+        <div
+          className={cn(
+            "group flex items-center px-4 py-3 text-sm font-medium rounded-md hover:bg-[#1b1b28] cursor-pointer",
+            active ? "bg-[#1b1b28] text-white" : "text-[#9899ac]"
+          )}
+        >
+          <i className={cn(`fas ${icon} w-5 h-5 mr-3`)}></i>
+          {label}
+        </div>
+      </Link>
+    </div>
   );
 };
 
@@ -37,9 +39,9 @@ const SidebarSection = ({ icon, label, href, active }: SidebarSectionProps) => {
   return (
     <div className="sidebar-section">
       <Link href={href}>
-        <a
+        <div
           className={cn(
-            "sidebar-menu-item flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md hover:bg-[#1b1b28]",
+            "sidebar-menu-item flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md hover:bg-[#1b1b28] cursor-pointer",
             active ? "bg-[#1b1b28] text-white" : "text-[#9899ac]"
           )}
         >
@@ -48,7 +50,7 @@ const SidebarSection = ({ icon, label, href, active }: SidebarSectionProps) => {
             {label}
           </div>
           <i className="fas fa-chevron-right text-xs"></i>
-        </a>
+        </div>
       </Link>
     </div>
   );
@@ -70,14 +72,14 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-gray-700">
         <Link href="/">
-          <a className="flex items-center">
+          <div className="flex items-center cursor-pointer">
             <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L2 7L12 12L22 7L12 2Z" />
               <path d="M2 17L12 22L22 17" />
               <path d="M2 12L12 17L22 12" />
             </svg>
             <span className="ml-3 text-white text-lg font-semibold">EUDR Comply</span>
-          </a>
+          </div>
         </Link>
       </div>
       
@@ -129,6 +131,16 @@ export default function Sidebar() {
             href="/declarations"
             active={location === "/declarations"}
           />
+          
+          {/* Self-Assessment Questionnaires - Only available to suppliers */}
+          {isSupplier && (
+            <SidebarSection
+              icon="fa-clipboard-check"
+              label="Self-Assessment"
+              href="/saqs"
+              active={location === "/saqs"}
+            />
+          )}
           
           {/* Compliance - Not available to suppliers or customers */}
           {!isSupplier && !isCustomer && (

@@ -6,9 +6,9 @@ import {
   activities, type Activity, type InsertActivity,
   tasks, type Task, type InsertTask,
   riskCategories, type RiskCategory, type InsertRiskCategory,
-  complianceMetrics, type ComplianceMetric, type InsertComplianceMetric
+  complianceMetrics, type ComplianceMetric, type InsertComplianceMetric,
+  saqs, type Saq, type InsertSaq
 } from "@shared/schema";
-import { v4 as uuidv4 } from 'uuid';
 
 export interface IStorage {
   // User management
@@ -58,6 +58,14 @@ export interface IStorage {
   getCurrentComplianceMetrics(): Promise<ComplianceMetric | undefined>;
   createComplianceMetrics(metrics: InsertComplianceMetric): Promise<ComplianceMetric>;
   getComplianceHistory(months: number): Promise<ComplianceMetric[]>;
+
+  // Self-Assessment Questionnaires (SAQs)
+  getSaq(id: number): Promise<Saq | undefined>;
+  createSaq(saq: InsertSaq): Promise<Saq>;
+  updateSaq(id: number, saq: Partial<InsertSaq>): Promise<Saq | undefined>;
+  listSaqsBySupplier(supplierId: number, status?: string): Promise<Saq[]>;
+  listSaqsByCustomer(customerId: number): Promise<Saq[]>;
+  getSaqStats(supplierId: number): Promise<{ total: number, pending: number, inProgress: number, completed: number }>;
 }
 
 export class MemStorage implements IStorage {
@@ -78,6 +86,8 @@ export class MemStorage implements IStorage {
   private taskIdCounter: number;
   private riskCategoryIdCounter: number;
   private complianceMetricIdCounter: number;
+  private saqIdCounter: number;
+  private saqs: Map<number, Saq>;
   
   constructor() {
     this.users = new Map();
@@ -88,6 +98,7 @@ export class MemStorage implements IStorage {
     this.tasks = new Map();
     this.riskCategories = new Map();
     this.complianceMetrics = new Map();
+    this.saqs = new Map();
     
     this.userIdCounter = 1;
     this.supplierIdCounter = 1;
@@ -97,6 +108,7 @@ export class MemStorage implements IStorage {
     this.taskIdCounter = 1;
     this.riskCategoryIdCounter = 1;
     this.complianceMetricIdCounter = 1;
+    this.saqIdCounter = 1;
     
     // Initialize with admin user
     this.createUser({
@@ -377,6 +389,69 @@ export class MemStorage implements IStorage {
     return Array.from(this.complianceMetrics.values())
       .filter(metric => metric.date.getTime() >= startDate.getTime())
       .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+  
+  // SAQ methods
+  async getSaq(id: number): Promise<Saq | undefined> {
+    return this.saqs.get(id);
+  }
+  
+  async createSaq(insertSaq: InsertSaq): Promise<Saq> {
+    const id = this.saqIdCounter++;
+    const now = new Date();
+    const saq: Saq = { 
+      ...insertSaq, 
+      id, 
+      createdAt: now,
+      updatedAt: now
+    };
+    this.saqs.set(id, saq);
+    return saq;
+  }
+  
+  async updateSaq(id: number, updateData: Partial<InsertSaq>): Promise<Saq | undefined> {
+    const saq = this.saqs.get(id);
+    if (!saq) {
+      return undefined;
+    }
+    
+    const updatedSaq: Saq = {
+      ...saq,
+      ...updateData,
+      updatedAt: new Date()
+    };
+    
+    this.saqs.set(id, updatedSaq);
+    return updatedSaq;
+  }
+  
+  async listSaqsBySupplier(supplierId: number, status?: string): Promise<Saq[]> {
+    let saqs = Array.from(this.saqs.values())
+      .filter(saq => saq.supplierId === supplierId);
+    
+    if (status) {
+      saqs = saqs.filter(saq => saq.status === status);
+    }
+    
+    return saqs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async listSaqsByCustomer(customerId: number): Promise<Saq[]> {
+    return Array.from(this.saqs.values())
+      .filter(saq => saq.customerId === customerId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getSaqStats(supplierId: number): Promise<{ total: number, pending: number, inProgress: number, completed: number }> {
+    const saqs = Array.from(this.saqs.values())
+      .filter(saq => saq.supplierId === supplierId);
+    
+    return {
+      total: saqs.length,
+      pending: saqs.filter(s => s.status === "pending").length,
+      inProgress: saqs.filter(s => s.status === "in-progress").length,
+      completed: saqs.filter(s => s.status === "completed").length
+    };
   }
   
   // Initialize demo data
@@ -706,6 +781,99 @@ export class MemStorage implements IStorage {
       
       this.complianceMetrics.set(metrics.id, metrics);
     }
+    
+    // Self-Assessment Questionnaires
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    
+    const oneMonthAgo2 = new Date();
+    oneMonthAgo2.setMonth(oneMonthAgo2.getMonth() - 1);
+    
+    const saqData = [
+      { 
+        title: "Annual Deforestation Risk Assessment",
+        description: "Annual self-assessment questionnaire for deforestation risk in your supply chain",
+        supplierId: 1,
+        customerId: 2,
+        status: "completed",
+        completedAt: twoWeeksAgo,
+        score: 87,
+        answers: JSON.stringify({
+          supplyChainMappingComplete: true,
+          documentationVerified: true,
+          riskAssessmentConducted: true,
+          mitigationMeasuresImplemented: true,
+          certificationStatus: "Certified",
+          monitoringSystemImplemented: true,
+          traceabilityVerified: "Full",
+          dueDate: "2025-05-15",
+          productCategory: "Coffee",
+          geographicSource: "Guatemala, Colombia",
+          conversionMeasures: "No conversion of natural forests",
+          peatlandManagement: "Not applicable",
+          forestPreservationRating: 4,
+          supplierTrainingPrograms: "Yes, twice annually",
+          thirdPartyAudits: "Verified by Rainforest Alliance"
+        })
+      },
+      { 
+        title: "EUDR Compliance Self-Declaration",
+        description: "Self-assessment of compliance with EU Deforestation Regulation requirements",
+        supplierId: 1,
+        customerId: 3,
+        status: "completed",
+        completedAt: oneMonthAgo2,
+        score: 92,
+        answers: JSON.stringify({
+          coordinateBasedMapping: true,
+          legalityVerification: true,
+          dueDataCollection: true,
+          riskAnalysis: true,
+          mitigationSteps: true,
+          geolocationData: "Available for 92% of production areas",
+          tracingSystem: "Blockchain-based traceability system",
+          certifications: "Rainforest Alliance, Organic, Fair Trade",
+          landRightsVerification: "Documented land ownership with local authority verification",
+          indigenousConsultation: "Full FPIC process documented",
+          deforestationProtocols: "Zero deforestation commitment with satellite monitoring",
+          laborPractices: "Living wage certification and third-party labor audits",
+          grievanceMechanism: "Anonymous hotline and third-party verification"
+        })
+      },
+      { 
+        title: "Supplier Sustainability Assessment",
+        description: "Annual assessment of overall sustainability practices",
+        supplierId: 2,
+        customerId: 1,
+        status: "in-progress",
+        completedAt: null,
+        score: null,
+        answers: JSON.stringify({
+          environmentalPolicy: true,
+          emissionsTracking: "Partial",
+          wasteManagement: "Implementing circular economy principles",
+          waterUsage: "Monitoring in place, 15% reduction target",
+          energyEfficiency: "Solar panels installed in 30% of facilities",
+          biodiversityProtection: "Buffer zones established around production areas",
+          chemicalUsage: "Reducing with organic alternatives",
+          currentChallenges: "Transitioning to fully organic production"
+        })
+      },
+      { 
+        title: "Social Compliance Questionnaire",
+        description: "Assessment of labor practices and social responsibility",
+        supplierId: 1,
+        customerId: 4,
+        status: "pending",
+        completedAt: null,
+        score: null,
+        answers: null
+      }
+    ];
+    
+    saqData.forEach(saqItem => {
+      this.createSaq(saqItem);
+    });
   }
 }
 

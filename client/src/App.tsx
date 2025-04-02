@@ -11,6 +11,7 @@ import Declarations from "@/pages/declarations";
 import Compliance from "@/pages/compliance";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import SAQs from "@/pages/saqs";
 import AppLayout from "@/layouts/app-layout";
 import { AuthProvider } from "@/hooks/use-auth";
 
@@ -56,6 +57,11 @@ function Router() {
       <Route path="/settings">
         <AppLayout>
           <Settings />
+        </AppLayout>
+      </Route>
+      <Route path="/saqs">
+        <AppLayout>
+          <SAQs />
         </AppLayout>
       </Route>
       

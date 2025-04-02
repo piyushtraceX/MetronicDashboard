@@ -2,7 +2,7 @@ import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertUserSchema, insertSupplierSchema, insertDocumentSchema, insertTaskSchema, insertDeclarationSchema } from "@shared/schema";
+import { insertUserSchema, insertSupplierSchema, insertDocumentSchema, insertTaskSchema, insertDeclarationSchema, insertSaqSchema } from "@shared/schema";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
@@ -526,6 +526,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Error fetching risk categories" });
+    }
+  });
+  
+  // SAQ routes
+  app.get("/api/supplier/:id/saqs", async (req, res) => {
+    try {
+      const supplierId = parseInt(req.params.id);
+      const status = req.query.status as string;
+      const saqs = await storage.listSaqsBySupplier(supplierId, status);
+      res.json(saqs);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching SAQs" });
+    }
+  });
+  
+  app.get("/api/supplier/:id/saqs/stats", async (req, res) => {
+    try {
+      const supplierId = parseInt(req.params.id);
+      const stats = await storage.getSaqStats(supplierId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching SAQ statistics" });
+    }
+  });
+  
+  app.get("/api/saqs/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const saq = await storage.getSaq(id);
+      
+      if (!saq) {
+        return res.status(404).json({ message: "SAQ not found" });
+      }
+      
+      res.json(saq);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching SAQ" });
+    }
+  });
+  
+  app.post("/api/saqs", async (req, res) => {
+    try {
+      const saqInput = insertSaqSchema.parse(req.body);
+      const saq = await storage.createSaq(saqInput);
+      
+      // Create activity record
+      await storage.createActivity({
+        type: "saq",
+        description: `New SAQ "${saq.title}" was created for supplier #${saq.supplierId}`,
+        userId: 1, // Mock user ID
+        entityType: "saq",
+        entityId: saq.id,
+        metadata: null
+      });
+      
+      res.status(201).json(saq);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Error creating SAQ" });
+      }
+    }
+  });
+  
+  app.put("/api/saqs/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const saqInput = insertSaqSchema.partial().parse(req.body);
+      
+      const updatedSaq = await storage.updateSaq(id, saqInput);
+      
+      if (!updatedSaq) {
+        return res.status(404).json({ message: "SAQ not found" });
+      }
+      
+      // Create activity for SAQ completion if status changed to completed
+      if (saqInput.status === "completed") {
+        await storage.createActivity({
+          type: "saq",
+          description: `SAQ "${updatedSaq.title}" was completed by supplier #${updatedSaq.supplierId}`,
+          userId: 1, // Mock user ID
+          entityType: "saq",
+          entityId: updatedSaq.id,
+          metadata: null
+        });
+      }
+      
+      res.json(updatedSaq);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Error updating SAQ" });
+      }
     }
   });
   
