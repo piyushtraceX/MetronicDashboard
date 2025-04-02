@@ -59,8 +59,9 @@ export default function Sidebar() {
   const { isOpen } = useSidebar();
   const { user } = useAuth();
   
-  // Check if user is a supplier
+  // Check if user is a supplier or customer
   const isSupplier = user?.role === 'supplier';
+  const isCustomer = user?.role === 'customer';
   
   if (!isOpen) return null;
   
@@ -91,8 +92,8 @@ export default function Sidebar() {
             active={location === "/"}
           />
           
-          {/* Supply Chain - Not available to suppliers */}
-          {!isSupplier && (
+          {/* Supply Chain - Not available to suppliers or customers */}
+          {!isSupplier && !isCustomer && (
             <SidebarSection
               icon="fa-sitemap"
               label="Supply Chain"
@@ -101,8 +102,8 @@ export default function Sidebar() {
             />
           )}
           
-          {/* Risk Assessment - Not available to suppliers */}
-          {!isSupplier && (
+          {/* Risk Assessment - Not available to suppliers or customers */}
+          {!isSupplier && !isCustomer && (
             <SidebarSection
               icon="fa-exclamation-triangle"
               label="Risk Assessment"
@@ -111,8 +112,8 @@ export default function Sidebar() {
             />
           )}
           
-          {/* Documents - Not available to suppliers */}
-          {!isSupplier && (
+          {/* Documents - Not available to suppliers or customers */}
+          {!isSupplier && !isCustomer && (
             <SidebarSection
               icon="fa-file-alt"
               label="Documents"
@@ -121,16 +122,16 @@ export default function Sidebar() {
             />
           )}
           
-          {/* Declarations - Available to all */}
+          {/* Declarations - Available to all with role-specific labels */}
           <SidebarSection
             icon="fa-file-signature"
-            label={isSupplier ? "Outbound Declarations" : "Declarations"}
+            label={isSupplier ? "Outbound Declarations" : isCustomer ? "Inbound Declarations" : "Declarations"}
             href="/declarations"
             active={location === "/declarations"}
           />
           
-          {/* Compliance - Not available to suppliers */}
-          {!isSupplier && (
+          {/* Compliance - Not available to suppliers or customers */}
+          {!isSupplier && !isCustomer && (
             <SidebarSection
               icon="fa-check-circle"
               label="Compliance"

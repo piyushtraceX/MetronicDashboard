@@ -143,14 +143,19 @@ interface NewDeclarationForm {
 export default function Declarations() {
   const { user } = useAuth();
   const isSupplier = user?.role === 'supplier';
+  const isCustomer = user?.role === 'customer';
   
-  // For suppliers, default to outbound tab
-  const [activeTab, setActiveTab] = useState<string>(isSupplier ? "outbound" : "all");
+  // For suppliers, default to outbound tab, for customers default to inbound tab
+  const [activeTab, setActiveTab] = useState<string>(
+    isSupplier ? "outbound" : isCustomer ? "inbound" : "all"
+  );
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [simpleModalOpen, setSimpleModalOpen] = useState(false);
   const [wizardModalOpen, setWizardModalOpen] = useState(false);
-  // For suppliers, always set declarationType to outbound
-  const [declarationType, setDeclarationType] = useState<"inbound" | "outbound">(isSupplier ? "outbound" : "inbound");
+  // For suppliers, always set declarationType to outbound, for customers to inbound
+  const [declarationType, setDeclarationType] = useState<"inbound" | "outbound">(
+    isSupplier ? "outbound" : isCustomer ? "inbound" : "inbound"
+  );
   const [detailViewOpen, setDetailViewOpen] = useState(false);
   const [selectedDeclarationId, setSelectedDeclarationId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -273,12 +278,14 @@ export default function Declarations() {
     refetchOnWindowFocus: false,
   });
   
-  // For suppliers, always filter to show outbound declarations regardless of tab
+  // For suppliers, show only outbound declarations; for customers, show only inbound
   const filteredDeclarations = isSupplier 
     ? declarations.filter((d) => d.type === "outbound")
-    : (activeTab === 'all' 
-        ? declarations 
-        : declarations.filter((d) => d.type === activeTab));
+    : isCustomer
+      ? declarations.filter((d) => d.type === "inbound")
+      : (activeTab === 'all' 
+          ? declarations 
+          : declarations.filter((d) => d.type === activeTab));
 
   return (
     <div className="space-y-6">
@@ -289,7 +296,7 @@ export default function Declarations() {
         </div>
         <div className="mt-4 md:mt-0 flex space-x-2">
           {/* Only show Inbound Declaration button for non-supplier users */}
-          {!isSupplier && (
+          {(!isSupplier || isCustomer) && (
             <Button 
               className="bg-green-600 hover:bg-green-700" 
               onClick={() => {
@@ -301,16 +308,19 @@ export default function Declarations() {
               Inbound Declaration
             </Button>
           )}
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => {
-              setDeclarationType("outbound");
-              setWizardModalOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Outbound Declaration
-          </Button>
+          {/* Only show Outbound Declaration button for non-customer users */}
+          {!isCustomer && (
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                setDeclarationType("outbound");
+                setWizardModalOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Outbound Declaration
+            </Button>
+          )}
         </div>
       </div>
       
@@ -510,26 +520,31 @@ export default function Declarations() {
                 <div>
                   <Label htmlFor="type">Declaration Type</Label>
                   <Select 
-                    value={isSupplier ? "outbound" : form.type} 
+                    value={isSupplier ? "outbound" : isCustomer ? "inbound" : form.type} 
                     onValueChange={(value: "inbound" | "outbound") => {
-                      if (!isSupplier) {
+                      if (!isSupplier && !isCustomer) {
                         handleInputChange('type', value);
                         setDeclarationType(value);
                       }
                     }}
-                    disabled={isSupplier}
+                    disabled={isSupplier || isCustomer}
                   >
                     <SelectTrigger id="type" className="mt-1">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
                       {!isSupplier && <SelectItem value="inbound">Inbound</SelectItem>}
-                      <SelectItem value="outbound">Outbound</SelectItem>
+                      {!isCustomer && <SelectItem value="outbound">Outbound</SelectItem>}
                     </SelectContent>
                   </Select>
                   {isSupplier && (
                     <p className="mt-1 text-xs text-gray-500">
                       As a supplier, you can only create outbound declarations
+                    </p>
+                  )}
+                  {isCustomer && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      As a customer, you can only create inbound declarations
                     </p>
                   )}
                 </div>
@@ -576,10 +591,18 @@ export default function Declarations() {
         </DialogContent>
       </Dialog>
       
-      <Tabs defaultValue={isSupplier ? "outbound" : "all"} className="w-full" onValueChange={setActiveTab}>
+      <Tabs 
+        defaultValue={isSupplier ? "outbound" : isCustomer ? "inbound" : "all"} 
+        className="w-full" 
+        onValueChange={setActiveTab}
+      >
         {isSupplier ? (
           <TabsList className="grid w-full grid-cols-1 mb-4">
             <TabsTrigger value="outbound">Outbound Declaration</TabsTrigger>
+          </TabsList>
+        ) : isCustomer ? (
+          <TabsList className="grid w-full grid-cols-1 mb-4">
+            <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
           </TabsList>
         ) : (
           <TabsList className="grid w-full grid-cols-3 mb-4">

@@ -58,6 +58,14 @@ export const personas = [
     description: "External supplier with limited access",
     avatar: "Su",
     email: "external@supplier.com"
+  },
+  {
+    id: 7,
+    name: "Customer",
+    role: "customer",
+    description: "Receives and processes inbound declarations",
+    avatar: "Cu",
+    email: "customer@eudrportal.com"
   }
 ];
 
