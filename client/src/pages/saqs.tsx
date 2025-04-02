@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { Head } from '@/components/head';
 import { useAuth } from '@/hooks/use-auth';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatDate } from '@/lib/utils';
-import { Loader2, FileText, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Loader2, FileText, CheckCircle2, AlertCircle, Clock, Building } from 'lucide-react';
 
 // Type definitions
 interface Saq {
@@ -143,13 +142,16 @@ export default function SAQPage() {
     setSelectedSAQ(null);
   };
   
+  // Set document title
+  React.useEffect(() => {
+    document.title = "Supplier Assessment | EUDR Comply";
+  }, []);
+  
   return (
     <>
-      <Head title="Self-Assessment Questionnaires | EUDR Comply" />
-      
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Self-Assessment Questionnaires</h1>
+          <h1 className="text-2xl font-bold">Supplier Assessment Questionnaires</h1>
         </div>
         
         {/* SAQ overview cards */}
@@ -194,15 +196,13 @@ export default function SAQPage() {
         )}
         
         {/* SAQ tabs and listing */}
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="received" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="all">All Questionnaires</TabsTrigger>
+            <TabsTrigger value="received">Received</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="all" className="space-y-4">
+          <TabsContent value="received" className="space-y-4">
             <Card>
               <CardContent className="pt-6">
                 {isLoading ? (
@@ -211,45 +211,53 @@ export default function SAQPage() {
                   </div>
                 ) : error ? (
                   <div className="text-center text-red-500">Error loading questionnaires</div>
-                ) : saqs && saqs.length > 0 ? (
+                ) : saqs && saqs.filter((saq: Saq) => saq.status === 'pending' || saq.status === 'in-progress').length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Title</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Received Date</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Completed</TableHead>
-                        <TableHead>Score</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {saqs.map((saq: Saq) => (
-                        <TableRow key={saq.id}>
-                          <TableCell>
-                            <div className="font-medium">{saq.title}</div>
-                            <div className="text-sm text-muted-foreground">{saq.description}</div>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(saq.status)}</TableCell>
-                          <TableCell>{saq.completedAt ? formatDate(new Date(saq.completedAt)) : '-'}</TableCell>
-                          <TableCell>{saq.score !== null ? `${saq.score}%` : '-'}</TableCell>
-                          <TableCell>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewSAQ(saq)}
-                              disabled={saq.status === 'pending'}
-                            >
-                              <FileText className="mr-2 h-4 w-4" />
-                              View
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {saqs
+                        .filter((saq: Saq) => saq.status === 'pending' || saq.status === 'in-progress')
+                        .map((saq: Saq) => (
+                          <TableRow key={saq.id}>
+                            <TableCell>
+                              <div className="font-medium">{saq.title}</div>
+                              <div className="text-sm text-muted-foreground">{saq.description}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+                                {saq.customerId === 1 ? "Eco Foods Inc." : 
+                                 saq.customerId === 2 ? "Green Planet Ltd." : 
+                                 saq.customerId === 3 ? "Sustainable Harvest" : 
+                                 `Customer #${saq.customerId}`}
+                              </div>
+                            </TableCell>
+                            <TableCell>{formatDate(new Date(saq.createdAt))}</TableCell>
+                            <TableCell>{getStatusBadge(saq.status)}</TableCell>
+                            <TableCell>
+                              <Button 
+                                variant={saq.status === 'pending' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => saq.status === 'in-progress' ? handleViewSAQ(saq) : null}
+                              >
+                                {saq.status === 'pending' ? 'Start' : <><FileText className="mr-2 h-4 w-4" />View</>}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 ) : (
                   <div className="text-center p-6 text-muted-foreground">
-                    No questionnaires found
+                    No received questionnaires found
                   </div>
                 )}
               </CardContent>
@@ -270,8 +278,9 @@ export default function SAQPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Title</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Completed Date</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Completed</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -285,9 +294,27 @@ export default function SAQPage() {
                               <div className="font-medium">{saq.title}</div>
                               <div className="text-sm text-muted-foreground">{saq.description}</div>
                             </TableCell>
-                            <TableCell>{getStatusBadge(saq.status)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+                                {saq.customerId === 1 ? "Eco Foods Inc." : 
+                                 saq.customerId === 2 ? "Green Planet Ltd." : 
+                                 saq.customerId === 3 ? "Sustainable Harvest" : 
+                                 `Customer #${saq.customerId}`}
+                              </div>
+                            </TableCell>
                             <TableCell>{saq.completedAt ? formatDate(new Date(saq.completedAt)) : '-'}</TableCell>
-                            <TableCell>{saq.score !== null ? `${saq.score}%` : '-'}</TableCell>
+                            <TableCell>{getStatusBadge(saq.status)}</TableCell>
+                            <TableCell>
+                              <div className={`text-lg font-bold ${
+                                saq.score !== null ? 
+                                  (saq.score >= 80 ? 'text-green-500' : 
+                                   saq.score >= 50 ? 'text-amber-500' : 'text-red-500') 
+                                : ''
+                              }`}>
+                                {saq.score !== null ? `${saq.score}%` : '-'}
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <Button 
                                 variant="outline" 
@@ -311,113 +338,7 @@ export default function SAQPage() {
             </Card>
           </TabsContent>
           
-          <TabsContent value="in-progress" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                {isLoading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : error ? (
-                  <div className="text-center text-red-500">Error loading questionnaires</div>
-                ) : saqs && saqs.filter((saq: Saq) => saq.status === 'in-progress').length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {saqs
-                        .filter((saq: Saq) => saq.status === 'in-progress')
-                        .map((saq: Saq) => (
-                          <TableRow key={saq.id}>
-                            <TableCell>
-                              <div className="font-medium">{saq.title}</div>
-                              <div className="text-sm text-muted-foreground">{saq.description}</div>
-                            </TableCell>
-                            <TableCell>{getStatusBadge(saq.status)}</TableCell>
-                            <TableCell>{formatDate(new Date(saq.createdAt))}</TableCell>
-                            <TableCell>Customer #{saq.customerId}</TableCell>
-                            <TableCell>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleViewSAQ(saq)}
-                              >
-                                <FileText className="mr-2 h-4 w-4" />
-                                View
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center p-6 text-muted-foreground">
-                    No in-progress questionnaires found
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="pending" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                {isLoading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : error ? (
-                  <div className="text-center text-red-500">Error loading questionnaires</div>
-                ) : saqs && saqs.filter((saq: Saq) => saq.status === 'pending').length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {saqs
-                        .filter((saq: Saq) => saq.status === 'pending')
-                        .map((saq: Saq) => (
-                          <TableRow key={saq.id}>
-                            <TableCell>
-                              <div className="font-medium">{saq.title}</div>
-                              <div className="text-sm text-muted-foreground">{saq.description}</div>
-                            </TableCell>
-                            <TableCell>{getStatusBadge(saq.status)}</TableCell>
-                            <TableCell>{formatDate(new Date(saq.createdAt))}</TableCell>
-                            <TableCell>Customer #{saq.customerId}</TableCell>
-                            <TableCell>
-                              <Button 
-                                variant="default" 
-                                size="sm"
-                              >
-                                Start
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center p-6 text-muted-foreground">
-                    No pending questionnaires found
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
       </div>
       

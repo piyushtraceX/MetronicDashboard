@@ -132,11 +132,11 @@ export default function Sidebar() {
             active={location === "/declarations"}
           />
           
-          {/* Self-Assessment Questionnaires - Only available to suppliers */}
+          {/* Supplier Assessment Questionnaires - Only available to suppliers */}
           {isSupplier && (
             <SidebarSection
               icon="fa-clipboard-check"
-              label="Self-Assessment"
+              label="Supplier Assessment"
               href="/saqs"
               active={location === "/saqs"}
             />
