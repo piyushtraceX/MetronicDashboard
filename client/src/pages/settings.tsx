@@ -679,10 +679,32 @@ export default function Settings() {
                       Create and manage supplier questionnaires with ease.
                     </CardDescription>
                   </div>
-                  <Button onClick={handleAddQuestionnaire}>
-                    <FaPlus className="mr-2" />
-                    Add Questionnaire
-                  </Button>
+                  <div className="relative group">
+                    <Button>
+                      <FaPlus className="mr-2" />
+                      Add Questionnaire
+                    </Button>
+                    <div className="hidden group-hover:block absolute right-0 top-full mt-2 w-64 bg-white rounded-md border shadow-lg z-10">
+                      <div className="p-2">
+                        <Button 
+                          variant="ghost" 
+                          className="w-full justify-start mb-1"
+                          onClick={handleDraftFromScratch}
+                        >
+                          <FaFileAlt className="mr-2" />
+                          Draft from Scratch
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          className="w-full justify-start"
+                          onClick={handleChooseTemplate}
+                        >
+                          <FaCopy className="mr-2" />
+                          Choose from Template
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               
