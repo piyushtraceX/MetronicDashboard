@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +25,10 @@ import {
   FaPencilAlt, 
   FaCalendarAlt, 
   FaUsers, 
-  FaFileAlt 
+  FaFileAlt,
+  FaTimes,
+  FaExpandAlt,
+  FaInfoCircle
 } from "react-icons/fa";
 import {
   Select,
@@ -160,6 +165,36 @@ export default function Settings() {
     }, 1000);
   };
   
+  // Form builder state
+  const [showFormBuilderModal, setShowFormBuilderModal] = useState(false);
+  const [formBuilderActiveTab, setFormBuilderActiveTab] = useState("form");
+  const [formQuestions, setFormQuestions] = useState([
+    {
+      id: 1,
+      text: "What is your company name?",
+      type: "short_answer",
+      required: false,
+      options: []
+    },
+    {
+      id: 2,
+      text: "Select your business type:",
+      type: "dropdown",
+      required: true,
+      options: ["Manufacturer", "Distributor"]
+    }
+  ]);
+  const [businessRules, setBusinessRules] = useState<string[]>([]);
+  const [newBusinessRule, setNewBusinessRule] = useState("");
+  const [addingNewQuestion, setAddingNewQuestion] = useState(false);
+  const [newQuestion, setNewQuestion] = useState({
+    text: "",
+    type: "short_answer",
+    required: false,
+    options: [] as string[]
+  });
+  const [newOption, setNewOption] = useState("");
+  
   // Functions for questionnaire management
   const handleAddQuestionnaire = () => {
     setShowQuestionnaireModal(true);
@@ -184,11 +219,7 @@ export default function Settings() {
   };
   
   const handleDraftFromScratch = () => {
-    setShowQuestionnaireModal(false);
-    toast({
-      title: "Form Builder Opened",
-      description: "You can now create your questionnaire from scratch.",
-    });
+    setShowFormBuilderModal(true);
   };
   
   const handleDeleteQuestionnaire = (id: number) => {
@@ -199,6 +230,94 @@ export default function Settings() {
         description: "The questionnaire has been deleted successfully.",
       });
     }
+  };
+  
+  const handleAddQuestion = () => {
+    setAddingNewQuestion(true);
+  };
+  
+  const handleSaveQuestion = () => {
+    if (newQuestion.text.trim() === "") {
+      toast({
+        title: "Error",
+        description: "Question text cannot be empty.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setFormQuestions([
+      ...formQuestions,
+      {
+        id: formQuestions.length > 0 ? Math.max(...formQuestions.map(q => q.id)) + 1 : 1,
+        text: newQuestion.text,
+        type: newQuestion.type,
+        required: newQuestion.required,
+        options: newQuestion.options
+      }
+    ]);
+    
+    setNewQuestion({
+      text: "",
+      type: "short_answer",
+      required: false,
+      options: []
+    });
+    
+    setAddingNewQuestion(false);
+  };
+  
+  const handleAddOption = () => {
+    if (newOption.trim() === "") return;
+    setNewQuestion({
+      ...newQuestion,
+      options: [...newQuestion.options, newOption]
+    });
+    setNewOption("");
+  };
+  
+  const handleRemoveOption = (index: number) => {
+    setNewQuestion({
+      ...newQuestion,
+      options: newQuestion.options.filter((_, i) => i !== index)
+    });
+  };
+  
+  const handleAddBusinessRule = () => {
+    if (newBusinessRule.trim() === "") return;
+    setBusinessRules([...businessRules, newBusinessRule]);
+    setNewBusinessRule("");
+  };
+  
+  const handleSaveQuestionnaire = () => {
+    if (formQuestions.length === 0) {
+      toast({
+        title: "Error",
+        description: "Questionnaire must have at least one question.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setQuestionnaires([
+      ...questionnaires,
+      {
+        id: questionnaires.length > 0 ? Math.max(...questionnaires.map(q => q.id)) + 1 : 1,
+        name: "New Questionnaire",
+        lastUpdated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        supplierType: "All",
+        active: false
+      }
+    ]);
+    
+    toast({
+      title: "Questionnaire Saved",
+      description: "Your questionnaire has been saved successfully.",
+    });
+    
+    setShowFormBuilderModal(false);
+    setFormQuestions([]);
+    setBusinessRules([]);
   };
   
   return (
@@ -842,6 +961,402 @@ export default function Settings() {
                   <Button>
                     Use Selected Template
                   </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+          
+          {/* Form Builder Modal */}
+          {showFormBuilderModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <Card className="w-full max-w-6xl mx-auto max-h-[90vh] overflow-hidden flex flex-col">
+                <CardHeader className="border-b">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Create New Questionnaire</CardTitle>
+                      <CardDescription>
+                        Design your questionnaire and set up business rules
+                      </CardDescription>
+                    </div>
+                    <Button variant="ghost" onClick={() => setShowFormBuilderModal(false)} className="w-8 h-8 p-0">
+                      <FaTimes />
+                    </Button>
+                  </div>
+                </CardHeader>
+                
+                <div className="flex border-b">
+                  <button 
+                    className={`px-6 py-3 font-medium text-sm ${formBuilderActiveTab === 'form' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}
+                    onClick={() => setFormBuilderActiveTab('form')}
+                  >
+                    <span className="flex items-center">
+                      <span className="bg-primary/10 text-primary w-5 h-5 rounded-full inline-flex items-center justify-center mr-2">1</span>
+                      Form Builder
+                    </span>
+                  </button>
+                  <button 
+                    className={`px-6 py-3 font-medium text-sm ${formBuilderActiveTab === 'rules' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}
+                    onClick={() => setFormBuilderActiveTab('rules')}
+                  >
+                    <span className="flex items-center">
+                      <span className="bg-primary/10 text-primary w-5 h-5 rounded-full inline-flex items-center justify-center mr-2">2</span>
+                      Business Rules
+                    </span>
+                  </button>
+                </div>
+                
+                <div className="overflow-auto flex-grow">
+                  {formBuilderActiveTab === 'form' ? (
+                    <div className="p-6 grid grid-cols-2 gap-6">
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium">Questions</h3>
+                          <Button size="sm" onClick={handleAddQuestion}>
+                            <FaPlus className="mr-2" size={14} />
+                            Add Question
+                          </Button>
+                        </div>
+                        
+                        {/* Question List */}
+                        <div className="space-y-4">
+                          {formQuestions.map((question, index) => (
+                            <div key={question.id} className="border rounded-lg p-4 bg-white">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h4 className="font-medium text-sm">{question.text}</h4>
+                                  <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                    <span className="capitalize mr-3">{question.type.replace('_', ' ')}</span>
+                                    {question.required && (
+                                      <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[10px] font-medium">Required</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                    <FaPencilAlt size={12} />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500">
+                                    <FaTrashAlt size={12} />
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              {question.options.length > 0 && (
+                                <div className="mt-2 text-sm">
+                                  <div className="text-xs text-gray-500 mb-1">Options:</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {question.options.map((option, idx) => (
+                                      <span key={idx} className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 text-xs">
+                                        {option}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Add Question Form */}
+                        {addingNewQuestion && (
+                          <div className="border rounded-lg p-4 bg-gray-50">
+                            <h4 className="font-medium mb-3">Add New Question</h4>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="questionText">Question Text</Label>
+                                <Input 
+                                  id="questionText" 
+                                  value={newQuestion.text}
+                                  onChange={(e) => setNewQuestion({...newQuestion, text: e.target.value})}
+                                  placeholder="Enter your question here"
+                                />
+                              </div>
+                              
+                              <div>
+                                <Label htmlFor="questionType">Question Type</Label>
+                                <Select 
+                                  value={newQuestion.type}
+                                  onValueChange={(value) => setNewQuestion({...newQuestion, type: value})}
+                                >
+                                  <SelectTrigger id="questionType">
+                                    <SelectValue placeholder="Select question type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="short_answer">Short Answer</SelectItem>
+                                    <SelectItem value="long_answer">Long Answer</SelectItem>
+                                    <SelectItem value="dropdown">Dropdown</SelectItem>
+                                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                                    <SelectItem value="radio">Radio Buttons</SelectItem>
+                                    <SelectItem value="rating">Rating Scale</SelectItem>
+                                    <SelectItem value="file_upload">File Upload</SelectItem>
+                                    <SelectItem value="date">Date Picker</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="required" 
+                                  checked={newQuestion.required}
+                                  onCheckedChange={(checked: boolean | "indeterminate") => 
+                                    setNewQuestion({...newQuestion, required: checked === true})
+                                  }
+                                />
+                                <Label htmlFor="required">Required</Label>
+                              </div>
+                              
+                              {['dropdown', 'checkbox', 'radio'].includes(newQuestion.type) && (
+                                <div className="space-y-2">
+                                  <Label>Options</Label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input 
+                                      value={newOption}
+                                      onChange={(e) => setNewOption(e.target.value)}
+                                      placeholder="Add an option"
+                                      className="flex-1"
+                                    />
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={handleAddOption}
+                                      type="button"
+                                    >
+                                      Add
+                                    </Button>
+                                  </div>
+                                  
+                                  {newQuestion.options.length > 0 && (
+                                    <div className="mt-2">
+                                      <div className="text-sm font-medium mb-1">Added options:</div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {newQuestion.options.map((option, idx) => (
+                                          <div key={idx} className="bg-gray-100 rounded flex items-center overflow-hidden">
+                                            <span className="px-2 py-1 text-sm">{option}</span>
+                                            <button
+                                              className="bg-gray-200 hover:bg-gray-300 p-1"
+                                              onClick={() => handleRemoveOption(idx)}
+                                              type="button"
+                                            >
+                                              <FaTimes size={12} />
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              <div className="flex justify-end space-x-2">
+                                <Button 
+                                  variant="ghost" 
+                                  onClick={() => setAddingNewQuestion(false)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button 
+                                  onClick={handleSaveQuestion}
+                                >
+                                  Add Question
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Preview Pane */}
+                      <div className="border rounded-lg bg-gray-50 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-medium">Preview</h3>
+                          <Button variant="outline" size="sm">
+                            <FaExpandAlt className="mr-2" size={14} />
+                            Full Screen
+                          </Button>
+                        </div>
+                        
+                        <div className="bg-white border rounded-lg p-4 shadow-sm space-y-5">
+                          {formQuestions.map((question) => (
+                            <div key={question.id} className="space-y-2">
+                              <div className="flex items-start justify-between">
+                                <label className="block text-sm font-medium">
+                                  {question.text}
+                                  {question.required && <span className="text-red-500 ml-1">*</span>}
+                                </label>
+                                {question.required && (
+                                  <div className="flex items-center">
+                                    <Switch checked={true} />
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {question.type === 'short_answer' && (
+                                <Input placeholder="Enter your answer" />
+                              )}
+                              
+                              {question.type === 'long_answer' && (
+                                <textarea 
+                                  className="w-full min-h-[100px] px-3 py-2 border rounded-md resize-y"
+                                  placeholder="Enter your answer"
+                                />
+                              )}
+                              
+                              {question.type === 'dropdown' && (
+                                <Select>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select an option" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {question.options.map((option, idx) => (
+                                      <SelectItem key={idx} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                              
+                              {question.type === 'checkbox' && (
+                                <div className="space-y-2">
+                                  {question.options.map((option, idx) => (
+                                    <div key={idx} className="flex items-center space-x-2">
+                                      <Checkbox id={`${question.id}-${idx}`} />
+                                      <label 
+                                        htmlFor={`${question.id}-${idx}`}
+                                        className="text-sm"
+                                      >
+                                        {option}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {question.type === 'radio' && (
+                                <div className="space-y-2">
+                                  {question.options.map((option, idx) => (
+                                    <div key={idx} className="flex items-center space-x-2">
+                                      <input 
+                                        type="radio" 
+                                        id={`${question.id}-${idx}`}
+                                        name={`question-${question.id}`}
+                                        className="rounded-full"
+                                      />
+                                      <label 
+                                        htmlFor={`${question.id}-${idx}`}
+                                        className="text-sm"
+                                      >
+                                        {option}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {question.type === 'date' && (
+                                <Input type="date" />
+                              )}
+                              
+                              {question.type === 'file_upload' && (
+                                <div className="border-2 border-dashed rounded-md p-4 text-center">
+                                  <div className="text-sm text-gray-500">
+                                    Drag and drop a file here, or click to browse
+                                  </div>
+                                  <Button variant="outline" size="sm" className="mt-2">
+                                    Browse Files
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {question.type === 'rating' && (
+                                <div className="flex items-center space-x-1">
+                                  {[1, 2, 3, 4, 5].map((rating) => (
+                                    <Button 
+                                      key={rating}
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      {rating}
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-medium">Business Rules</h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Add business rules to validate answers and control question visibility
+                          </p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => document.getElementById('business-rule-input')?.focus()}
+                        >
+                          <FaPlus className="mr-2" size={14} />
+                          Add Rule
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="border rounded-lg p-4 bg-white shadow-sm">
+                          <Label htmlFor="business-rule-input" className="mb-2 block">Add Business Rule</Label>
+                          <div className="flex space-x-2">
+                            <Textarea 
+                              id="business-rule-input"
+                              placeholder="Type your business rule in natural language, e.g. 'If business type is Manufacturer, show question about manufacturing capacity'"
+                              value={newBusinessRule}
+                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewBusinessRule(e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button onClick={handleAddBusinessRule}>Add</Button>
+                          </div>
+                        </div>
+                        
+                        {businessRules.length > 0 ? (
+                          <div className="space-y-2">
+                            {businessRules.map((rule, index) => (
+                              <div key={index} className="border rounded-lg p-4 bg-white shadow-sm">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <div className="text-xs text-gray-500 mb-1">Rule #{index + 1}</div>
+                                    <p className="text-sm">{rule}</p>
+                                  </div>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500">
+                                    <FaTrashAlt size={12} />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <div className="mb-2 flex justify-center">
+                              <FaInfoCircle size={24} />
+                            </div>
+                            <p className="text-sm">No business rules added yet</p>
+                            <p className="text-xs mt-1">Business rules define conditional logic for your questionnaire</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="p-4 border-t bg-gray-50 flex justify-between">
+                  <Button variant="ghost" onClick={() => setShowFormBuilderModal(false)}>
+                    Cancel
+                  </Button>
+                  
+                  <div className="flex space-x-2">
+                    <Button variant="outline">Save Draft</Button>
+                    <Button onClick={handleSaveQuestionnaire}>Save Questionnaire</Button>
+                  </div>
                 </div>
               </Card>
             </div>
