@@ -10,6 +10,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { 
+  FaUserCircle, 
+  FaSave, 
+  FaUpload, 
+  FaTrashAlt, 
+  FaSpinner, 
+  FaLock, 
+  FaCopy, 
+  FaPlus, 
+  FaEye, 
+  FaPencilAlt, 
+  FaCalendarAlt, 
+  FaUsers, 
+  FaFileAlt 
+} from "react-icons/fa";
 import {
   Select,
   SelectContent,
@@ -58,6 +73,27 @@ export default function Settings() {
     dateFormat: "MM/DD/YYYY",
     language: "en",
   });
+  
+  // Questionnaire state
+  const [questionnaires, setQuestionnaires] = useState([
+    {
+      id: 1,
+      name: "Supplier Assessment Form",
+      lastUpdated: "Jan 15, 2023",
+      supplierType: "Farmer",
+      active: true,
+    },
+    {
+      id: 2,
+      name: "Trader Evaluation Form",
+      lastUpdated: "Jan 10, 2023",
+      supplierType: "Trader",
+      active: false,
+    }
+  ]);
+  
+  const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +160,47 @@ export default function Settings() {
     }, 1000);
   };
   
+  // Functions for questionnaire management
+  const handleAddQuestionnaire = () => {
+    setShowQuestionnaireModal(true);
+  };
+  
+  const handleToggleActive = (id: number, newState: boolean) => {
+    setQuestionnaires(
+      questionnaires.map(q => 
+        q.id === id ? { ...q, active: newState } : q
+      )
+    );
+    
+    toast({
+      title: newState ? "Questionnaire Activated" : "Questionnaire Deactivated",
+      description: `The questionnaire has been ${newState ? "activated" : "deactivated"} successfully.`,
+    });
+  };
+  
+  const handleChooseTemplate = () => {
+    setShowQuestionnaireModal(false);
+    setShowTemplateModal(true);
+  };
+  
+  const handleDraftFromScratch = () => {
+    setShowQuestionnaireModal(false);
+    toast({
+      title: "Form Builder Opened",
+      description: "You can now create your questionnaire from scratch.",
+    });
+  };
+  
+  const handleDeleteQuestionnaire = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this questionnaire?")) {
+      setQuestionnaires(questionnaires.filter(q => q.id !== id));
+      toast({
+        title: "Questionnaire Deleted",
+        description: "The questionnaire has been deleted successfully.",
+      });
+    }
+  };
+  
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -139,6 +216,7 @@ export default function Settings() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="api">API Access</TabsTrigger>
           <TabsTrigger value="display">Display & Language</TabsTrigger>
+          <TabsTrigger value="questionnaires">Questionnaire Configuration</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
@@ -184,9 +262,9 @@ export default function Settings() {
                     <div className="pt-4">
                       <Button type="submit" disabled={loading}>
                         {loading ? (
-                          <i className="fas fa-spinner fa-spin mr-2"></i>
+                          <FaSpinner className="mr-2 animate-spin" />
                         ) : (
-                          <i className="fas fa-save mr-2"></i>
+                          <FaSave className="mr-2" />
                         )}
                         Save Changes
                       </Button>
@@ -588,6 +666,164 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="questionnaires">
+          <div className="mb-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Questionnaire Configuration</CardTitle>
+                    <CardDescription>
+                      Create and manage supplier questionnaires with ease.
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleAddQuestionnaire}>
+                    <FaPlus className="mr-2" />
+                    Add Questionnaire
+                  </Button>
+                </div>
+              </CardHeader>
+              
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {questionnaires.map((questionnaire) => (
+                    <div 
+                      key={questionnaire.id} 
+                      className="border rounded-lg p-5 shadow-sm relative"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-lg font-medium">{questionnaire.name}</h3>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <FaEye className="text-gray-500" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <FaPencilAlt className="text-gray-500" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                            onClick={() => handleDeleteQuestionnaire(questionnaire.id)}
+                          >
+                            <FaTrashAlt />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <FaCalendarAlt className="mr-2" />
+                          Last updated: {questionnaire.lastUpdated}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <FaUsers className="mr-2" />
+                          Supplier Type: {questionnaire.supplierType}
+                        </div>
+                      </div>
+                      
+                      <div className="absolute bottom-5 right-5 flex items-center">
+                        <span className="text-sm mr-2">
+                          {questionnaire.active ? 'Active' : 'Inactive'}
+                        </span>
+                        <Switch 
+                          checked={questionnaire.active} 
+                          onCheckedChange={(checked) => handleToggleActive(questionnaire.id, checked)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Add Questionnaire Modal */}
+          {showQuestionnaireModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <Card className="w-full max-w-md mx-auto">
+                <CardHeader>
+                  <CardTitle>Add New Questionnaire</CardTitle>
+                  <CardDescription>
+                    Choose how you would like to create your questionnaire
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button 
+                    className="w-full py-8 text-lg" 
+                    variant="outline"
+                    onClick={handleDraftFromScratch}
+                  >
+                    <FaFileAlt className="mr-2 text-xl" />
+                    Draft from Scratch
+                  </Button>
+                  <Button 
+                    className="w-full py-8 text-lg" 
+                    variant="outline"
+                    onClick={handleChooseTemplate}
+                  >
+                    <FaCopy className="mr-2 text-xl" />
+                    Choose from Template
+                  </Button>
+                </CardContent>
+                <div className="flex justify-end p-4 border-t">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowQuestionnaireModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+          
+          {/* Template Selection Modal */}
+          {showTemplateModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <Card className="w-full max-w-4xl mx-auto">
+                <CardHeader>
+                  <CardTitle>Choose a Template</CardTitle>
+                  <CardDescription>
+                    Select a pre-built template to start with
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="border rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-md">
+                      <h3 className="font-medium mb-2">EUDR Compliance Basic</h3>
+                      <p className="text-sm text-gray-500 mb-3">Basic assessment for EUDR compliance readiness</p>
+                      <div className="text-xs text-gray-400">15 questions</div>
+                    </div>
+                    <div className="border rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-md">
+                      <h3 className="font-medium mb-2">Supplier Due Diligence</h3>
+                      <p className="text-sm text-gray-500 mb-3">Comprehensive due diligence assessment</p>
+                      <div className="text-xs text-gray-400">32 questions</div>
+                    </div>
+                    <div className="border rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-md">
+                      <h3 className="font-medium mb-2">Environmental Impact</h3>
+                      <p className="text-sm text-gray-500 mb-3">Environmental and sustainability assessment</p>
+                      <div className="text-xs text-gray-400">24 questions</div>
+                    </div>
+                  </div>
+                </CardContent>
+                <div className="flex justify-end p-4 border-t">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowTemplateModal(false)}
+                    className="mr-2"
+                  >
+                    Cancel
+                  </Button>
+                  <Button>
+                    Use Selected Template
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
