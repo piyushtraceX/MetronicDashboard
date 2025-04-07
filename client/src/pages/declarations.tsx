@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Search, Eye, Upload, Plus } from "lucide-react";
+import { CalendarIcon, Search, Eye, Upload, Plus, MapPin, AlertCircle } from "lucide-react";
 import StatusBadge from "@/components/ui/status-badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -80,6 +80,11 @@ function DeclarationRow({ declaration, onViewClick }: {
   declaration: Declaration; 
   onViewClick: (id: number) => void;
 }) {
+  const [mapModalOpen, setMapModalOpen] = useState(false);
+  
+  // Determine compliance based on risk level for this example (in a real app, fetch from API)
+  const isCompliant = declaration.riskLevel === "low" || declaration.riskLevel === "medium";
+  
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-50">
       <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
@@ -106,6 +111,78 @@ function DeclarationRow({ declaration, onViewClick }: {
           )}></span>
           {declaration.riskLevel.charAt(0).toUpperCase() + declaration.riskLevel.slice(1)} Risk
         </span>
+      </td>
+      <td className="px-3 py-4 text-sm whitespace-nowrap">
+        <span className={cn(
+          "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
+          isCompliant ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+        )}>
+          <span className={cn(
+            "mr-1 h-2 w-2 rounded-full",
+            isCompliant ? "bg-green-500" : "bg-red-500"
+          )}></span>
+          {isCompliant ? "Compliant" : "Non-Compliant"}
+        </span>
+        
+        {!isCompliant && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-500 text-xs ml-2"
+            onClick={() => setMapModalOpen(true)}
+          >
+            <MapPin className="h-3 w-3 mr-1" />
+            View Non-Compliant Farms
+          </Button>
+        )}
+        
+        {/* Map Modal for Non-Compliant Farms */}
+        <Dialog open={mapModalOpen} onOpenChange={setMapModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Non-Compliant Farms</DialogTitle>
+              <DialogDescription>
+                This map shows the locations of non-compliant farms for Declaration #{declaration.id}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="relative bg-gray-100 border rounded-md h-[60vh] flex items-center justify-center">
+              <div className="absolute inset-0 m-4 bg-white/80 border rounded-md p-4 max-w-xs">
+                <h3 className="font-semibold text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Non-Compliant Areas
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  3 areas have been identified as non-compliant with EUDR regulations
+                </p>
+                <ul className="mt-2 text-sm space-y-1">
+                  <li className="flex items-center">
+                    <span className="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
+                    Deforested area (2022-2023)
+                  </li>
+                  <li className="flex items-center">
+                    <span className="h-2 w-2 bg-orange-500 rounded-full mr-2"></span>
+                    Missing traceability data
+                  </li>
+                  <li className="flex items-center">
+                    <span className="h-2 w-2 bg-yellow-500 rounded-full mr-2"></span>
+                    Incomplete documentation
+                  </li>
+                </ul>
+              </div>
+              <div className="text-center text-gray-500">
+                <MapPin className="h-20 w-20 mx-auto text-gray-300" />
+                <p className="mt-4">Map visualization would be displayed here</p>
+                <p className="text-sm mt-2">GeoJSON data for non-compliant polygon areas</p>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMapModalOpen(false)}>Close</Button>
+              <Button>Download GeoJSON</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {formatDate(declaration.lastUpdated)}
@@ -700,6 +777,9 @@ export default function Declarations() {
                     Risk Level
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Compliance Status
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Last Update
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
@@ -710,13 +790,13 @@ export default function Declarations() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {isLoadingDeclarations ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-gray-500">
+                    <td colSpan={7} className="py-10 text-center text-gray-500">
                       Loading declarations...
                     </td>
                   </tr>
                 ) : filteredDeclarations.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-gray-500">
+                    <td colSpan={7} className="py-10 text-center text-gray-500">
                       No declarations found
                     </td>
                   </tr>

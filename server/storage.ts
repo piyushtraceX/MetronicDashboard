@@ -602,7 +602,69 @@ export class MemStorage implements IStorage {
         startDate: twoMonthsAgo, 
         endDate: null, 
         createdBy: 1,
-        industry: "Forestry"
+        industry: "Forestry",
+        geojsonData: {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {
+                name: "Deforested Area 1",
+                issue: "Recent deforestation (2022-2023)",
+                area_ha: 24.5,
+                compliance: "non-compliant"
+              },
+              geometry: {
+                type: "Polygon",
+                coordinates: [[
+                  [102.0, 0.5],
+                  [102.0, 0.6],
+                  [102.1, 0.6],
+                  [102.1, 0.5],
+                  [102.0, 0.5]
+                ]]
+              }
+            },
+            {
+              type: "Feature",
+              properties: {
+                name: "Traceability Gap Region",
+                issue: "Missing traceability data",
+                area_ha: 32.1,
+                compliance: "non-compliant"
+              },
+              geometry: {
+                type: "Polygon",
+                coordinates: [[
+                  [102.2, 0.7],
+                  [102.2, 0.8],
+                  [102.3, 0.8],
+                  [102.3, 0.7],
+                  [102.2, 0.7]
+                ]]
+              }
+            },
+            {
+              type: "Feature",
+              properties: {
+                name: "Documentation Issue Area",
+                issue: "Incomplete documentation",
+                area_ha: 18.7,
+                compliance: "non-compliant"
+              },
+              geometry: {
+                type: "Polygon",
+                coordinates: [[
+                  [102.4, 0.9],
+                  [102.4, 1.0],
+                  [102.5, 1.0],
+                  [102.5, 0.9],
+                  [102.4, 0.9]
+                ]]
+              }
+            }
+          ]
+        }
       },
       { 
         type: "outbound", 
