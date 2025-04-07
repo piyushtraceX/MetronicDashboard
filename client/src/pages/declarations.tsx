@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Search, Eye, Upload, Plus, MapPin, AlertCircle } from "lucide-react";
+import { CalendarIcon, Search, Eye, Upload, Plus, MapPin, AlertCircle, MoreHorizontal, FileText } from "lucide-react";
 import StatusBadge from "@/components/ui/status-badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,6 +21,14 @@ import {
   DialogTitle,
   DialogClose
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -123,18 +131,37 @@ function DeclarationRow({ declaration, onViewClick }: {
           )}></span>
           {isCompliant ? "Compliant" : "Non-Compliant"}
         </span>
-        
-        {!isCompliant && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-red-500 text-xs ml-2"
-            onClick={() => setMapModalOpen(true)}
-          >
-            <MapPin className="h-3 w-3 mr-1" />
-            View Non-Compliant Farms
-          </Button>
-        )}
+      </td>
+      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+        {formatDate(declaration.lastUpdated)}
+      </td>
+      <td className="px-3 py-4 text-sm text-right whitespace-nowrap">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => onViewClick(declaration.id)}>
+              <Eye className="h-4 w-4 mr-2" />
+              <span>View Details</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem onClick={() => window.open('#', '_blank')}>
+              <FileText className="h-4 w-4 mr-2" />
+              <span>File DDS in EU Traces</span>
+            </DropdownMenuItem>
+            
+            {!isCompliant && (
+              <DropdownMenuItem onClick={() => setMapModalOpen(true)} className="text-red-600">
+                <MapPin className="h-4 w-4 mr-2" />
+                <span>View Non-Compliant Farms</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         {/* Map Modal for Non-Compliant Farms */}
         <Dialog open={mapModalOpen} onOpenChange={setMapModalOpen}>
@@ -183,20 +210,6 @@ function DeclarationRow({ declaration, onViewClick }: {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </td>
-      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
-        {formatDate(declaration.lastUpdated)}
-      </td>
-      <td className="px-3 py-4 text-sm text-right whitespace-nowrap">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-primary"
-          onClick={() => onViewClick(declaration.id)}
-        >
-          <Eye className="h-4 w-4 mr-1" />
-          View
-        </Button>
       </td>
     </tr>
   );
