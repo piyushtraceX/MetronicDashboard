@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Search, Eye, Upload, Plus, MapPin, AlertCircle, MoreHorizontal, FileText } from "lucide-react";
+import { CalendarIcon, Search, Eye, Upload, Plus, MapPin, AlertCircle, MoreHorizontal, FileText, Download, Map } from "lucide-react";
 import StatusBadge from "@/components/ui/status-badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -89,9 +89,64 @@ function DeclarationRow({ declaration, onViewClick }: {
   onViewClick: (id: number) => void;
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
+  const { toast } = useToast();
   
   // Determine compliance based on risk level for this example (in a real app, fetch from API)
   const isCompliant = declaration.riskLevel === "low" || declaration.riskLevel === "medium";
+  
+  // Function to handle downloading consolidated GeoJSON
+  const handleDownloadGeoJSON = () => {
+    // In a real app, this would make an API call to get the actual GeoJSON data
+    // For this demo, we'll create a sample GeoJSON object
+    const geoJSON = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {
+            name: "Declaration Area #" + declaration.id,
+            description: "Boundary for " + declaration.productName
+          },
+          geometry: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [100.0, 0.0],
+                [101.0, 0.0],
+                [101.0, 1.0],
+                [100.0, 1.0],
+                [100.0, 0.0]
+              ]
+            ]
+          }
+        }
+      ]
+    };
+    
+    // Convert to string and create blob
+    const geoJSONString = JSON.stringify(geoJSON, null, 2);
+    const blob = new Blob([geoJSONString], { type: 'application/geo+json' });
+    
+    // Create download link and trigger click
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `declaration-${declaration.id}-geojson.json`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+    
+    toast({
+      title: "GeoJSON Downloaded",
+      description: `GeoJSON data for Declaration #${declaration.id} has been downloaded`,
+      variant: "default",
+    });
+  };
   
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-50">
@@ -154,6 +209,11 @@ function DeclarationRow({ declaration, onViewClick }: {
               <span>File DDS in EU Traces</span>
             </DropdownMenuItem>
             
+            <DropdownMenuItem onClick={handleDownloadGeoJSON}>
+              <Download className="h-4 w-4 mr-2" />
+              <span>Download Consolidated GeoJSON</span>
+            </DropdownMenuItem>
+            
             {!isCompliant && (
               <DropdownMenuItem onClick={() => setMapModalOpen(true)} className="text-red-600">
                 <MapPin className="h-4 w-4 mr-2" />
@@ -206,7 +266,7 @@ function DeclarationRow({ declaration, onViewClick }: {
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setMapModalOpen(false)}>Close</Button>
-              <Button>Download GeoJSON</Button>
+              <Button onClick={handleDownloadGeoJSON}>Download GeoJSON</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
