@@ -93,7 +93,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
   // Step 4: Customer Selection (for outbound only)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  
+  // GeoJSON upload state
   const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
+  const [geometryValid, setGeometryValid] = useState<boolean | null>(null);
+  const [satelliteValid, setSatelliteValid] = useState<boolean | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
   // Create declaration mutation
   const createDeclaration = useMutation({
@@ -238,11 +243,50 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const handleGeoJSONUpload = (e: React.MouseEvent) => {
     e.preventDefault();
     setHasUploadedGeoJSON(true);
+    setIsValidating(true);
+    setGeometryValid(null);
+    setSatelliteValid(null);
+    
     toast({
       title: "GeoJSON uploaded",
-      description: "GeoJSON file has been uploaded successfully",
+      description: "GeoJSON file has been uploaded successfully. Validating...",
       variant: "default",
     });
+    
+    // Simulate geometry validation check
+    setTimeout(() => {
+      // 50% probability of geometry validation passing/failing for equal testing scenarios
+      const geometryIsValid = Math.random() < 0.5;
+      setGeometryValid(geometryIsValid);
+      
+      // If geometry validation fails, don't proceed to satellite check
+      if (!geometryIsValid) {
+        setIsValidating(false);
+        toast({
+          title: "Geometry validation failed",
+          description: "The GeoJSON contains non-compliant geometry. Please notify the supplier. The declaration can be saved as draft but cannot be submitted.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Only proceed to satellite check if geometry is valid
+      setTimeout(() => {
+        // 50% probability of satellite validation passing/failing
+        const satelliteIsValid = Math.random() < 0.5;
+        setSatelliteValid(satelliteIsValid);
+        setIsValidating(false);
+        
+        // If satellite check fails, notify the user
+        if (!satelliteIsValid) {
+          toast({
+            title: "Validation issues detected",
+            description: "Satellite check detected potential deforestation. The declaration can be saved as draft but cannot be submitted.",
+            variant: "destructive",
+          });
+        }
+      }, 2000);
+    }, 1500);
   };
 
   const handleDocumentUpload = (e: React.MouseEvent) => {
@@ -281,44 +325,29 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       case 1: // Declaration Type
         return true; // Always valid as we have a default
 
-      case 2: // Declaration Details - Items
-        // Check if at least one item has required fields
-        const validItems = items.some(item => 
-          item.hsnCode.trim() !== "" && 
-          item.productName.trim() !== "" && 
-          item.quantity.trim() !== "" && 
-          parseFloat(item.quantity) > 0
-        );
-
-        if (!validItems) {
+      case 2: // GeoJSON Upload
+        // Check if GeoJSON is uploaded
+        if (!hasUploadedGeoJSON) {
           toast({
-            title: "Required fields missing",
-            description: "Please fill in HSN Code, Product Name and Quantity for at least one item",
+            title: "GeoJSON required",
+            description: "Please upload a GeoJSON file to continue",
             variant: "destructive",
           });
           return false;
         }
-
-        // Check if dates are selected
-        if (!startDate || !endDate) {
+        
+        // Check if validation is in progress
+        if (isValidating) {
           toast({
-            title: "Dates required",
-            description: "Please select both start and end dates for the declaration validity period",
+            title: "Validation in progress",
+            description: "Please wait for the GeoJSON validation to complete",
             variant: "destructive",
           });
           return false;
         }
-
-        // Check if supplier is selected
-        if (!selectedSupplierId) {
-          toast({
-            title: "Supplier selection required",
-            description: "Please select a supplier for the declaration",
-            variant: "destructive",
-          });
-          return false;
-        }
-
+        
+        // Allow proceeding even with failed validations
+        // The declaration can be saved as draft but won't be submittable later
         return true;
 
       case 3: // Upload Evidence
@@ -367,6 +396,17 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       rmId: item.rmId
     }));
 
+    // Determine declaration status based on GeoJSON validation results
+    let status = "pending";
+    
+    if (geometryValid === false) {
+      status = "non-compliant-geometry";
+    } else if (satelliteValid === false) {
+      status = "non-compliant-satellite";
+    } else if (declarationType === "inbound") {
+      status = "validating";
+    }
+    
     // Prepare payload
     const payload = {
       type: declarationType,
@@ -376,12 +416,14 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       endDate: endDate ? endDate.toISOString() : null,
       supplierId: selectedSupplierId,
       customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
-      status: declarationType === "inbound" ? "validating" : "pending",
+      status: status,
       riskLevel: "medium",
       poNumber: poNumber,
       supplierSoNumber: supplierSoNumber,
       shipmentNumber: shipmentNumber,
-      comments: comments
+      comments: comments,
+      geometryValid: geometryValid,
+      satelliteValid: satelliteValid
     };
 
     createDeclaration.mutate(payload);
@@ -414,6 +456,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setShipmentNumber("");
     setSelectedCustomer(null);
     setComments("");
+    setHasUploadedGeoJSON(false);
+    setGeometryValid(null);
+    setSatelliteValid(null);
+    setIsValidating(false);
   };
 
   // Handle dialog close
@@ -781,19 +827,28 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 <div 
                   className={cn(
                     "border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50",
-                    hasUploadedGeoJSON ? "border-green-300 bg-green-50" : "border-gray-300"
+                    hasUploadedGeoJSON ? 
+                      (geometryValid === false || satelliteValid === false) 
+                        ? "border-red-300 bg-red-50" 
+                        : "border-green-300 bg-green-50"
+                      : "border-gray-300"
                   )}
-                  onClick={handleGeoJSONUpload}
+                  onClick={!hasUploadedGeoJSON ? handleGeoJSONUpload : undefined}
+                  style={{ cursor: hasUploadedGeoJSON ? 'default' : 'pointer' }}
                 >
                   <div className="mx-auto flex justify-center">
                     <Upload className={cn(
                       "h-12 w-12",
-                      hasUploadedGeoJSON ? "text-green-500" : "text-gray-400"
+                      hasUploadedGeoJSON ? 
+                        (geometryValid === false || satelliteValid === false) 
+                          ? "text-red-500" 
+                          : "text-green-500" 
+                        : "text-gray-400"
                     )} />
                   </div>
                   <p className="mt-4 text-sm text-gray-600">
                     {hasUploadedGeoJSON ? 
-                      "GeoJSON file uploaded successfully" : 
+                      (isValidating ? "Validating GeoJSON file..." : "GeoJSON file uploaded successfully") : 
                       "Drag and drop your GeoJSON file here, or click to browse"}
                   </p>
                   {!hasUploadedGeoJSON && (
@@ -807,6 +862,63 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     >
                       Browse Files
                     </Button>
+                  )}
+                  
+                  {/* Validation status indicators */}
+                  {hasUploadedGeoJSON && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="text-sm font-medium">Geometry Check:</span>
+                        {isValidating ? (
+                          <span className="text-sm text-amber-500">Checking...</span>
+                        ) : geometryValid === true ? (
+                          <span className="text-sm text-green-600">Compliant</span>
+                        ) : geometryValid === false ? (
+                          <span className="text-sm text-red-600">Non-Compliant</span>
+                        ) : (
+                          <span className="text-sm text-gray-500">Pending</span>
+                        )}
+                      </div>
+                      
+                      {/* Only show satellite check if geometry check passed */}
+                      {geometryValid === true && (
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-sm font-medium">Satellite Check:</span>
+                          {isValidating ? (
+                            <span className="text-sm text-amber-500">Checking...</span>
+                          ) : satelliteValid === true ? (
+                            <span className="text-sm text-green-600">Compliant</span>
+                          ) : satelliteValid === false ? (
+                            <span className="text-sm text-red-600">Non-Compliant</span>
+                          ) : (
+                            <span className="text-sm text-gray-500">Pending</span>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Warning message for failed validations */}
+                      {geometryValid === false && (
+                        <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
+                          <p className="text-sm text-red-600">
+                            Geometry validation failed. Please notify the supplier.
+                          </p>
+                          <p className="text-sm text-red-600 mt-1">
+                            The declaration can only be saved as draft and cannot be submitted.
+                          </p>
+                        </div>
+                      )}
+                      
+                      {geometryValid === true && satelliteValid === false && (
+                        <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
+                          <p className="text-sm text-red-600">
+                            Satellite check detected potential deforestation. Please notify the supplier.
+                          </p>
+                          <p className="text-sm text-red-600 mt-1">
+                            The declaration can only be saved as draft and cannot be submitted.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -1044,6 +1156,45 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         </ul>
                       )}
                     </div>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <h4 className="text-sm font-medium text-gray-500">GeoJSON Validation Status</h4>
+                    {!hasUploadedGeoJSON ? (
+                      <p className="mt-1 text-red-500">Not uploaded</p>
+                    ) : (
+                      <div className="mt-1 space-y-1">
+                        <div className="flex items-center">
+                          <span className="text-sm mr-2">Geometry Check:</span>
+                          {geometryValid === true ? (
+                            <Badge className="bg-green-500">Compliant</Badge>
+                          ) : geometryValid === false ? (
+                            <Badge className="bg-red-500">Non-Compliant</Badge>
+                          ) : (
+                            <Badge className="bg-yellow-500">Pending</Badge>
+                          )}
+                        </div>
+                        
+                        {geometryValid === true && (
+                          <div className="flex items-center">
+                            <span className="text-sm mr-2">Satellite Check:</span>
+                            {satelliteValid === true ? (
+                              <Badge className="bg-green-500">Compliant</Badge>
+                            ) : satelliteValid === false ? (
+                              <Badge className="bg-red-500">Non-Compliant</Badge>
+                            ) : (
+                              <Badge className="bg-yellow-500">Pending</Badge>
+                            )}
+                          </div>
+                        )}
+                        
+                        {(geometryValid === false || (geometryValid === true && satelliteValid === false)) && (
+                          <div className="mt-2 text-sm text-red-600">
+                            This declaration will be saved with non-compliant status.
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
