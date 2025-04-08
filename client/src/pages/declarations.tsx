@@ -332,17 +332,34 @@ function DeclarationRow({
             <div className="py-4 space-y-4">
               <div>
                 <Label htmlFor="supplier-name" className="text-sm font-medium">Supplier Name</Label>
-                <Input id="supplier-name" placeholder="Enter supplier name" />
+                <Input 
+                  id="supplier-name" 
+                  placeholder="Enter supplier name" 
+                  defaultValue={`Contact Person for Supplier ${declaration.supplierId}`}
+                  readOnly 
+                  className="bg-gray-50"
+                />
               </div>
               
               <div>
                 <Label htmlFor="supplier-company" className="text-sm font-medium">Supplier Company</Label>
-                <Input id="supplier-company" placeholder="Enter supplier company" defaultValue={`Supplier ${declaration.supplierId}`} />
+                <Input 
+                  id="supplier-company" 
+                  placeholder="Enter supplier company" 
+                  defaultValue={`Supplier ${declaration.supplierId}`} 
+                />
               </div>
               
               <div>
                 <Label htmlFor="supplier-email" className="text-sm font-medium">Supplier Email</Label>
-                <Input id="supplier-email" placeholder="Enter supplier email" type="email" />
+                <Input 
+                  id="supplier-email" 
+                  placeholder="Enter supplier email" 
+                  defaultValue={`supplier${declaration.supplierId}@example.com`}
+                  readOnly 
+                  className="bg-gray-50"
+                  type="email" 
+                />
               </div>
             </div>
             
