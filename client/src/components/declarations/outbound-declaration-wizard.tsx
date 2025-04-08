@@ -254,8 +254,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     
     // Simulate geometry validation check
     setTimeout(() => {
-      // For testing purposes, force geometry validation to fail
-      const geometryIsValid = false; // Change to true to test satellite check
+      // 50% probability of geometry validation passing/failing for equal testing scenarios
+      const geometryIsValid = Math.random() < 0.5;
       setGeometryValid(geometryIsValid);
       
       // If geometry validation fails, don't proceed to satellite check
@@ -271,8 +271,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       
       // Only proceed to satellite check if geometry is valid
       setTimeout(() => {
-        // Randomly decide satellite validation result (70% success rate)
-        const satelliteIsValid = Math.random() < 0.7;
+        // 50% probability of satellite validation passing/failing for equal testing scenarios
+        const satelliteIsValid = Math.random() < 0.5;
         setSatelliteValid(satelliteIsValid);
         setIsValidating(false);
         
