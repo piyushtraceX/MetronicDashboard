@@ -90,12 +90,14 @@ function DeclarationRow({
   declaration, 
   onViewClick,
   selected = false,
-  onSelectChange
+  onSelectChange,
+  onAllotRmId
 }: { 
   declaration: Declaration; 
   onViewClick: (id: number) => void;
   selected?: boolean;
   onSelectChange?: (id: number, selected: boolean) => void;
+  onAllotRmId?: (id: number) => void;
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const { toast } = useToast();
@@ -236,12 +238,7 @@ function DeclarationRow({
             </DropdownMenuItem>
             
             {!declaration.rmId && (
-              <DropdownMenuItem onClick={() => {
-                toast({
-                  title: "Allot RM ID",
-                  description: `Preparing to allot RM ID for declaration #${declaration.id}`,
-                });
-              }}>
+              <DropdownMenuItem onClick={() => onAllotRmId?.(declaration.id)}>
                 <Tag className="h-4 w-4 mr-2" />
                 <span>Allot RM ID</span>
               </DropdownMenuItem>
@@ -452,6 +449,10 @@ export default function Declarations() {
   // State for selected rows
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   
+  // State for RM ID allotment modal
+  const [allotRmIdModalOpen, setAllotRmIdModalOpen] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  
   // Fetch declarations
   const { data: declarations = [], isLoading: isLoadingDeclarations } = useQuery<Declaration[]>({
     queryKey: ['/api/declarations', activeTab !== 'all' ? { type: activeTab } : undefined],
@@ -516,6 +517,12 @@ export default function Declarations() {
   const selectedWithoutRmId = selectedRows.length > 0 
     ? filteredDeclarations.filter(d => selectedRows.includes(d.id) && !d.rmId)
     : [];
+    
+  // Handle RM ID allotment for single declaration
+  const handleAllotRmId = (id: number) => {
+    setSelectedRows([id]);
+    setAllotRmIdModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -978,34 +985,13 @@ export default function Declarations() {
                   size="sm" 
                   variant="outline" 
                   className="mr-2 border-green-500 text-green-600 hover:bg-green-50"
-                  onClick={() => {
-                    /* Implementation for bulk RM ID allotment dialog */
-                    toast({
-                      title: "Bulk RM ID Allotment",
-                      description: `Preparing to allot RM IDs for ${selectedWithoutRmId.length} declarations`,
-                    });
-                  }}
+                  onClick={() => setAllotRmIdModalOpen(true)}
                 >
                   <Tag className="h-4 w-4 mr-1" />
                   Allot RM ID
                 </Button>
               )}
-              
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="mr-2"
-                onClick={() => {
-                  /* Export selected declarations */
-                  toast({
-                    title: "Export Started",
-                    description: `Exporting ${selectedRows.length} declarations to Excel`,
-                  });
-                }}
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-1" />
-                Export to Excel
-              </Button>
+
             </div>
             
             <Button 
@@ -1080,6 +1066,7 @@ export default function Declarations() {
                         setSelectedDeclarationId(id);
                         setDetailViewOpen(true);
                       }}
+                      onAllotRmId={handleAllotRmId}
                     />
                   ))
                 )}
@@ -1095,6 +1082,89 @@ export default function Declarations() {
         onOpenChange={setDetailViewOpen}
         declarationId={selectedDeclarationId}
       />
+      
+      {/* Allot RM ID Modal */}
+      <Dialog open={allotRmIdModalOpen} onOpenChange={setAllotRmIdModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Products</DialogTitle>
+          </DialogHeader>
+          
+          <div className="border-2 border-dashed rounded-md p-6 text-center">
+            <div className="mx-auto flex flex-col items-center">
+              <p className="text-sm text-gray-500 mb-2">
+                Drag and drop your Excel file here
+              </p>
+              <p className="text-sm text-gray-500 mb-4">or</p>
+              <Button size="sm" className="mb-2">
+                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Browse Files
+              </Button>
+              <p className="text-xs text-gray-500 mb-2">
+                Supported formats: .xlsx, .xls
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center text-sm py-2">
+            <div className="flex items-center text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => {
+              // Handler for downloading product list template
+              const selectedProducts = selectedWithoutRmId.map((d, index) => ({
+                "Sr No.": index + 1,
+                "Product Name": filteredDeclarations.find(fd => fd.id === d.id)?.productName || "",
+                "RM ID": ""
+              }));
+              
+              // In a real implementation, this would create an Excel file
+              // For now, we'll just show a toast
+              toast({
+                title: "Product List Template",
+                description: `Downloading template with ${selectedWithoutRmId.length} products`,
+              });
+            }}>
+              <svg className="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download Product List
+            </div>
+            <p className="ml-1 text-gray-500 text-xs">
+              Get our sample Excel template
+            </p>
+          </div>
+          
+          <div className="text-sm flex items-center text-blue-500">
+            <svg className="h-4 w-4 mr-1 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Maximum file size: 10MB
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAllotRmIdModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={fileUploading}>
+              {fileUploading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Uploading...
+                </span>
+              ) : (
+                "Upload File"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
