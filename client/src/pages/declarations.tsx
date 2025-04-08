@@ -90,14 +90,12 @@ function DeclarationRow({
   declaration, 
   onViewClick,
   selected = false,
-  onSelectChange,
-  onAllotRmId
+  onSelectChange
 }: { 
   declaration: Declaration; 
   onViewClick: (id: number) => void;
   selected?: boolean;
   onSelectChange?: (id: number, selected: boolean) => void;
-  onAllotRmId?: (id: number) => void;
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const { toast } = useToast();
@@ -174,11 +172,6 @@ function DeclarationRow({
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {declaration.industry || "Not specified"} / {declaration.productName}
       </td>
-      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
-        {declaration.rmId ? declaration.rmId : (
-          <span className="text-gray-400 italic">RM ID not present</span>
-        )}
-      </td>
       <td className="px-3 py-4 text-sm whitespace-nowrap">
         <StatusBadge status={declaration.status} />
       </td>
@@ -236,13 +229,6 @@ function DeclarationRow({
               <Download className="h-4 w-4 mr-2" />
               <span>Download Consolidated GeoJSON</span>
             </DropdownMenuItem>
-            
-            {!declaration.rmId && (
-              <DropdownMenuItem onClick={() => onViewClick(declaration.id)}>
-                <Tag className="h-4 w-4 mr-2" />
-                <span>Allot RM ID</span>
-              </DropdownMenuItem>
-            )}
             
             {!isCompliant && (
               <DropdownMenuItem onClick={() => setMapModalOpen(true)} className="text-red-600">
@@ -1014,24 +1000,8 @@ export default function Declarations() {
           <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'} selected</span>
-              {selectedWithoutRmId.length > 0 && (
-                <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">
-                  {selectedWithoutRmId.length} without RM ID
-                </Badge>
-              )}
             </div>
             <div className="flex gap-2">
-              {selectedWithoutRmId.length > 0 && (
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
-                  className="flex items-center gap-1"
-                  onClick={() => setAllotRmIdModalOpen(true)}
-                >
-                  <Tag className="h-4 w-4" />
-                  <span>Allot RM ID</span>
-                </Button>
-              )}
               <Button size="sm" variant="outline" onClick={() => setSelectedRows([])}>
                 Clear selection
               </Button>
@@ -1056,9 +1026,6 @@ export default function Declarations() {
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Industry/Product
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    RM ID
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Status
@@ -1101,7 +1068,6 @@ export default function Declarations() {
                         setSelectedDeclarationId(id);
                         setDetailViewOpen(true);
                       }}
-                      onAllotRmId={handleAllotRmId}
                     />
                   ))
                 )}
