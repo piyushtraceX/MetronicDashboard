@@ -969,42 +969,6 @@ export default function Declarations() {
           </div>
         )}
         
-        {/* Bulk Actions Panel - shown only when rows are selected */}
-        {selectedRows.length > 0 && (
-          <div className="bg-gray-50 border rounded-md p-3 mb-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <Badge className="mr-2 bg-blue-100 text-blue-800 hover:bg-blue-100">
-                {selectedRows.length} selected
-              </Badge>
-              
-              <span className="text-sm text-gray-500 mr-2">
-                Bulk Actions:
-              </span>
-              
-              {selectedWithoutRmId.length > 0 && (
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="mr-2 border-green-500 text-green-600 hover:bg-green-50"
-                  onClick={() => setAllotRmIdModalOpen(true)}
-                >
-                  <Tag className="h-4 w-4 mr-1" />
-                  Allot RM ID
-                </Button>
-              )}
-
-            </div>
-            
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={() => setSelectedRows([])}
-            >
-              Clear selection
-            </Button>
-          </div>
-        )}
-        
         <div className="rounded-md border">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
