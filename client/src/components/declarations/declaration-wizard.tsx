@@ -669,7 +669,18 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       </div>
 
                       <div className="flex flex-wrap gap-3 items-end">
-                        <div className="w-44">
+                        <div className="w-28">
+                          <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
+                          <Input 
+                            id={`hsn-code-${item.id}`} 
+                            placeholder="e.g. 1511.10.00"
+                            value={item.hsnCode}
+                            onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div className="w-28">
                           <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
                             RM Id
                             <TooltipProvider>
@@ -688,17 +699,6 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             placeholder="e.g. RM13579"
                             value={item.rmId}
                             onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-                        
-                        <div className="w-44">
-                          <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
-                          <Input 
-                            id={`hsn-code-${item.id}`} 
-                            placeholder="e.g. 1511.10.00"
-                            value={item.hsnCode}
-                            onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
                             className="mt-1"
                           />
                         </div>

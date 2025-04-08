@@ -801,13 +801,32 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                           </div>
                           
                           <div className="flex flex-wrap gap-3 items-end">
-                            <div className="w-44">
+                            <div className="w-28">
                               <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
                               <Input 
                                 id={`hsn-code-${item.id}`} 
                                 placeholder="e.g. 1511.10.00"
                                 value={item.hsnCode}
                                 onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div className="w-28">
+                              <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
+                                RM ID
+                                <span 
+                                  className="ml-1 text-gray-400 cursor-help"
+                                  title="RM Id refers to the raw material id of this product in your ERP"
+                                >
+                                  ⓘ
+                                </span>
+                              </Label>
+                              <Input 
+                                id={`rm-id-${item.id}`} 
+                                placeholder="e.g. RM12345"
+                                value={item.rmId || ""}
+                                onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
                                 className="mt-1"
                               />
                             </div>
@@ -864,25 +883,6 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                   <SelectItem value="m³">m³</SelectItem>
                                 </SelectContent>
                               </Select>
-                            </div>
-                            
-                            <div className="w-44">
-                              <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
-                                RM ID
-                                <span 
-                                  className="ml-1 text-gray-400 cursor-help"
-                                  title="RM Id refers to the raw material id of this product in your ERP"
-                                >
-                                  ⓘ
-                                </span>
-                              </Label>
-                              <Input 
-                                id={`rm-id-${item.id}`} 
-                                placeholder="e.g. RM12345"
-                                value={item.rmId || ""}
-                                onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
-                                className="mt-1"
-                              />
                             </div>
                           </div>
                         </div>
