@@ -238,7 +238,7 @@ function DeclarationRow({
             </DropdownMenuItem>
             
             {!declaration.rmId && (
-              <DropdownMenuItem onClick={() => onAllotRmId?.(declaration.id)}>
+              <DropdownMenuItem onClick={() => onViewClick(declaration.id)}>
                 <Tag className="h-4 w-4 mr-2" />
                 <span>Allot RM ID</span>
               </DropdownMenuItem>
@@ -952,15 +952,16 @@ export default function Declarations() {
             </div>
             <div className="flex gap-2">
               {selectedWithoutRmId.length > 0 && (
-                <Button size="sm" variant="secondary" className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="flex items-center gap-1"
+                  onClick={() => setAllotRmIdModalOpen(true)}
+                >
                   <Tag className="h-4 w-4" />
                   <span>Allot RM ID</span>
                 </Button>
               )}
-              <Button size="sm" variant="secondary" className="flex items-center gap-1">
-                <FileSpreadsheet className="h-4 w-4" />
-                <span>Export to Excel</span>
-              </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedRows([])}>
                 Clear selection
               </Button>

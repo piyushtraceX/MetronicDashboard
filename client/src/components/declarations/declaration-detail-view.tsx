@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,11 @@ import {
   X,
   AlertTriangle 
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Declaration {
   id: number;
@@ -44,6 +47,7 @@ interface Declaration {
   hasGeoJSON?: boolean;
   declarationSource?: string;
   comments?: string;
+  rmId?: string | null;
 }
 
 interface Supplier {
@@ -72,12 +76,22 @@ interface DeclarationDetailViewProps {
 export default function DeclarationDetailView({ open, onOpenChange, declarationId }: DeclarationDetailViewProps) {
   const { toast } = useToast();
   const [comments, setComments] = useState("");
-
+  const [rmId, setRmId] = useState("");
+  
   // Fetch declaration details
   const { data: declaration, isLoading: isLoadingDeclaration } = useQuery<Declaration>({
     queryKey: ['/api/declarations', declarationId],
     enabled: !!declarationId && open,
   });
+  
+  // Set initial RM ID value when declaration is loaded
+  useEffect(() => {
+    if (declaration?.rmId) {
+      setRmId(declaration.rmId);
+    } else {
+      setRmId("");
+    }
+  }, [declaration]);
 
   // Fetch supplier details
   const { data: supplier, isLoading: isLoadingSupplier } = useQuery<Supplier>({
@@ -90,6 +104,36 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
     queryKey: ['/api/customers', declaration?.customerId],
     enabled: !!declaration?.customerId && open && declaration?.type === 'outbound',
   });
+
+  // Mutation for updating RM ID
+  const updateDeclarationMutation = useMutation({
+    mutationFn: (data: { rmId: string }) => {
+      return apiRequest(`/api/declarations/${declarationId}`, 'PATCH', { rmId: data.rmId });
+    },
+    onSuccess: () => {
+      toast({
+        title: "RM ID Updated",
+        description: "Raw Material ID has been successfully updated",
+        variant: "default",
+      });
+      
+      // Invalidate the declaration query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ['/api/declarations', declarationId] });
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update RM ID",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const handleSaveRmId = () => {
+    if (declaration && rmId.trim() !== (declaration.rmId || "")) {
+      updateDeclarationMutation.mutate({ rmId: rmId.trim() });
+    }
+  };
 
   const handleFileDDS = () => {
     toast({
@@ -160,6 +204,32 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
                     `${declaration.status.charAt(0).toUpperCase()}${declaration.status.slice(1)}` : 
                     "Unknown"}
                 </Badge>
+              </div>
+              
+              <div className="col-span-2">
+                <div className="flex items-end gap-4">
+                  <div className="flex-grow">
+                    <Label htmlFor="rmId" className="text-sm font-medium text-gray-500 flex items-center">
+                      RM ID (Raw Material ID)
+                      <span className="text-xs text-gray-400 ml-2 italic">(ERP System Reference)</span>
+                    </Label>
+                    <Input
+                      id="rmId"
+                      value={rmId}
+                      onChange={(e) => setRmId(e.target.value)}
+                      placeholder="Enter RM ID"
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    onClick={handleSaveRmId}
+                    disabled={updateDeclarationMutation.isPending || rmId.trim() === (declaration.rmId || "")}
+                    className="mb-px"
+                  >
+                    {updateDeclarationMutation.isPending ? "Saving..." : "Save RM ID"}
+                  </Button>
+                </div>
               </div>
             </div>
             
