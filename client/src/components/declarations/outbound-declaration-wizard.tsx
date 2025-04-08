@@ -187,7 +187,13 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   // Create declaration mutation
   const createDeclaration = useMutation({
     mutationFn: (declaration: any) => 
-      apiRequest('POST', '/api/declarations', declaration),
+      apiRequest('/api/declarations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(declaration)
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/declarations'] });
       toast({

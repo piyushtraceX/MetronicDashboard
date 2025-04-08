@@ -98,8 +98,13 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   // Create declaration mutation
   const createDeclaration = useMutation({
     mutationFn: async (data: any) => {
-      const result = await apiRequest('POST', '/api/declarations', data);
-      return result.json();
+      return apiRequest('/api/declarations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       // Close modal

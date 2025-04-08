@@ -372,11 +372,13 @@ export default function Declarations() {
         riskLevel: "medium",
       };
       
-      // Using the apiRequest function with the correct parameter order:
-      // apiRequest(method, url, data?)
-      const result = await apiRequest('POST', '/api/declarations', payload);
-      
-      return result.json();
+      return apiRequest('/api/declarations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
     },
     onSuccess: () => {
       // Reset form
@@ -518,11 +520,79 @@ export default function Declarations() {
     ? filteredDeclarations.filter(d => selectedRows.includes(d.id) && !d.rmId)
     : [];
     
+  // Get IDs of declarations without RM IDs
+  const selectedWithoutRmIdIds = selectedWithoutRmId.map(d => d.id);
+  
+  // Create a lookup object for declarations by ID
+  const declarationsById: {[key: number]: Declaration} = {};
+  filteredDeclarations.forEach(d => {
+    declarationsById[d.id] = d;
+  });
+    
   // Handle RM ID allotment for single declaration
   const handleAllotRmId = (id: number) => {
     setSelectedRows([id]);
     setAllotRmIdModalOpen(true);
   };
+  
+  // Mutation to update RM ID for a single declaration
+  const updateRmId = useMutation({
+    mutationFn: async ({ id, rmId }: { id: number, rmId: string }) => {
+      return apiRequest(`/api/declarations/${id}/rm-id`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rmId }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "RM ID Updated",
+        description: "The RM ID has been successfully updated",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/declarations'] });
+      setAllotRmIdModalOpen(false);
+    },
+    onError: (error) => {
+      console.error('Error updating RM ID:', error);
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating the RM ID",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutation to bulk update RM IDs for multiple declarations
+  const bulkUpdateRmIds = useMutation({
+    mutationFn: async (updates: { id: number, rmId: string }[]) => {
+      return apiRequest('/api/declarations/bulk-update-rm-ids', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ updates }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "RM IDs Updated",
+        description: "The RM IDs have been successfully updated",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/declarations'] });
+      setAllotRmIdModalOpen(false);
+      setSelectedRows([]);
+    },
+    onError: (error) => {
+      console.error('Error updating RM IDs:', error);
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating the RM IDs",
+        variant: "destructive",
+      });
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -1078,18 +1148,46 @@ export default function Declarations() {
           
           <div className="flex items-center text-sm py-2">
             <div className="flex items-center text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => {
-              // Handler for downloading product list template
-              const selectedProducts = selectedWithoutRmId.map((d, index) => ({
-                "Sr No.": index + 1,
-                "Product Name": filteredDeclarations.find(fd => fd.id === d.id)?.productName || "",
-                "RM ID": ""
-              }));
-              
-              // In a real implementation, this would create an Excel file
-              // For now, we'll just show a toast
-              toast({
-                title: "Product List Template",
-                description: `Downloading template with ${selectedWithoutRmId.length} products`,
+              // Create a request to the server to download the product list Excel file
+              fetch('/api/declarations/product-list-template', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  products: selectedWithoutRmIdIds.map((id, index) => ({
+                    srNo: index + 1,
+                    productName: declarationsById[id]?.productName || "",
+                    rmId: ""
+                  }))
+                }),
+              })
+              .then(response => response.blob())
+              .then(blob => {
+                // Create a URL for the blob
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Product List.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                toast({
+                  title: "Product List Downloaded",
+                  description: `Downloaded template with ${selectedWithoutRmId.length} products`,
+                });
+              })
+              .catch(error => {
+                console.error('Error downloading file:', error);
+                toast({
+                  title: "Download Failed",
+                  description: "There was an error downloading the product list template",
+                  variant: "destructive",
+                });
               });
             }}>
               <svg className="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1100,7 +1198,7 @@ export default function Declarations() {
               Download Product List
             </div>
             <p className="ml-1 text-gray-500 text-xs">
-              Get our sample Excel template
+              Get Excel template with selected products
             </p>
           </div>
           

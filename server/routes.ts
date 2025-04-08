@@ -660,6 +660,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint to update RM IDs for declarations
+  app.patch("/api/declarations/:id/rm-id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { rmId } = req.body;
+      
+      if (!rmId) {
+        return res.status(400).json({ message: "RM ID is required" });
+      }
+      
+      const declaration = await storage.getDeclaration(id);
+      if (!declaration) {
+        return res.status(404).json({ message: "Declaration not found" });
+      }
+      
+      const updated = await storage.updateDeclaration(id, { rmId });
+      
+      if (updated) {
+        // Log the activity
+        await storage.createActivity({
+          type: "updated",
+          entityType: "declaration",
+          entityId: id,
+          description: `Updated RM ID to '${rmId}'`,
+          userId: 1, // Use actual user ID when available
+        });
+        
+        res.json(updated);
+      } else {
+        res.status(500).json({ message: "Error updating declaration" });
+      }
+    } catch (error) {
+      console.error('Error updating RM ID:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+  
+  // Endpoint to bulk update RM IDs for multiple declarations
+  app.patch("/api/declarations/bulk-update-rm-ids", async (req, res) => {
+    try {
+      const { updates } = req.body;
+      
+      if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({ message: "Invalid updates format" });
+      }
+      
+      const results = [];
+      for (const update of updates) {
+        const { id, rmId } = update;
+        
+        if (!id || !rmId) {
+          results.push({ id, success: false, message: "Missing id or rmId" });
+          continue;
+        }
+        
+        const declaration = await storage.getDeclaration(id);
+        if (!declaration) {
+          results.push({ id, success: false, message: "Declaration not found" });
+          continue;
+        }
+        
+        const updated = await storage.updateDeclaration(id, { rmId });
+        
+        if (updated) {
+          // Log the activity
+          await storage.createActivity({
+            type: "updated",
+            entityType: "declaration",
+            entityId: id,
+            description: `Updated RM ID to '${rmId}'`,
+            userId: 1, // Use actual user ID when available
+          });
+          
+          results.push({ id, success: true });
+        } else {
+          results.push({ id, success: false, message: "Error updating declaration" });
+        }
+      }
+      
+      res.json({ results });
+    } catch (error) {
+      console.error('Error bulk updating RM IDs:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+  
+  // Endpoint to download product list Excel template
+  app.post("/api/declarations/product-list-template", async (req, res) => {
+    try {
+      // In a real-world scenario, we'd use a library like exceljs to generate
+      // an Excel file dynamically based on the request data.
+      // For this demo, we'll serve a pre-made Excel file.
+      
+      const products = req.body.products || [];
+      
+      // Log for debugging
+      console.log(`Generating product list template for ${products.length} products`);
+      
+      // Send the static Excel file
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="Product List.xlsx"');
+      
+      // Serve the pre-made Excel file
+      const path = require('path');
+      const fs = require('fs');
+      const filePath = path.join(__dirname, 'assets', 'Product List.xlsx');
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        console.error('Excel template file not found at path:', filePath);
+        return res.status(404).json({ message: "Template file not found" });
+      }
+      
+      // Stream the file to the client
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error('Error generating Excel template:', error);
+      res.status(500).json({ message: "Error generating Excel template" });
+    }
+  });
+  
   const httpServer = createServer(app);
   
   return httpServer;
