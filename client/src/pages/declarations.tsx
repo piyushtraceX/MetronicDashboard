@@ -58,6 +58,7 @@ interface Declaration {
   lastUpdated: string;
   industry: string | null;
   rmId?: string | null;
+  complianceStatus?: "compliant" | "non-compliant" | "non-compliant-geometry";
 }
 
 interface DeclarationStats {
@@ -100,8 +101,21 @@ function DeclarationRow({
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const { toast } = useToast();
   
-  // Determine compliance based on risk level for this example (in a real app, fetch from API)
-  const isCompliant = declaration.riskLevel === "low" || declaration.riskLevel === "medium";
+  // Determine compliance status (in a real app, this would come from the API)
+  let complianceStatus = declaration.complianceStatus;
+  if (!complianceStatus) {
+    // If not explicitly set, determine from risk level as before
+    complianceStatus = (declaration.riskLevel === "low" || declaration.riskLevel === "medium") 
+      ? "compliant" 
+      : "non-compliant";
+  }
+  
+  // For the demo, set some declarations to have geometry issues
+  if (!declaration.complianceStatus && declaration.id % 3 === 0) {
+    complianceStatus = "non-compliant-geometry";
+  }
+  
+  const isCompliant = complianceStatus === "compliant";
   
   // Function to handle downloading consolidated GeoJSON
   const handleDownloadGeoJSON = () => {
@@ -194,13 +208,21 @@ function DeclarationRow({
       <td className="px-3 py-4 text-sm whitespace-nowrap">
         <span className={cn(
           "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
-          isCompliant ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          complianceStatus === "compliant" ? "bg-green-100 text-green-800" : 
+          complianceStatus === "non-compliant-geometry" ? "bg-orange-100 text-orange-800" : 
+          "bg-red-100 text-red-800"
         )}>
           <span className={cn(
             "mr-1 h-2 w-2 rounded-full",
-            isCompliant ? "bg-green-500" : "bg-red-500"
+            complianceStatus === "compliant" ? "bg-green-500" : 
+            complianceStatus === "non-compliant-geometry" ? "bg-orange-500" : 
+            "bg-red-500"
           )}></span>
-          {isCompliant ? "Compliant" : "Non-Compliant"}
+          {complianceStatus === "compliant" 
+            ? "Compliant" 
+            : complianceStatus === "non-compliant-geometry" 
+              ? "Non-Compliant Geometry"
+              : "Non-Compliant"}
         </span>
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">

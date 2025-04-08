@@ -48,6 +48,7 @@ interface Declaration {
   declarationSource?: string;
   comments?: string;
   rmId?: string | null;
+  complianceStatus?: "compliant" | "non-compliant" | "non-compliant-geometry";
 }
 
 interface Supplier {
@@ -265,17 +266,46 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
             
             <div>
               <h3 className="text-sm font-medium text-gray-500 mb-2">GeoJSON</h3>
-              <div className="flex items-center">
-                {declaration.hasGeoJSON ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Uploaded</span>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
-                    <span>Not Uploaded</span>
-                  </>
+              <div className="flex items-center space-y-2 flex-col items-start">
+                <div className="flex items-center">
+                  {declaration.hasGeoJSON ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
+                      <span>Uploaded</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+                      <span>Not Uploaded</span>
+                    </>
+                  )}
+                </div>
+                
+                <div className="flex items-center">
+                  <h3 className="text-sm font-medium text-gray-500 mr-2">Compliance Status:</h3>
+                  <Badge className={
+                    !declaration.complianceStatus || declaration.complianceStatus === "compliant" 
+                      ? "bg-green-500" 
+                      : declaration.complianceStatus === "non-compliant-geometry"
+                        ? "bg-orange-500"
+                        : "bg-red-500"
+                  }>
+                    {!declaration.complianceStatus || declaration.complianceStatus === "compliant" 
+                      ? "Compliant" 
+                      : declaration.complianceStatus === "non-compliant-geometry"
+                        ? "Non-Compliant Geometry"
+                        : "Non-Compliant"}
+                  </Badge>
+                </div>
+                
+                {declaration.complianceStatus === "non-compliant-geometry" && (
+                  <div className="bg-orange-50 border border-orange-200 p-2 rounded-md text-sm text-orange-800 mt-2 w-full">
+                    <div className="flex items-center">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mr-2" />
+                      <span className="font-medium">Geometry Validation Failed</span>
+                    </div>
+                    <p className="mt-1 ml-6">The provided GeoJSON data contains geometry validation errors. Please correct the geometry issues and resubmit.</p>
+                  </div>
                 )}
               </div>
             </div>
