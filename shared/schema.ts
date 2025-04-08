@@ -63,6 +63,7 @@ export const declarations = pgTable("declarations", {
   createdAt: timestamp("created_at").defaultNow(),
   lastUpdated: timestamp("last_updated").defaultNow(),
   industry: text("industry"),
+  rmId: text("rm_id"),
 });
 
 export const insertDeclarationSchema = createInsertSchema(declarations).pick({
@@ -80,6 +81,7 @@ export const insertDeclarationSchema = createInsertSchema(declarations).pick({
   endDate: true,
   createdBy: true,
   industry: true,
+  rmId: true,
 });
 
 // Documents

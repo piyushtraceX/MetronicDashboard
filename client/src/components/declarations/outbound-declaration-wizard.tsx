@@ -28,6 +28,7 @@ interface DeclarationItem {
   scientificName: string;
   quantity: string;
   unit: string;
+  rmId?: string;
 }
 
 // Define the interface for existing declaration objects
@@ -81,7 +82,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       productName: "",
       scientificName: "",
       quantity: "",
-      unit: "kg"
+      unit: "kg",
+      rmId: ""
     }
   ]);
   
@@ -212,7 +214,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       productName: "",
       scientificName: "",
       quantity: "",
-      unit: "kg"
+      unit: "kg",
+      rmId: ""
     };
     setItems([...items, newItem]);
   };
@@ -459,7 +462,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         productName: item.productName,
         scientificName: item.scientificName,
         quantity: parseFloat(item.quantity),
-        unit: item.unit
+        unit: item.unit,
+        rmId: item.rmId || null
       }));
       
       payload = {
@@ -496,7 +500,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         productName: "",
         scientificName: "",
         quantity: "",
-        unit: "kg"
+        unit: "kg",
+        rmId: ""
       }
     ]);
     setSelectedDeclarationIds([]);
@@ -856,6 +861,25 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                   <SelectItem value="m³">m³</SelectItem>
                                 </SelectContent>
                               </Select>
+                            </div>
+                            
+                            <div className="w-44">
+                              <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
+                                RM ID
+                                <span 
+                                  className="ml-1 text-gray-400 cursor-help"
+                                  title="RM Id refers to the raw material id of this product in your ERP"
+                                >
+                                  ⓘ
+                                </span>
+                              </Label>
+                              <Input 
+                                id={`rm-id-${item.id}`} 
+                                placeholder="e.g. RM12345"
+                                value={item.rmId || ""}
+                                onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
+                                className="mt-1"
+                              />
                             </div>
                           </div>
                         </div>

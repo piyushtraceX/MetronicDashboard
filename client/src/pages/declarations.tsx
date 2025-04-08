@@ -56,6 +56,7 @@ interface Declaration {
   createdAt: string;
   lastUpdated: string;
   industry: string | null;
+  rmId?: string | null;
 }
 
 interface DeclarationStats {
@@ -155,6 +156,11 @@ function DeclarationRow({ declaration, onViewClick }: {
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {declaration.industry || "Not specified"} / {declaration.productName}
+      </td>
+      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+        {declaration.rmId ? declaration.rmId : (
+          <span className="text-gray-400 italic">RM ID not present</span>
+        )}
       </td>
       <td className="px-3 py-4 text-sm whitespace-nowrap">
         <StatusBadge status={declaration.status} />
@@ -288,6 +294,7 @@ interface NewDeclarationForm {
   endDate: Date | undefined;
   industry: string;
   agreementChecked: boolean;
+  rmId?: string;
 }
 
 export default function Declarations() {
@@ -322,7 +329,8 @@ export default function Declarations() {
     startDate: undefined,
     endDate: undefined,
     industry: "Food & Beverage",
-    agreementChecked: false
+    agreementChecked: false,
+    rmId: ""
   });
   
   // Handle form input changes
@@ -359,7 +367,8 @@ export default function Declarations() {
         startDate: undefined,
         endDate: undefined,
         industry: "Food & Beverage",
-        agreementChecked: false
+        agreementChecked: false,
+        rmId: ""
       });
       
       // Close modal
@@ -543,6 +552,25 @@ export default function Declarations() {
                   value={form.productDescription}
                   onChange={(e) => handleInputChange('productDescription', e.target.value)}
                   className="h-24"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="rm-id" className="flex items-center">
+                  RM ID
+                  <span className="ml-1 cursor-help" title="RM ID refers to the raw material id of this product in your ERP">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M12 16v-4"></path>
+                      <path d="M12 8h.01"></path>
+                    </svg>
+                  </span>
+                </Label>
+                <Input 
+                  id="rm-id" 
+                  placeholder="Enter RM ID" 
+                  value={form.rmId}
+                  onChange={(e) => handleInputChange('rmId', e.target.value)}
                 />
               </div>
               
@@ -844,6 +872,9 @@ export default function Declarations() {
                     Industry/Product
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    RM ID
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Status
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -863,13 +894,13 @@ export default function Declarations() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {isLoadingDeclarations ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-gray-500">
+                    <td colSpan={8} className="py-10 text-center text-gray-500">
                       Loading declarations...
                     </td>
                   </tr>
                 ) : filteredDeclarations.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-gray-500">
+                    <td colSpan={8} className="py-10 text-center text-gray-500">
                       No declarations found
                     </td>
                   </tr>
