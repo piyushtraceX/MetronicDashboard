@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { CalendarIcon, Plus, Search, Trash2, Upload, User, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -669,14 +669,16 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         <div className="w-44">
                           <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
                             RM Id
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="h-3.5 w-3.5 ml-1 text-gray-400 hover:text-gray-600 cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs max-w-xs">RM Id refers to the raw material id of this product in your ERP</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="h-3.5 w-3.5 ml-1 text-gray-400 hover:text-gray-600 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs max-w-xs">RM Id refers to the raw material id of this product in your ERP</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </Label>
                           <Input 
                             id={`rm-id-${item.id}`} 
