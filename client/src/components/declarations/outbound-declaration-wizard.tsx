@@ -85,6 +85,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   
   // GeoJSON upload state for fresh declarations
   const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
+  const [geometryValid, setGeometryValid] = useState<boolean | null>(null);
+  const [satelliteValid, setSatelliteValid] = useState<boolean | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
   
   // Documents state
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
@@ -168,15 +171,45 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     ));
   };
 
-  // Handle GeoJSON upload
+  // Handle GeoJSON upload and validation
   const handleGeoJSONUpload = (e: React.MouseEvent) => {
     e.preventDefault();
     setHasUploadedGeoJSON(true);
+    setIsValidating(true);
+    setGeometryValid(null);
+    setSatelliteValid(null);
+    
     toast({
       title: "GeoJSON uploaded",
-      description: "GeoJSON file has been uploaded successfully",
+      description: "GeoJSON file has been uploaded successfully. Validating...",
       variant: "default",
     });
+    
+    // Simulate geometry validation check
+    setTimeout(() => {
+      // Randomly decide geometry validation result (80% success rate)
+      const geometryIsValid = Math.random() < 0.8;
+      setGeometryValid(geometryIsValid);
+      
+      // Simulate satellite check (after geometry check is complete)
+      setTimeout(() => {
+        // Randomly decide satellite validation result (70% success rate)
+        const satelliteIsValid = Math.random() < 0.7;
+        setSatelliteValid(satelliteIsValid);
+        setIsValidating(false);
+        
+        // If either check fails, notify the user
+        if (!geometryIsValid || !satelliteIsValid) {
+          toast({
+            title: "Validation issues detected",
+            description: !geometryIsValid 
+              ? "Geometry validation failed. The declaration can be saved as draft but cannot be submitted."
+              : "Satellite check detected potential deforestation. The declaration can be saved as draft but cannot be submitted.",
+            variant: "destructive",
+          });
+        }
+      }, 2000);
+    }, 1500);
   };
 
   // Handle document upload
@@ -301,7 +334,48 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   const submitDeclaration = () => {
     if (!validateCurrentStep()) return;
     
+    // For fresh declarations, check if GeoJSON validation passed
+    if (declarationSource === "fresh" && hasUploadedGeoJSON) {
+      // If still validating, ask user to wait
+      if (isValidating) {
+        toast({
+          title: "Validation in progress",
+          description: "Please wait while the GeoJSON file is being validated",
+          variant: "default",
+        });
+        return;
+      }
+      
+      // Check for geometry validation failure
+      if (geometryValid === false) {
+        toast({
+          title: "Cannot submit declaration",
+          description: "Geometry validation failed. Please notify the supplier and save as draft instead.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check for satellite validation failure
+      if (satelliteValid === false) {
+        toast({
+          title: "Cannot submit declaration",
+          description: "Satellite check detected potential deforestation. Please notify the supplier and save as draft instead.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     let payload;
+    let status = "pending";
+    
+    // If there are validation issues, set status to draft
+    if (declarationSource === "fresh" && 
+        hasUploadedGeoJSON && 
+        (geometryValid === false || satelliteValid === false)) {
+      status = "draft";
+    }
     
     if (declarationSource === "existing") {
       // Prepare payload for declaration based on existing ones
@@ -341,8 +415,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         soNumber: soNumber.trim() || null,
         shipmentNumber: shipmentNumber.trim() || null,
         hasGeoJSON: hasUploadedGeoJSON,
+        geometryValid: geometryValid,
+        satelliteValid: satelliteValid,
         comments: comments.trim() || null,
-        status: "pending",
+        status,
         riskLevel: "medium"
       };
     }
@@ -378,6 +454,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     setSONumber("");
     setShipmentNumber("");
     setHasUploadedGeoJSON(false);
+    setGeometryValid(null);
+    setSatelliteValid(null);
+    setIsValidating(false);
     setComments("");
   };
 
@@ -744,19 +823,28 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   <div 
                     className={cn(
                       "border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50",
-                      hasUploadedGeoJSON ? "border-green-300 bg-green-50" : "border-gray-300"
+                      hasUploadedGeoJSON ? 
+                        (geometryValid === false || satelliteValid === false) 
+                          ? "border-red-300 bg-red-50" 
+                          : "border-green-300 bg-green-50" 
+                        : "border-gray-300"
                     )}
-                    onClick={handleGeoJSONUpload}
+                    onClick={!hasUploadedGeoJSON ? handleGeoJSONUpload : undefined}
+                    style={{ cursor: hasUploadedGeoJSON ? 'default' : 'pointer' }}
                   >
                     <div className="mx-auto flex justify-center">
                       <Upload className={cn(
                         "h-12 w-12",
-                        hasUploadedGeoJSON ? "text-green-500" : "text-gray-400"
+                        hasUploadedGeoJSON ? 
+                          (geometryValid === false || satelliteValid === false) 
+                            ? "text-red-500" 
+                            : "text-green-500" 
+                          : "text-gray-400"
                       )} />
                     </div>
                     <p className="mt-4 text-sm text-gray-600">
                       {hasUploadedGeoJSON ? 
-                        "GeoJSON file uploaded successfully" : 
+                        (isValidating ? "Validating GeoJSON file..." : "GeoJSON file uploaded successfully") : 
                         "Drag and drop your GeoJSON file here, or click to browse"}
                     </p>
                     {!hasUploadedGeoJSON && (
@@ -770,6 +858,51 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                       >
                         Browse Files
                       </Button>
+                    )}
+                    
+                    {/* Validation status indicators */}
+                    {hasUploadedGeoJSON && (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-sm font-medium">Geometry Check:</span>
+                          {isValidating ? (
+                            <span className="text-sm text-amber-500">Checking...</span>
+                          ) : geometryValid === true ? (
+                            <span className="text-sm text-green-600">Compliant</span>
+                          ) : geometryValid === false ? (
+                            <span className="text-sm text-red-600">Non-Compliant</span>
+                          ) : (
+                            <span className="text-sm text-gray-500">Pending</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-sm font-medium">Satellite Check:</span>
+                          {isValidating ? (
+                            <span className="text-sm text-amber-500">Checking...</span>
+                          ) : satelliteValid === true ? (
+                            <span className="text-sm text-green-600">Compliant</span>
+                          ) : satelliteValid === false ? (
+                            <span className="text-sm text-red-600">Non-Compliant</span>
+                          ) : (
+                            <span className="text-sm text-gray-500">Pending</span>
+                          )}
+                        </div>
+                        
+                        {/* Warning message for failed validations */}
+                        {(geometryValid === false || satelliteValid === false) && (
+                          <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-sm text-red-600">
+                              {geometryValid === false ? 
+                                "Geometry validation failed. Please notify the supplier." : 
+                                "Satellite check detected potential deforestation. Please notify the supplier."}
+                            </p>
+                            <p className="text-sm text-red-600 mt-1">
+                              The declaration can only be saved as draft and cannot be submitted.
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
