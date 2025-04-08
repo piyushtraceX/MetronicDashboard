@@ -108,7 +108,7 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
   // Mutation for updating RM ID
   const updateDeclarationMutation = useMutation({
     mutationFn: (data: { rmId: string }) => {
-      return apiRequest(`/api/declarations/${declarationId}`, 'PATCH', { rmId: data.rmId });
+      return apiRequest('PATCH', `/api/declarations/${declarationId}`, { rmId: data.rmId });
     },
     onSuccess: () => {
       toast({

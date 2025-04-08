@@ -484,6 +484,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH endpoint specifically for declaration updates like RM ID
+  app.patch("/api/declarations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const declarationInput = insertDeclarationSchema.partial().parse(req.body);
+      
+      const updatedDeclaration = await storage.updateDeclaration(id, declarationInput);
+      
+      if (!updatedDeclaration) {
+        return res.status(404).json({ message: "Declaration not found" });
+      }
+      
+      // Create activity record for RM ID updates if that's what was updated
+      const activityDescription = req.body.rmId !== undefined
+        ? `RM ID was updated for declaration "${updatedDeclaration.productName}"`
+        : `Declaration for product "${updatedDeclaration.productName}" was updated`;
+      
+      await storage.createActivity({
+        type: "declaration",
+        description: activityDescription,
+        userId: 1, // Mock user ID
+        entityType: "declaration",
+        entityId: updatedDeclaration.id,
+        metadata: null
+      });
+      
+      res.json(updatedDeclaration);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Error updating declaration" });
+      }
+    }
+  });
+
   // Customer routes for outbound declarations
   app.get("/api/customers", async (req, res) => {
     // Mock customers for demo purposes
