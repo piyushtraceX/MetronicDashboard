@@ -25,6 +25,12 @@ interface Customer {
   id: number;
   name: string;
   type: string;
+  company?: string;
+  country?: string;
+  registrationNumber?: string;
+  contactPerson?: string;
+  contactEmail?: string;
+  complianceScore?: number;
 }
 
 interface Supplier {
@@ -127,10 +133,61 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
   // Mock customers for the example
   const customers: Customer[] = [
-    { id: 1, name: "Euro Foods GmbH", type: "EU-Based Entity" },
-    { id: 2, name: "Global Trade Partners", type: "Non-EU Entity" },
-    { id: 3, name: "Organic Distributors Ltd", type: "EU-Based Entity" },
-    { id: 4, name: "Pacific Wholesale Inc", type: "Non-EU Entity" },
+    { 
+      id: 1, 
+      name: "EuroFood Retailers GmbH", 
+      type: "EU-Based Entity",
+      company: "EuroFood Group",
+      country: "Germany",
+      registrationNumber: "DE78901234",
+      contactPerson: "Hans Mueller",
+      contactEmail: "h.mueller@eurofood.example",
+      complianceScore: 92
+    },
+    { 
+      id: 2, 
+      name: "Global Trade Partners Ltd", 
+      type: "Non-EU Distributor",
+      company: "GTP International",
+      country: "United Kingdom",
+      registrationNumber: "GB45678901",
+      contactPerson: "Sarah Johnson",
+      contactEmail: "sjohnson@gtp.example",
+      complianceScore: 85
+    },
+    { 
+      id: 3, 
+      name: "Nordic Organic Markets AB", 
+      type: "Retail Chain",
+      company: "Nordic Foods Group",
+      country: "Sweden",
+      registrationNumber: "SE12345678",
+      contactPerson: "Erik Andersson",
+      contactEmail: "e.andersson@nordicorganic.example",
+      complianceScore: 95
+    },
+    { 
+      id: 4, 
+      name: "Mediterranean Distributors S.L.", 
+      type: "EU-Based Entity",
+      company: "Med Group",
+      country: "Spain",
+      registrationNumber: "ES87654321",
+      contactPerson: "Carmen Rodriguez",
+      contactEmail: "rodriguez@meddist.example",
+      complianceScore: 88
+    },
+    { 
+      id: 5, 
+      name: "Asian Markets Co., Ltd.", 
+      type: "Non-EU Distributor",
+      company: "AMC Holdings",
+      country: "Singapore",
+      registrationNumber: "SG67890123",
+      contactPerson: "Lim Wei Ling",
+      contactEmail: "wlim@asianmarkets.example",
+      complianceScore: 82
+    }
   ];
 
   // Handle form input changes for items
@@ -808,21 +865,42 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   <div 
                     key={customer.id}
                     className={cn(
-                      "p-4 border rounded-lg flex items-center justify-between cursor-pointer",
+                      "p-4 border rounded-lg cursor-pointer",
                       selectedCustomer?.id === customer.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
                     )}
                     onClick={() => setSelectedCustomer(customer)}
                   >
-                    <div className="flex items-center">
-                      <User className="h-5 w-5 text-gray-500 mr-3" />
-                      <div>
-                        <div className="font-medium">{customer.name}</div>
-                        <div className="text-sm text-gray-500">{customer.type}</div>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start">
+                        <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
+                        <div>
+                          <div className="font-medium">{customer.name}</div>
+                          <div className="text-sm text-gray-500">{customer.company} - {customer.type}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {customer.complianceScore !== undefined && (
+                          <div className={cn(
+                            "text-xs font-medium rounded-full px-2 py-1",
+                            customer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                            customer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                            "bg-red-100 text-red-800"
+                          )}>
+                            {customer.complianceScore}% Compliant
+                          </div>
+                        )}
+                        {selectedCustomer?.id === customer.id && (
+                          <Badge className="bg-primary ml-2">Selected</Badge>
+                        )}
                       </div>
                     </div>
-                    {selectedCustomer?.id === customer.id && (
-                      <Badge className="bg-primary">Selected</Badge>
-                    )}
+                    
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500 mt-2 pl-8">
+                      <div><span className="text-gray-400">Country:</span> {customer.country}</div>
+                      <div><span className="text-gray-400">Registration:</span> {customer.registrationNumber}</div>
+                      <div><span className="text-gray-400">Contact:</span> {customer.contactPerson}</div>
+                      <div><span className="text-gray-400">Email:</span> {customer.contactEmail}</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -874,9 +952,33 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </div>
 
                   {declarationType === "outbound" && (
-                    <div>
+                    <div className="col-span-2">
                       <h4 className="text-sm font-medium text-gray-500">Customer</h4>
-                      <p className="mt-1">{selectedCustomer?.name || "Not selected"}</p>
+                      {selectedCustomer ? (
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="font-medium">{selectedCustomer.name}</div>
+                            {selectedCustomer.complianceScore !== undefined && (
+                              <div className={cn(
+                                "text-xs font-medium rounded-full px-2 py-1",
+                                selectedCustomer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                                selectedCustomer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                                "bg-red-100 text-red-800"
+                              )}>
+                                {selectedCustomer.complianceScore}% Compliant
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm grid grid-cols-2 gap-2">
+                            <div><span className="text-gray-500">Company:</span> {selectedCustomer.company}</div>
+                            <div><span className="text-gray-500">Type:</span> {selectedCustomer.type}</div>
+                            <div><span className="text-gray-500">Country:</span> {selectedCustomer.country}</div>
+                            <div><span className="text-gray-500">Registration:</span> {selectedCustomer.registrationNumber}</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-red-500">Not selected</p>
+                      )}
                     </div>
                   )}
 

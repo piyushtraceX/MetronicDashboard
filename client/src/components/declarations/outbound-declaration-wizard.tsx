@@ -45,6 +45,12 @@ interface Customer {
   id: number;
   name: string;
   type: string;
+  company?: string;
+  country?: string;
+  registrationNumber?: string;
+  contactPerson?: string;
+  contactEmail?: string;
+  complianceScore?: number;
 }
 
 interface OutboundDeclarationWizardProps {
@@ -110,9 +116,61 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   ];
   
   const customers: Customer[] = [
-    { id: 1, name: "Customer 1", type: "EU-Based Entity" },
-    { id: 2, name: "Customer 2", type: "Non-EU Distributor" },
-    { id: 3, name: "Customer 3", type: "Retail Chain" }
+    { 
+      id: 1, 
+      name: "EuroFood Retailers GmbH", 
+      type: "EU-Based Entity",
+      company: "EuroFood Group",
+      country: "Germany",
+      registrationNumber: "DE78901234",
+      contactPerson: "Hans Mueller",
+      contactEmail: "h.mueller@eurofood.example",
+      complianceScore: 92
+    },
+    { 
+      id: 2, 
+      name: "Global Trade Partners Ltd", 
+      type: "Non-EU Distributor",
+      company: "GTP International",
+      country: "United Kingdom",
+      registrationNumber: "GB45678901",
+      contactPerson: "Sarah Johnson",
+      contactEmail: "sjohnson@gtp.example",
+      complianceScore: 85
+    },
+    { 
+      id: 3, 
+      name: "Nordic Organic Markets AB", 
+      type: "Retail Chain",
+      company: "Nordic Foods Group",
+      country: "Sweden",
+      registrationNumber: "SE12345678",
+      contactPerson: "Erik Andersson",
+      contactEmail: "e.andersson@nordicorganic.example",
+      complianceScore: 95
+    },
+    { 
+      id: 4, 
+      name: "Mediterranean Distributors S.L.", 
+      type: "EU-Based Entity",
+      company: "Med Group",
+      country: "Spain",
+      registrationNumber: "ES87654321",
+      contactPerson: "Carmen Rodriguez",
+      contactEmail: "rodriguez@meddist.example",
+      complianceScore: 88
+    },
+    { 
+      id: 5, 
+      name: "Asian Markets Co., Ltd.", 
+      type: "Non-EU Distributor",
+      company: "AMC Holdings",
+      country: "Singapore",
+      registrationNumber: "SG67890123",
+      contactPerson: "Lim Wei Ling",
+      contactEmail: "wlim@asianmarkets.example",
+      complianceScore: 82
+    }
   ];
   
   // Query to get available inbound declarations (would be replaced with actual API call)
@@ -1021,8 +1079,23 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                               setCustomerSearchTerm('');
                             }}
                           >
-                            <div className="font-medium">{customer.name}</div>
-                            <div className="text-sm text-gray-500">{customer.type}</div>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-medium">{customer.name}</div>
+                                <div className="text-sm text-gray-500">{customer.company} - {customer.type}</div>
+                                <div className="text-xs text-gray-400 mt-1">{customer.country} • Reg: {customer.registrationNumber}</div>
+                              </div>
+                              {customer.complianceScore !== undefined && (
+                                <div className={cn(
+                                  "text-xs font-medium rounded-full px-2 py-1",
+                                  customer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                                  customer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                                  "bg-red-100 text-red-800"
+                                )}>
+                                  {customer.complianceScore}% Compliant
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1033,20 +1106,49 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                 {selectedCustomer && (
                   <div className="mb-4">
                     <h4 className="text-sm font-medium mb-2">Selected Customer</h4>
-                    <div className="p-4 border rounded-lg flex items-center justify-between bg-primary/5 border-primary">
-                      <div>
-                        <div className="font-medium">{selectedCustomer.name}</div>
-                        <div className="text-sm text-gray-500">{selectedCustomer.type}</div>
+                    <div className="p-4 border rounded-lg bg-primary/5 border-primary">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="font-medium text-lg">{selectedCustomer.name}</div>
+                          <div className="text-sm text-gray-500">{selectedCustomer.company} - {selectedCustomer.type}</div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {selectedCustomer.complianceScore !== undefined && (
+                            <div className={cn(
+                              "text-xs font-medium rounded-full px-2 py-1",
+                              selectedCustomer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                              selectedCustomer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                              "bg-red-100 text-red-800"
+                            )}>
+                              {selectedCustomer.complianceScore}% Compliant
+                            </div>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => setSelectedCustomer(null)}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => setSelectedCustomer(null)}
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
+                      
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Country:</span> {selectedCustomer.country}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Registration:</span> {selectedCustomer.registrationNumber}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Contact:</span> {selectedCustomer.contactPerson}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Email:</span> {selectedCustomer.contactEmail}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1168,8 +1270,28 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                     <h4 className="text-sm font-medium text-gray-500">Customer</h4>
                     <div className="mt-1 space-y-2">
                       {selectedCustomer ? (
-                        <div className="p-2 bg-gray-50 rounded-md">
-                          {selectedCustomer.name} - {selectedCustomer.type}
+                        <div className="p-3 bg-gray-50 rounded-md">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="font-medium">{selectedCustomer.name}</div>
+                            {selectedCustomer.complianceScore !== undefined && (
+                              <div className={cn(
+                                "text-xs font-medium rounded-full px-2 py-1",
+                                selectedCustomer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                                selectedCustomer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                                "bg-red-100 text-red-800"
+                              )}>
+                                {selectedCustomer.complianceScore}% Compliant
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm grid grid-cols-2 gap-2">
+                            <div><span className="text-gray-500">Company:</span> {selectedCustomer.company}</div>
+                            <div><span className="text-gray-500">Type:</span> {selectedCustomer.type}</div>
+                            <div><span className="text-gray-500">Country:</span> {selectedCustomer.country}</div>
+                            <div><span className="text-gray-500">Registration:</span> {selectedCustomer.registrationNumber}</div>
+                            <div><span className="text-gray-500">Contact:</span> {selectedCustomer.contactPerson}</div>
+                            <div><span className="text-gray-500">Email:</span> {selectedCustomer.contactEmail}</div>
+                          </div>
                         </div>
                       ) : (
                         <p>No customer selected</p>
