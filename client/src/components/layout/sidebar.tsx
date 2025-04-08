@@ -65,10 +65,8 @@ export default function Sidebar() {
   const isSupplier = user?.role === 'supplier';
   const isCustomer = user?.role === 'customer';
   
-  if (!isOpen) return null;
-  
   return (
-    <aside className="bg-[#1e1e2d] text-[#9899ac] w-64 flex-shrink-0 hidden md:block">
+    <aside className={`bg-[#1e1e2d] text-[#9899ac] w-64 flex-shrink-0 transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:block fixed md:static z-30 h-screen`}>
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-gray-700">
         <Link href="/">

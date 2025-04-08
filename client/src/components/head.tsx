@@ -25,6 +25,17 @@ export function Head({ title, description }: HeadProps) {
       }
     }
     
+    // Add Font Awesome if it's not already loaded
+    if (!document.querySelector('link[href*="fontawesome"]')) {
+      const fontAwesomeLink = document.createElement('link');
+      fontAwesomeLink.rel = 'stylesheet';
+      fontAwesomeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+      fontAwesomeLink.integrity = 'sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==';
+      fontAwesomeLink.crossOrigin = 'anonymous';
+      fontAwesomeLink.referrerPolicy = 'no-referrer';
+      document.head.appendChild(fontAwesomeLink);
+    }
+    
     // Cleanup function
     return () => {
       // Reset title when component unmounts (optional)

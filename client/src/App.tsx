@@ -14,6 +14,7 @@ import Settings from "@/pages/settings";
 import SAQs from "@/pages/saqs";
 import AppLayout from "@/layouts/app-layout";
 import { AuthProvider } from "@/hooks/use-auth";
+import { Head } from "@/components/head";
 
 function Router() {
   return (
@@ -77,6 +78,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <Head title="EUDR Comply" description="European Union Deforestation Regulation Compliance Platform" />
         <Router />
         <Toaster />
       </AuthProvider>
