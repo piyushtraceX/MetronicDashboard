@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Stepper from "@/components/ui/stepper";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -557,6 +557,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>Create Outbound Declaration</DialogTitle>
+          <DialogDescription>
+            Create an outbound declaration to your customers with compliance documentation.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="mb-8">

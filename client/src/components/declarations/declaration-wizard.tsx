@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Stepper from "@/components/ui/stepper";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -452,6 +452,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>Create Declaration</DialogTitle>
+          <DialogDescription>
+            Create an inbound declaration with proper compliance documentation.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="mb-8">

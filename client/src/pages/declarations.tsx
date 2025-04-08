@@ -561,9 +561,6 @@ export default function Declarations() {
         </div>
       </div>
       
-      {/* Simple Declaration Modal */}
-      <Dialog open={simpleModalOpen} onOpenChange={setSimpleModalOpen}>
-        
       {/* Advanced Declaration Wizard */}
       {declarationType === "inbound" ? (
         <DeclarationWizard 
@@ -576,6 +573,9 @@ export default function Declarations() {
           onOpenChange={setWizardModalOpen}
         />
       )}
+      
+      {/* Simple Declaration Modal */}
+      <Dialog open={simpleModalOpen} onOpenChange={setSimpleModalOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Create Declaration</DialogTitle>
@@ -1089,6 +1089,9 @@ export default function Declarations() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Import Products</DialogTitle>
+            <DialogDescription>
+              Upload a spreadsheet with RM IDs for your selected declarations.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="border-2 border-dashed rounded-md p-6 text-center">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -153,6 +153,12 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Loading Declaration</DialogTitle>
+            <DialogDescription>
+              Retrieving declaration details, please wait...
+            </DialogDescription>
+          </DialogHeader>
           <div className="py-8 text-center">
             <div className="animate-pulse h-6 w-1/3 bg-gray-200 rounded mb-4 mx-auto"></div>
             <div className="animate-pulse h-32 w-full bg-gray-100 rounded mb-4"></div>
@@ -168,6 +174,9 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">Review Declaration</DialogTitle>
+          <DialogDescription>
+            Review and manage declaration details, supporting documents and compliance status.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
