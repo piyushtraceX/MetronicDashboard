@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Search, Eye, Upload, Plus, MapPin, AlertCircle, MoreHorizontal, FileText, Download, Map } from "lucide-react";
+import { CalendarIcon, Search, Eye, Upload, Plus, MapPin, AlertCircle, MoreHorizontal, FileText, Download, Map, Tag, FileSpreadsheet } from "lucide-react";
 import StatusBadge from "@/components/ui/status-badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -85,9 +86,16 @@ function RiskSummaryCard({ color, label, count, icon }: { color: string; label: 
   );
 }
 
-function DeclarationRow({ declaration, onViewClick }: { 
+function DeclarationRow({ 
+  declaration, 
+  onViewClick,
+  selected = false,
+  onSelectChange
+}: { 
   declaration: Declaration; 
   onViewClick: (id: number) => void;
+  selected?: boolean;
+  onSelectChange?: (id: number, selected: boolean) => void;
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const { toast } = useToast();
@@ -151,6 +159,13 @@ function DeclarationRow({ declaration, onViewClick }: {
   
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-50">
+      <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
+        <Checkbox 
+          checked={selected}
+          onCheckedChange={(checked) => onSelectChange?.(declaration.id, checked === true)}
+          aria-label={`Select declaration ${declaration.id}`}
+        />
+      </td>
       <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
         <div className="font-medium text-gray-900">Supplier {declaration.supplierId}</div>
       </td>
@@ -219,6 +234,18 @@ function DeclarationRow({ declaration, onViewClick }: {
               <Download className="h-4 w-4 mr-2" />
               <span>Download Consolidated GeoJSON</span>
             </DropdownMenuItem>
+            
+            {!declaration.rmId && (
+              <DropdownMenuItem onClick={() => {
+                toast({
+                  title: "Allot RM ID",
+                  description: `Preparing to allot RM ID for declaration #${declaration.id}`,
+                });
+              }}>
+                <Tag className="h-4 w-4 mr-2" />
+                <span>Allot RM ID</span>
+              </DropdownMenuItem>
+            )}
             
             {!isCompliant && (
               <DropdownMenuItem onClick={() => setMapModalOpen(true)} className="text-red-600">
@@ -419,6 +446,12 @@ export default function Declarations() {
     createDeclaration.mutate(submissionData);
   };
   
+  // State for status filter
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // State for selected rows
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  
   // Fetch declarations
   const { data: declarations = [], isLoading: isLoadingDeclarations } = useQuery<Declaration[]>({
     queryKey: ['/api/declarations', activeTab !== 'all' ? { type: activeTab } : undefined],
@@ -438,13 +471,51 @@ export default function Declarations() {
   });
   
   // For suppliers, show only outbound declarations; for customers, show only inbound
-  const filteredDeclarations = isSupplier 
+  let filteredDeclarations = isSupplier 
     ? declarations.filter((d) => d.type === "outbound")
     : isCustomer
       ? declarations.filter((d) => d.type === "inbound")
       : (activeTab === 'all' 
           ? declarations 
           : declarations.filter((d) => d.type === activeTab));
+          
+  // Apply status filter
+  if (statusFilter !== "all") {
+    if (statusFilter === "rm_id_not_present") {
+      // Filter declarations without RM IDs
+      filteredDeclarations = filteredDeclarations.filter((d) => !d.rmId);
+    } else {
+      // Filter by regular status
+      filteredDeclarations = filteredDeclarations.filter((d) => d.status === statusFilter);
+    }
+  }
+  
+  // Handle row selection functions
+  const handleRowSelect = (id: number, selected: boolean) => {
+    if (selected) {
+      setSelectedRows((prev) => [...prev, id]);
+    } else {
+      setSelectedRows((prev) => prev.filter((rowId) => rowId !== id));
+    }
+  };
+  
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      const allIds = filteredDeclarations.map((d) => d.id);
+      setSelectedRows(allIds);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+  
+  // Check if all rows are selected
+  const allSelected = filteredDeclarations.length > 0 && 
+    filteredDeclarations.every((d) => selectedRows.includes(d.id));
+    
+  // Get declarations without RM IDs from selected rows
+  const selectedWithoutRmId = selectedRows.length > 0 
+    ? filteredDeclarations.filter(d => selectedRows.includes(d.id) && !d.rmId)
+    : [];
 
   return (
     <div className="space-y-6">
@@ -813,7 +884,7 @@ export default function Declarations() {
         
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="w-full md:w-1/4">
-            <Select defaultValue="all">
+            <Select defaultValue="all" value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
@@ -823,6 +894,7 @@ export default function Declarations() {
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="review">Review</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="rm_id_not_present">RM id not present</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -860,11 +932,104 @@ export default function Declarations() {
           </div>
         </div>
         
+        {/* Bulk Actions Panel */}
+        {selectedRows.length > 0 && (
+          <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'} selected</span>
+              {selectedWithoutRmId.length > 0 && (
+                <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">
+                  {selectedWithoutRmId.length} without RM ID
+                </Badge>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {selectedWithoutRmId.length > 0 && (
+                <Button size="sm" variant="secondary" className="flex items-center gap-1">
+                  <Tag className="h-4 w-4" />
+                  <span>Allot RM ID</span>
+                </Button>
+              )}
+              <Button size="sm" variant="secondary" className="flex items-center gap-1">
+                <FileSpreadsheet className="h-4 w-4" />
+                <span>Export to Excel</span>
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSelectedRows([])}>
+                Clear selection
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {/* Bulk Actions Panel - shown only when rows are selected */}
+        {selectedRows.length > 0 && (
+          <div className="bg-gray-50 border rounded-md p-3 mb-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <Badge className="mr-2 bg-blue-100 text-blue-800 hover:bg-blue-100">
+                {selectedRows.length} selected
+              </Badge>
+              
+              <span className="text-sm text-gray-500 mr-2">
+                Bulk Actions:
+              </span>
+              
+              {selectedWithoutRmId.length > 0 && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="mr-2 border-green-500 text-green-600 hover:bg-green-50"
+                  onClick={() => {
+                    /* Implementation for bulk RM ID allotment dialog */
+                    toast({
+                      title: "Bulk RM ID Allotment",
+                      description: `Preparing to allot RM IDs for ${selectedWithoutRmId.length} declarations`,
+                    });
+                  }}
+                >
+                  <Tag className="h-4 w-4 mr-1" />
+                  Allot RM ID
+                </Button>
+              )}
+              
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="mr-2"
+                onClick={() => {
+                  /* Export selected declarations */
+                  toast({
+                    title: "Export Started",
+                    description: `Exporting ${selectedRows.length} declarations to Excel`,
+                  });
+                }}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-1" />
+                Export to Excel
+              </Button>
+            </div>
+            
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => setSelectedRows([])}
+            >
+              Clear selection
+            </Button>
+          </div>
+        )}
+        
         <div className="rounded-md border">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
+                    <Checkbox 
+                      checked={allSelected}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all"
+                    />
+                  </th>
                   <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
                     Supplier Name
                   </th>
@@ -894,13 +1059,13 @@ export default function Declarations() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {isLoadingDeclarations ? (
                   <tr>
-                    <td colSpan={8} className="py-10 text-center text-gray-500">
+                    <td colSpan={9} className="py-10 text-center text-gray-500">
                       Loading declarations...
                     </td>
                   </tr>
                 ) : filteredDeclarations.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-10 text-center text-gray-500">
+                    <td colSpan={9} className="py-10 text-center text-gray-500">
                       No declarations found
                     </td>
                   </tr>
@@ -909,6 +1074,8 @@ export default function Declarations() {
                     <DeclarationRow 
                       key={declaration.id} 
                       declaration={declaration} 
+                      selected={selectedRows.includes(declaration.id)}
+                      onSelectChange={handleRowSelect}
                       onViewClick={(id) => {
                         setSelectedDeclarationId(id);
                         setDetailViewOpen(true);
