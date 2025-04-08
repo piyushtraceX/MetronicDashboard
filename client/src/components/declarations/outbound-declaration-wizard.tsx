@@ -258,20 +258,29 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       const geometryIsValid = Math.random() < 0.8;
       setGeometryValid(geometryIsValid);
       
-      // Simulate satellite check (after geometry check is complete)
+      // If geometry validation fails, don't proceed to satellite check
+      if (!geometryIsValid) {
+        setIsValidating(false);
+        toast({
+          title: "Geometry validation failed",
+          description: "The GeoJSON contains non-compliant geometry. Please notify the supplier. The declaration can be saved as draft but cannot be submitted.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Only proceed to satellite check if geometry is valid
       setTimeout(() => {
         // Randomly decide satellite validation result (70% success rate)
         const satelliteIsValid = Math.random() < 0.7;
         setSatelliteValid(satelliteIsValid);
         setIsValidating(false);
         
-        // If either check fails, notify the user
-        if (!geometryIsValid || !satelliteIsValid) {
+        // If satellite check fails, notify the user
+        if (!satelliteIsValid) {
           toast({
             title: "Validation issues detected",
-            description: !geometryIsValid 
-              ? "Geometry validation failed. The declaration can be saved as draft but cannot be submitted."
-              : "Satellite check detected potential deforestation. The declaration can be saved as draft but cannot be submitted.",
+            description: "Satellite check detected potential deforestation. The declaration can be saved as draft but cannot be submitted.",
             variant: "destructive",
           });
         }
@@ -967,26 +976,38 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                           )}
                         </div>
                         
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className="text-sm font-medium">Satellite Check:</span>
-                          {isValidating ? (
-                            <span className="text-sm text-amber-500">Checking...</span>
-                          ) : satelliteValid === true ? (
-                            <span className="text-sm text-green-600">Compliant</span>
-                          ) : satelliteValid === false ? (
-                            <span className="text-sm text-red-600">Non-Compliant</span>
-                          ) : (
-                            <span className="text-sm text-gray-500">Pending</span>
-                          )}
-                        </div>
+                        {/* Only show satellite check if geometry check passed */}
+                        {geometryValid === true && (
+                          <div className="flex items-center justify-center space-x-2">
+                            <span className="text-sm font-medium">Satellite Check:</span>
+                            {isValidating ? (
+                              <span className="text-sm text-amber-500">Checking...</span>
+                            ) : satelliteValid === true ? (
+                              <span className="text-sm text-green-600">Compliant</span>
+                            ) : satelliteValid === false ? (
+                              <span className="text-sm text-red-600">Non-Compliant</span>
+                            ) : (
+                              <span className="text-sm text-gray-500">Pending</span>
+                            )}
+                          </div>
+                        )}
                         
                         {/* Warning message for failed validations */}
-                        {(geometryValid === false || satelliteValid === false) && (
+                        {geometryValid === false && (
                           <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
                             <p className="text-sm text-red-600">
-                              {geometryValid === false ? 
-                                "Geometry validation failed. Please notify the supplier." : 
-                                "Satellite check detected potential deforestation. Please notify the supplier."}
+                              Geometry validation failed. Please notify the supplier.
+                            </p>
+                            <p className="text-sm text-red-600 mt-1">
+                              The declaration can only be saved as draft and cannot be submitted.
+                            </p>
+                          </div>
+                        )}
+                        
+                        {geometryValid === true && satelliteValid === false && (
+                          <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-sm text-red-600">
+                              Satellite check detected potential deforestation. Please notify the supplier.
                             </p>
                             <p className="text-sm text-red-600 mt-1">
                               The declaration can only be saved as draft and cannot be submitted.
