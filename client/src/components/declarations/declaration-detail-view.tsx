@@ -249,10 +249,7 @@ export default function DeclarationDetailView({ open, onOpenChange, declarationI
               <div className="bg-gray-50 p-3 rounded-md">
                 {declaration.productName ? (
                   <p>
-                    1. {declaration.productName} 
-                    {declaration.quantity ? ` (${declaration.quantity} ${declaration.unit || 'units'})` : ''}
-                    {declaration.hsnCode ? ` - HSN: ${declaration.hsnCode}` : ''}
-                    {declaration.productDescription ? ` - ${declaration.productDescription}` : ''}
+                    1. {declaration.productName}{declaration.quantity ? ` (${declaration.quantity} ${declaration.unit || 'units'})` : ''}{declaration.hsnCode ? ` - HSN: ${declaration.hsnCode}` : ''}{declaration.productDescription ? ` - ${declaration.productDescription}` : ''}
                   </p>
                 ) : (
                   <p className="text-gray-400">1.</p>
