@@ -99,6 +99,7 @@ function DeclarationRow({
   onSelectChange?: (id: number, selected: boolean) => void;
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [notifySupplierOpen, setNotifySupplierOpen] = useState(false);
   const { toast } = useToast();
   
   // Determine compliance status (in a real app, this would come from the API)
@@ -302,9 +303,64 @@ function DeclarationRow({
               </div>
             </div>
             
+            <DialogFooter className="flex justify-between">
+              <Button 
+                variant="secondary" 
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+                onClick={() => setNotifySupplierOpen(true)}
+              >
+                <span>Notify Supplier</span>
+              </Button>
+              <div className="space-x-2">
+                <Button variant="outline" onClick={() => setMapModalOpen(false)}>Close</Button>
+                <Button onClick={handleDownloadGeoJSON}>Download GeoJSON</Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Notify Supplier Modal */}
+        <Dialog open={notifySupplierOpen} onOpenChange={setNotifySupplierOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Notify Supplier</DialogTitle>
+              <DialogDescription>
+                Send email notification to the supplier about non-compliant areas.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4 space-y-4">
+              <div>
+                <Label htmlFor="supplier-name" className="text-sm font-medium">Supplier Name</Label>
+                <Input id="supplier-name" placeholder="Enter supplier name" />
+              </div>
+              
+              <div>
+                <Label htmlFor="supplier-company" className="text-sm font-medium">Supplier Company</Label>
+                <Input id="supplier-company" placeholder="Enter supplier company" defaultValue={`Supplier ${declaration.supplierId}`} />
+              </div>
+              
+              <div>
+                <Label htmlFor="supplier-email" className="text-sm font-medium">Supplier Email</Label>
+                <Input id="supplier-email" placeholder="Enter supplier email" type="email" />
+              </div>
+            </div>
+            
             <DialogFooter>
-              <Button variant="outline" onClick={() => setMapModalOpen(false)}>Close</Button>
-              <Button onClick={handleDownloadGeoJSON}>Download GeoJSON</Button>
+              <Button variant="outline" onClick={() => setNotifySupplierOpen(false)}>Cancel</Button>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  toast({
+                    title: "Email Notification Sent",
+                    description: "The supplier has been notified about the non-compliant areas.",
+                    variant: "default",
+                  });
+                  setNotifySupplierOpen(false);
+                }}
+              >
+                Send Email
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
