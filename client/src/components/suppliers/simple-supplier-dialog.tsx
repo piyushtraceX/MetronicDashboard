@@ -43,7 +43,7 @@ export default function SimpleSupplierDialog({
   onOpenChange,
   initialData,
 }: SupplierDialogProps) {
-  const [activeTab, setActiveTab] = useState("partnerDetails");
+  const [activeTab, setActiveTab] = useState("supplierDetails");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Partner Details
@@ -164,19 +164,19 @@ export default function SimpleSupplierDialog({
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <Tabs
-            defaultValue="partnerDetails"
+            defaultValue="supplierDetails"
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="partnerDetails">Partner Details</TabsTrigger>
+              <TabsTrigger value="supplierDetails">Supplier Details</TabsTrigger>
               <TabsTrigger value="addressDetails">Address Details</TabsTrigger>
               <TabsTrigger value="contactDetails">Primary Contact</TabsTrigger>
             </TabsList>
 
-            {/* Partner Details Tab */}
-            <TabsContent value="partnerDetails" className="space-y-4">
+            {/* Supplier Details Tab */}
+            <TabsContent value="supplierDetails" className="space-y-4">
               <div className="space-y-4">
                 <div>
                   <Label>COMPANY LOGO</Label>
@@ -189,13 +189,13 @@ export default function SimpleSupplierDialog({
                 </div>
 
                 <div className="grid w-full items-center gap-1.5">
-                  <Label htmlFor="partnerType">Partner Type *</Label>
+                  <Label htmlFor="partnerType">Supplier Type *</Label>
                   <Select 
                     onValueChange={(value) => handleSelectChange("partnerType", value)} 
                     value={formData.partnerType}
                   >
                     <SelectTrigger id="partnerType">
-                      <SelectValue placeholder="Select partner type" />
+                      <SelectValue placeholder="Select supplier type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="supplier">Supplier</SelectItem>
@@ -207,7 +207,7 @@ export default function SimpleSupplierDialog({
                 </div>
 
                 <div className="grid w-full items-center gap-1.5">
-                  <Label htmlFor="name">PARTNER'S NAME *</Label>
+                  <Label htmlFor="name">SUPPLIER'S NAME *</Label>
                   <Input
                     id="name"
                     name="name"
@@ -241,13 +241,13 @@ export default function SimpleSupplierDialog({
                 </div>
 
                 <div className="grid w-full items-center gap-1.5">
-                  <Label htmlFor="partnerRole">PARTNER'S ROLE *</Label>
+                  <Label htmlFor="partnerRole">SUPPLIER'S ROLE *</Label>
                   <Select 
                     onValueChange={(value) => handleSelectChange("partnerRole", value)} 
                     value={formData.partnerRole}
                   >
                     <SelectTrigger id="partnerRole">
-                      <SelectValue placeholder="Select partner role" />
+                      <SelectValue placeholder="Select supplier role" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="supplier">Supplier</SelectItem>
@@ -259,7 +259,7 @@ export default function SimpleSupplierDialog({
                 </div>
 
                 <div className="grid w-full items-center gap-1.5">
-                  <Label htmlFor="partnerRoleName">PARTNER'S ROLE NAME OF YOUR CHOICE *</Label>
+                  <Label htmlFor="partnerRoleName">SUPPLIER'S ROLE NAME OF YOUR CHOICE *</Label>
                   <Input
                     id="partnerRoleName"
                     name="partnerRoleName"
@@ -485,7 +485,7 @@ export default function SimpleSupplierDialog({
                   <Button 
                     type="button" 
                     variant="outline"
-                    onClick={() => setActiveTab("partnerDetails")}
+                    onClick={() => setActiveTab("supplierDetails")}
                   >
                     Previous
                   </Button>
