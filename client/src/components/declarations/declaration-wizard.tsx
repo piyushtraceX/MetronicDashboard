@@ -853,7 +853,6 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     </div>
                   )}
                 </div>
-                
                 {/* Reset selection button - only show when selections exist */}
                 {(selectedSupplierIds.length > 0 || selectedSupplierId) && (
                   <div className="mt-4 flex justify-end">
