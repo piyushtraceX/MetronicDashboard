@@ -44,13 +44,12 @@ export default function SimplifiedSupplierForm({
     name: initialData?.name || "",
     partnerType: initialData?.partnerType || "supplier",
     partnerRole: initialData?.partnerRole || "supplier",
-    partnerRoleName: initialData?.partnerRoleName || "SUPPLIER",
     status: initialData?.status || "pending",
     products: initialData?.products || "Default Products",
     country: initialData?.country || "india",
     
     // Optional fields
-    domain: initialData?.domain || "",
+    industry: initialData?.industry || "",
     registrationType: initialData?.registrationType || "",
     category: initialData?.category || "",
     
@@ -114,7 +113,6 @@ export default function SimplifiedSupplierForm({
         name: formData.name || "New Supplier",
         partnerType: formData.partnerType,
         partnerRole: formData.partnerRole,
-        partnerRoleName: formData.partnerRoleName,
         country: formData.country,
         status: formData.status,
         products: formData.products,
@@ -135,7 +133,7 @@ export default function SimplifiedSupplierForm({
         ...(formData.designation ? { designation: formData.designation } : {}),
         ...(formData.mobileNumber ? { mobileNumber: formData.mobileNumber } : {}),
         
-        ...(formData.domain ? { domain: formData.domain } : {}),
+        ...(formData.industry ? { industry: formData.industry } : {}),
         ...(formData.registrationType ? { registrationType: formData.registrationType } : {}),
         ...(formData.category ? { category: formData.category } : {})
       };
@@ -254,12 +252,12 @@ export default function SimplifiedSupplierForm({
                 </div>
 
                 <div className="grid w-full items-center gap-1.5">
-                  <Label htmlFor="domain">DOMAIN</Label>
+                  <Label htmlFor="industry">INDUSTRY</Label>
                   <Input
-                    id="domain"
-                    name="domain"
+                    id="industry"
+                    name="industry"
                     placeholder="E.g., Manufacturing"
-                    value={formData.domain}
+                    value={formData.industry}
                     onChange={handleChange}
                   />
                 </div>
@@ -283,12 +281,12 @@ export default function SimplifiedSupplierForm({
                 </div>
 
                 <div className="grid w-full items-center gap-1.5">
-                  <Label htmlFor="partnerRoleName">SUPPLIER'S ROLE NAME OF YOUR CHOICE *</Label>
+                  <Label htmlFor="products">PRODUCT *</Label>
                   <Input
-                    id="partnerRoleName"
-                    name="partnerRoleName"
-                    placeholder="E.g., SUPPLIER"
-                    value={formData.partnerRoleName}
+                    id="products"
+                    name="products"
+                    placeholder="E.g., Palm Oil, Wood, Paper"
+                    value={formData.products}
                     onChange={handleChange}
                     required
                   />
