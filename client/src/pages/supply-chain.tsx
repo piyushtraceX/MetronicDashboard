@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SAQResponseViewer from "@/components/supply-chain/saq-response-viewer";
+import SimpleSupplierDialog from "@/components/suppliers/simple-supplier-dialog";
 
 export default function SupplyChain() {
   const [activeTab, setActiveTab] = useState("onboarding");
   const [viewResponseOpen, setViewResponseOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedResponseId, setSelectedResponseId] = useState("");
+  const [openCreateForm, setOpenCreateForm] = useState(false);
 
   // Mock suppliers data for the onboarding tab
   const suppliers = [
@@ -89,7 +91,10 @@ export default function SupplyChain() {
           <TabsContent value="onboarding" className="mt-0">
             <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
               <h2 className="text-xl font-semibold">Supplier Management</h2>
-              <Button className="mt-4 md:mt-0">
+              <Button 
+                className="mt-4 md:mt-0"
+                onClick={() => setOpenCreateForm(true)}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
@@ -354,6 +359,13 @@ export default function SupplyChain() {
         onClose={() => setViewResponseOpen(false)}
         supplierName={selectedSupplier}
         responseId={selectedResponseId}
+      />
+      
+      {/* Supplier Form Dialog */}
+      <SimpleSupplierDialog
+        open={openCreateForm}
+        onOpenChange={(open) => setOpenCreateForm(open)}
+        initialData={null}
       />
     </div>
   );
