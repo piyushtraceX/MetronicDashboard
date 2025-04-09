@@ -649,9 +649,76 @@ export class MemStorage implements IStorage {
         enablePortal: true,
         portalLanguage: "german",
         
-        registrationNumber: "DE78901234",
         complianceScore: 92,
-        riskLevel: "low",
+        status: "active"
+      },
+      {
+        type: "business",
+        companyName: "Green Planet Distribution",
+        firstName: "Emma",
+        lastName: "Johnson",
+        displayName: "Green Planet Distribution",
+        email: "e.johnson@greenplanet.example",
+        workPhone: "+441234567890",
+        mobilePhone: "+447890123456",
+        
+        billingAttention: "Finance Department",
+        billingCountry: "United Kingdom",
+        billingAddressLine1: "72 Eco Street",
+        billingAddressLine2: "Suite 401",
+        billingCity: "London",
+        billingState: "Greater London",
+        billingPostalCode: "EC1V 7YY",
+        
+        sameAsBilling: true,
+        
+        gstTreatment: "registered",
+        placeOfSupply: "London",
+        taxPreference: "taxable",
+        currency: "GBP",
+        paymentTerms: "net15",
+        enablePortal: true,
+        portalLanguage: "english",
+        
+        complianceScore: 87,
+        status: "active"
+      },
+      {
+        type: "business",
+        companyName: "Organic Foods Co.",
+        firstName: "Robert",
+        lastName: "Davis",
+        displayName: "Organic Foods Co.",
+        email: "r.davis@organicfoods.example",
+        workPhone: "+15556667777",
+        mobilePhone: "+15551112222",
+        
+        billingAttention: "Accounts Receivable",
+        billingCountry: "United States",
+        billingAddressLine1: "450 Green Avenue",
+        billingAddressLine2: "",
+        billingCity: "Portland",
+        billingState: "Oregon",
+        billingPostalCode: "97201",
+        
+        sameAsBilling: false,
+        shippingAttention: "Warehouse Manager",
+        shippingCountry: "United States",
+        shippingAddressLine1: "789 Distribution Way",
+        shippingAddressLine2: "",
+        shippingCity: "Portland",
+        shippingState: "Oregon",
+        shippingPostalCode: "97230",
+        
+        gstTreatment: "registered",
+        placeOfSupply: "Oregon",
+        taxPreference: "taxable",
+        currency: "USD",
+        paymentTerms: "net30",
+        enablePortal: true,
+        portalLanguage: "english",
+        
+        complianceScore: 94,
         status: "active"
       },
       {
@@ -682,9 +749,7 @@ export class MemStorage implements IStorage {
         enablePortal: true,
         portalLanguage: "english",
         
-        registrationNumber: "SE556789-1234",
         complianceScore: 88,
-        riskLevel: "low",
         status: "active"
       },
       {
@@ -722,9 +787,7 @@ export class MemStorage implements IStorage {
         enablePortal: false,
         portalLanguage: "italian",
         
-        registrationNumber: "IT12345678901",
         complianceScore: 76,
-        riskLevel: "medium",
         status: "pending"
       },
       {
@@ -755,9 +818,7 @@ export class MemStorage implements IStorage {
         enablePortal: true,
         portalLanguage: "spanish",
         
-        registrationNumber: "ES87654321B",
         complianceScore: 42,
-        riskLevel: "high",
         status: "active"
       }
     ];
