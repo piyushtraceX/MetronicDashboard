@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SAQResponseViewer from "@/components/supply-chain/saq-response-viewer";
 import SimplifiedSupplierForm from "@/components/suppliers/simplified-supplier-form";
@@ -17,9 +18,21 @@ export default function SupplyChain() {
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedResponseId, setSelectedResponseId] = useState("");
   const [openCreateForm, setOpenCreateForm] = useState(false);
-
-  // Mock suppliers data for the onboarding tab
-  const suppliers = [
+  
+  // Fetch real suppliers from the API
+  const { data: supplierData, isLoading, error } = useQuery({
+    queryKey: ["/api/suppliers"],
+    queryFn: async () => {
+      const res = await fetch("/api/suppliers");
+      if (!res.ok) {
+        throw new Error("Failed to fetch suppliers");
+      }
+      return res.json();
+    }
+  });
+  
+  // Combine fetched suppliers with mock data for demonstration
+  const suppliers = supplierData || [
     { id: 1, name: "ABC Corp", address: "Berlin, Germany", industry: "Wood Products", status: "SAQ Pending" },
     { id: 2, name: "XYZ Ltd", address: "Madrid, Spain", industry: "Palm Oil", status: "Approved" },
     { id: 3, name: "DEF Inc", address: "London, UK", industry: "Rubber", status: "Rejected" },
@@ -189,30 +202,57 @@ export default function SupplyChain() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {suppliers.map((supplier) => (
-                    <TableRow key={supplier.id}>
-                      <TableCell>
-                        <Checkbox />
-                      </TableCell>
-                      <TableCell className="font-medium text-blue-600 hover:underline">
-                        {supplier.name}
-                      </TableCell>
-                      <TableCell>{supplier.address}</TableCell>
-                      <TableCell>{supplier.industry}</TableCell>
-                      <TableCell>{getStatusBadge(supplier.status)}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" className="text-blue-600 hover:text-blue-800">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-1">
-                            <path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h3.8a2 2 0 0 0 1.4-.6L12 4.6a2 2 0 0 1 1.4-.6h3.8a2 2 0 0 1 2 2v2.4Z" />
-                            <path d="M7 13h0" />
-                            <path d="M12 13h0" />
-                            <path d="M17 13h0" />
-                          </svg>
-                          Send SAQ
-                        </Button>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        <div className="flex justify-center items-center">
+                          <Loader2 className="w-6 h-6 animate-spin text-gray-500 mr-2" />
+                          <span>Loading suppliers...</span>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4 text-red-500">
+                        Failed to load suppliers. Please try again.
+                      </TableCell>
+                    </TableRow>
+                  ) : suppliers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        No suppliers found. Add your first supplier to get started.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    suppliers.map((supplier) => (
+                      <TableRow key={supplier.id}>
+                        <TableCell>
+                          <Checkbox />
+                        </TableCell>
+                        <TableCell className="font-medium text-blue-600 hover:underline">
+                          {supplier.name}
+                        </TableCell>
+                        <TableCell>
+                          {supplier.city && supplier.country ? 
+                            `${supplier.city}, ${supplier.country}` : 
+                            supplier.country || supplier.address || "Not specified"}
+                        </TableCell>
+                        <TableCell>{supplier.products || supplier.industry || supplier.category || "Not specified"}</TableCell>
+                        <TableCell>{getStatusBadge(supplier.status || "Pending")}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" className="text-blue-600 hover:text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-1">
+                              <path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h3.8a2 2 0 0 0 1.4-.6L12 4.6a2 2 0 0 1 1.4-.6h3.8a2 2 0 0 1 2 2v2.4Z" />
+                              <path d="M7 13h0" />
+                              <path d="M12 13h0" />
+                              <path d="M17 13h0" />
+                            </svg>
+                            Send SAQ
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
               
