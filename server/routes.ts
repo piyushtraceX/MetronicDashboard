@@ -520,40 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Customer routes for outbound declarations
-  app.get("/api/customers", async (req, res) => {
-    // Mock customers for demo purposes
-    const customers = [
-      { id: 1, name: "EU Retail Group", type: "retailer" },
-      { id: 2, name: "Global Food Distributors", type: "distributor" },
-      { id: 3, name: "Sustainable Products Co", type: "manufacturer" },
-      { id: 4, name: "EcoBrands Inc", type: "retailer" }
-    ];
-    res.json(customers);
-  });
-  
-  app.get("/api/customers/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      // Mock customer data for demo
-      const customers = [
-        { id: 1, name: "EU Retail Group", type: "retailer", country: "Germany", contactPerson: "Anne Schmidt", email: "anne@euretail.example" },
-        { id: 2, name: "Global Food Distributors", type: "distributor", country: "France", contactPerson: "Jean Dupont", email: "jean@gfd.example" },
-        { id: 3, name: "Sustainable Products Co", type: "manufacturer", country: "Netherlands", contactPerson: "Jan de Vries", email: "jan@sustainable.example" },
-        { id: 4, name: "EcoBrands Inc", type: "retailer", country: "Belgium", contactPerson: "Eva Dubois", email: "eva@ecobrands.example" }
-      ];
-      
-      const customer = customers.find(c => c.id === id);
-      
-      if (!customer) {
-        return res.status(404).json({ message: "Customer not found" });
-      }
-      
-      res.json(customer);
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching customer" });
-    }
-  });
+  // Customer routes are now implemented below with real data
 
   // Risk categories routes
   app.get("/api/risk-categories", async (req, res) => {
