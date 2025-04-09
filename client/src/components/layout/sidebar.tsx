@@ -130,6 +130,16 @@ export default function Sidebar() {
             active={location === "/declarations"}
           />
           
+          {/* Customers - Not available to suppliers or customers */}
+          {!isSupplier && !isCustomer && (
+            <SidebarSection
+              icon="fa-users"
+              label="Customers"
+              href="/customers"
+              active={location === "/customers"}
+            />
+          )}
+          
           {/* Supplier Assessment Questionnaires - Only available to suppliers */}
           {isSupplier && (
             <SidebarSection

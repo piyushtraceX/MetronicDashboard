@@ -236,3 +236,94 @@ export const insertSaqSchema = createInsertSchema(saqs).pick({
 
 export type Saq = typeof saqs.$inferSelect;
 export type InsertSaq = z.infer<typeof insertSaqSchema>;
+
+// Customer schema
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(),
+  companyName: text("company_name"),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  displayName: text("display_name"),
+  email: text("email").notNull(),
+  workPhone: text("work_phone"),
+  mobilePhone: text("mobile_phone"),
+  
+  // Billing address
+  billingAttention: text("billing_attention"),
+  billingCountry: text("billing_country").notNull(),
+  billingAddressLine1: text("billing_address_line1").notNull(),
+  billingAddressLine2: text("billing_address_line2"),
+  billingCity: text("billing_city").notNull(),
+  billingState: text("billing_state").notNull(),
+  billingPostalCode: text("billing_postal_code").notNull(),
+  
+  // Shipping address
+  sameAsBilling: boolean("same_as_billing").default(true),
+  shippingAttention: text("shipping_attention"),
+  shippingCountry: text("shipping_country"),
+  shippingAddressLine1: text("shipping_address_line1"),
+  shippingAddressLine2: text("shipping_address_line2"),
+  shippingCity: text("shipping_city"),
+  shippingState: text("shipping_state"),
+  shippingPostalCode: text("shipping_postal_code"),
+  
+  // Other details
+  gstTreatment: text("gst_treatment"),
+  placeOfSupply: text("place_of_supply"),
+  pan: text("pan"),
+  taxPreference: text("tax_preference").default("taxable"),
+  currency: text("currency").default("USD"),
+  paymentTerms: text("payment_terms").default("dueOnReceipt"),
+  enablePortal: boolean("enable_portal").default(false),
+  portalLanguage: text("portal_language").default("english"),
+  
+  // EUDR compliance fields
+  registrationNumber: text("registration_number"),
+  complianceScore: integer("compliance_score").default(50),
+  riskLevel: text("risk_level").default("medium"),
+  status: text("status").default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCustomerSchema = createInsertSchema(customers).pick({
+  type: true,
+  companyName: true,
+  firstName: true,
+  lastName: true,
+  displayName: true,
+  email: true,
+  workPhone: true,
+  mobilePhone: true,
+  billingAttention: true,
+  billingCountry: true,
+  billingAddressLine1: true,
+  billingAddressLine2: true,
+  billingCity: true,
+  billingState: true,
+  billingPostalCode: true,
+  sameAsBilling: true,
+  shippingAttention: true,
+  shippingCountry: true,
+  shippingAddressLine1: true,
+  shippingAddressLine2: true,
+  shippingCity: true,
+  shippingState: true,
+  shippingPostalCode: true,
+  gstTreatment: true,
+  placeOfSupply: true,
+  pan: true,
+  taxPreference: true,
+  currency: true,
+  paymentTerms: true,
+  enablePortal: true,
+  portalLanguage: true,
+  registrationNumber: true,
+  complianceScore: true,
+  riskLevel: true,
+  status: true,
+});
+
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;

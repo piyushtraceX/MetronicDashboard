@@ -8,6 +8,7 @@ import SupplyChain from "@/pages/supply-chain";
 import RiskAssessment from "@/pages/risk-assessment";
 import Documents from "@/pages/documents";
 import Declarations from "@/pages/declarations";
+import Customers from "@/pages/customers";
 import Compliance from "@/pages/compliance";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
@@ -43,6 +44,11 @@ function Router() {
       <Route path="/declarations">
         <AppLayout>
           <Declarations />
+        </AppLayout>
+      </Route>
+      <Route path="/customers">
+        <AppLayout>
+          <Customers />
         </AppLayout>
       </Route>
       <Route path="/compliance">

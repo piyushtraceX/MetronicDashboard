@@ -1,6 +1,7 @@
 import {
   users, type User, type InsertUser,
   suppliers, type Supplier, type InsertSupplier,
+  customers, type Customer, type InsertCustomer,
   declarations, type Declaration, type InsertDeclaration,
   documents, type Document, type InsertDocument,
   activities, type Activity, type InsertActivity,
@@ -24,18 +25,28 @@ export interface IStorage {
   updateSupplier(id: number, supplier: Partial<InsertSupplier>): Promise<Supplier | undefined>;
   listSuppliers(): Promise<Supplier[]>;
   
+  // Customer management
+  getCustomer(id: number): Promise<Customer | undefined>;
+  getCustomerByEmail(email: string): Promise<Customer | undefined>;
+  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  listCustomers(status?: string): Promise<Customer[]>;
+  getCustomerStats(): Promise<{ total: number, active: number, inactive: number, highRisk: number }>;
+  
   // Declaration management
   getDeclaration(id: number): Promise<Declaration | undefined>;
   createDeclaration(declaration: InsertDeclaration): Promise<Declaration>;
   updateDeclaration(id: number, declaration: Partial<InsertDeclaration>): Promise<Declaration | undefined>;
   listDeclarations(type?: string): Promise<Declaration[]>;
   listDeclarationsBySupplier(supplierId: number): Promise<Declaration[]>;
+  listDeclarationsByCustomer(customerId: number): Promise<Declaration[]>;
   getDeclarationStats(): Promise<{ total: number, inbound: number, outbound: number, approved: number, pending: number, review: number, rejected: number }>;
   
   // Document management
   getDocument(id: number): Promise<Document | undefined>;
   createDocument(document: InsertDocument): Promise<Document>;
   listDocumentsBySupplier(supplierId: number): Promise<Document[]>;
+  listDocumentsByCustomer(customerId: number): Promise<Document[]>;
   listDocuments(): Promise<Document[]>;
   
   // Activity tracking
@@ -71,6 +82,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private suppliers: Map<number, Supplier>;
+  private customers: Map<number, Customer>;
   private declarations: Map<number, Declaration>;
   private documents: Map<number, Document>;
   private activities: Map<number, Activity>;
@@ -80,6 +92,7 @@ export class MemStorage implements IStorage {
   
   private userIdCounter: number;
   private supplierIdCounter: number;
+  private customerIdCounter: number;
   private declarationIdCounter: number;
   private documentIdCounter: number;
   private activityIdCounter: number;
@@ -92,6 +105,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.suppliers = new Map();
+    this.customers = new Map();
     this.declarations = new Map();
     this.documents = new Map();
     this.activities = new Map();
@@ -102,6 +116,7 @@ export class MemStorage implements IStorage {
     
     this.userIdCounter = 1;
     this.supplierIdCounter = 1;
+    this.customerIdCounter = 1;
     this.declarationIdCounter = 1;
     this.documentIdCounter = 1;
     this.activityIdCounter = 1;
@@ -188,6 +203,79 @@ export class MemStorage implements IStorage {
   
   async listSuppliers(): Promise<Supplier[]> {
     return Array.from(this.suppliers.values());
+  }
+  
+  // Customer methods
+  async getCustomer(id: number): Promise<Customer | undefined> {
+    return this.customers.get(id);
+  }
+  
+  async getCustomerByEmail(email: string): Promise<Customer | undefined> {
+    return Array.from(this.customers.values()).find(
+      (customer) => customer.email === email,
+    );
+  }
+  
+  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
+    const id = this.customerIdCounter++;
+    const now = new Date();
+    const customer: Customer = {
+      ...insertCustomer,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.customers.set(id, customer);
+    return customer;
+  }
+  
+  async updateCustomer(id: number, updateData: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const customer = this.customers.get(id);
+    if (!customer) {
+      return undefined;
+    }
+    
+    const updatedCustomer: Customer = {
+      ...customer,
+      ...updateData,
+      updatedAt: new Date()
+    };
+    
+    this.customers.set(id, updatedCustomer);
+    return updatedCustomer;
+  }
+  
+  async listCustomers(status?: string): Promise<Customer[]> {
+    let customers = Array.from(this.customers.values());
+    
+    if (status && status !== "all") {
+      customers = customers.filter(customer => customer.status === status);
+    }
+    
+    return customers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async listDeclarationsByCustomer(customerId: number): Promise<Declaration[]> {
+    return Array.from(this.declarations.values())
+      .filter(declaration => declaration.customerId === customerId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async listDocumentsByCustomer(customerId: number): Promise<Document[]> {
+    return Array.from(this.documents.values()).filter(
+      (doc) => doc.customerId === customerId
+    );
+  }
+  
+  async getCustomerStats(): Promise<{ total: number, active: number, inactive: number, highRisk: number }> {
+    const customers = Array.from(this.customers.values());
+    
+    return {
+      total: customers.length,
+      active: customers.filter(c => c.status === "active").length,
+      inactive: customers.filter(c => c.status !== "active").length,
+      highRisk: customers.filter(c => c.riskLevel === "high").length
+    };
   }
   
   // Declaration methods
@@ -530,6 +618,153 @@ export class MemStorage implements IStorage {
     
     suppliers.forEach(supplier => {
       this.createSupplier(supplier);
+    });
+    
+    // Customers
+    const customers = [
+      {
+        type: "business",
+        companyName: "EuroFood Retailers GmbH",
+        firstName: "Hans",
+        lastName: "Mueller",
+        displayName: "EuroFood Retailers GmbH",
+        email: "h.mueller@eurofood.example",
+        workPhone: "+49987654321",
+        mobilePhone: "+49123456789",
+        
+        billingAttention: "Accounts Department",
+        billingCountry: "Germany",
+        billingAddressLine1: "Europaallee 10",
+        billingAddressLine2: "",
+        billingCity: "Berlin",
+        billingState: "Berlin",
+        billingPostalCode: "10115",
+        
+        sameAsBilling: true,
+        
+        gstTreatment: "registered",
+        placeOfSupply: "Berlin",
+        taxPreference: "taxable",
+        currency: "EUR",
+        paymentTerms: "net30",
+        enablePortal: true,
+        portalLanguage: "german",
+        
+        registrationNumber: "DE78901234",
+        complianceScore: 92,
+        riskLevel: "low",
+        status: "active"
+      },
+      {
+        type: "business",
+        companyName: "Nordic Eco Markets AB",
+        firstName: "Elsa",
+        lastName: "Johansson",
+        displayName: "Nordic Eco Markets AB",
+        email: "e.johansson@nordicmarkets.example",
+        workPhone: "+46123456789",
+        mobilePhone: "+46987654321",
+        
+        billingAttention: "Finance Department",
+        billingCountry: "Sweden",
+        billingAddressLine1: "Kungsgatan 25",
+        billingAddressLine2: "Floor 4",
+        billingCity: "Stockholm",
+        billingState: "Stockholm County",
+        billingPostalCode: "11156",
+        
+        sameAsBilling: true,
+        
+        gstTreatment: "registered",
+        placeOfSupply: "Stockholm",
+        taxPreference: "taxable",
+        currency: "SEK",
+        paymentTerms: "net15",
+        enablePortal: true,
+        portalLanguage: "english",
+        
+        registrationNumber: "SE556789-1234",
+        complianceScore: 88,
+        riskLevel: "low",
+        status: "active"
+      },
+      {
+        type: "business",
+        companyName: "Mediterra Foods SpA",
+        firstName: "Marco",
+        lastName: "Rossi",
+        displayName: "Mediterra Foods SpA",
+        email: "m.rossi@mediterra.example",
+        workPhone: "+39123456789",
+        mobilePhone: "+39987654321",
+        
+        billingAttention: "Administrative Office",
+        billingCountry: "Italy",
+        billingAddressLine1: "Via Roma 45",
+        billingAddressLine2: "",
+        billingCity: "Milan",
+        billingState: "Lombardy",
+        billingPostalCode: "20121",
+        
+        sameAsBilling: false,
+        shippingAttention: "Warehouse Manager",
+        shippingCountry: "Italy",
+        shippingAddressLine1: "Via Industriale 87",
+        shippingAddressLine2: "",
+        shippingCity: "Milan",
+        shippingState: "Lombardy",
+        shippingPostalCode: "20126",
+        
+        gstTreatment: "registered",
+        placeOfSupply: "Milan",
+        taxPreference: "taxable",
+        currency: "EUR",
+        paymentTerms: "net30",
+        enablePortal: false,
+        portalLanguage: "italian",
+        
+        registrationNumber: "IT12345678901",
+        complianceScore: 76,
+        riskLevel: "medium",
+        status: "pending"
+      },
+      {
+        type: "business",
+        companyName: "Iberia Gourmet Ltd",
+        firstName: "Sofia",
+        lastName: "Martinez",
+        displayName: "Iberia Gourmet Ltd",
+        email: "s.martinez@iberiagourmet.example",
+        workPhone: "+34123456789",
+        mobilePhone: "+34987654321",
+        
+        billingAttention: "Finance Office",
+        billingCountry: "Spain",
+        billingAddressLine1: "Calle Mayor 28",
+        billingAddressLine2: "Floor 3",
+        billingCity: "Madrid",
+        billingState: "Community of Madrid",
+        billingPostalCode: "28013",
+        
+        sameAsBilling: true,
+        
+        gstTreatment: "registered",
+        placeOfSupply: "Madrid",
+        taxPreference: "taxable",
+        currency: "EUR",
+        paymentTerms: "net45",
+        enablePortal: true,
+        portalLanguage: "spanish",
+        
+        registrationNumber: "ES87654321B",
+        complianceScore: 42,
+        riskLevel: "high",
+        status: "active"
+      }
+    ];
+    
+    customers.forEach(customer => {
+      this.createCustomer(customer);
     });
 
     // Declarations

@@ -2,7 +2,7 @@ import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertUserSchema, insertSupplierSchema, insertDocumentSchema, insertTaskSchema, insertDeclarationSchema, insertSaqSchema } from "@shared/schema";
+import { insertUserSchema, insertSupplierSchema, insertDocumentSchema, insertTaskSchema, insertDeclarationSchema, insertSaqSchema, insertCustomerSchema } from "@shared/schema";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
@@ -565,6 +565,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Customer routes
+  app.get("/api/customers", async (req, res) => {
+    try {
+      const status = req.query.status as string | undefined;
+      const customers = await storage.listCustomers(status);
+      res.json(customers);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching customers" });
+    }
+  });
+
+  app.get("/api/customers/stats", async (req, res) => {
+    try {
+      const stats = await storage.getCustomerStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching customer statistics" });
+    }
+  });
+
+  app.get("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customer = await storage.getCustomer(id);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching customer" });
+    }
+  });
+
+  app.post("/api/customers", async (req, res) => {
+    try {
+      const customerInput = insertCustomerSchema.parse(req.body);
+      
+      // Check if customer with email exists
+      const existingCustomer = await storage.getCustomerByEmail(customerInput.email);
+      if (existingCustomer) {
+        return res.status(400).json({ message: "Customer with this email already exists" });
+      }
+      
+      const customer = await storage.createCustomer(customerInput);
+      
+      // Log activity for customer creation
+      await storage.createActivity({
+        type: "customer",
+        description: `New customer ${customer.displayName || customer.companyName || `${customer.firstName} ${customer.lastName}`} created`,
+        userId: 1, // Assuming admin user
+        entityType: "customer",
+        entityId: customer.id,
+        metadata: null
+      });
+      
+      res.status(201).json(customer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        console.error("Error creating customer:", error);
+        res.status(500).json({ message: "Error creating customer" });
+      }
+    }
+  });
+  
+  app.patch("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customerInput = insertCustomerSchema.partial().parse(req.body);
+      
+      const updatedCustomer = await storage.updateCustomer(id, customerInput);
+      
+      if (!updatedCustomer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      // Log activity for customer update
+      await storage.createActivity({
+        type: "customer",
+        description: `Customer ${updatedCustomer.displayName || updatedCustomer.companyName || `${updatedCustomer.firstName} ${updatedCustomer.lastName}`} information updated`,
+        userId: 1, // Assuming admin user
+        entityType: "customer",
+        entityId: updatedCustomer.id,
+        metadata: null
+      });
+      
+      res.json(updatedCustomer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        console.error("Error updating customer:", error);
+        res.status(500).json({ message: "Error updating customer" });
+      }
+    }
+  });
+  
+  app.get("/api/customers/:id/declarations", async (req, res) => {
+    try {
+      const customerId = parseInt(req.params.id);
+      const declarations = await storage.listDeclarationsByCustomer(customerId);
+      res.json(declarations);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching customer declarations" });
+    }
+  });
+  
+  app.get("/api/customers/:id/documents", async (req, res) => {
+    try {
+      const customerId = parseInt(req.params.id);
+      const documents = await storage.listDocumentsByCustomer(customerId);
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching customer documents" });
+    }
+  });
+
   // SAQ routes
   app.get("/api/supplier/:id/saqs", async (req, res) => {
     try {
