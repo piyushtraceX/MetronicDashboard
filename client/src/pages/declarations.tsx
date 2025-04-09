@@ -605,6 +605,16 @@ export default function Declarations() {
     }
   }
   
+  // Sort declarations by ID/date in descending order (newest first)
+  filteredDeclarations = [...filteredDeclarations].sort((a, b) => {
+    // If we have date fields, sort by date
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    // Otherwise sort by ID (assuming higher IDs are newer entries)
+    return b.id - a.id;
+  });
+  
   // Handle row selection functions
   const handleRowSelect = (id: number, selected: boolean) => {
     if (selected) {

@@ -485,12 +485,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Set created by to mock user
       declarationInput.createdBy = 1;
       
+      // Extract product names from items if they exist
+      if (req.body.items && Array.isArray(req.body.items) && req.body.items.length > 0) {
+        // If productName is not already set, use product names from items
+        if (!declarationInput.productName) {
+          // Join the first 3 product names with commas
+          const productNames = req.body.items
+            .filter((item: any) => item.productName)
+            .map((item: any) => item.productName)
+            .slice(0, 3);
+            
+          if (productNames.length > 0) {
+            declarationInput.productName = productNames.join(", ");
+            
+            // If there are more than 3 products, add "and more"
+            if (req.body.items.length > 3) {
+              declarationInput.productName += ` and ${req.body.items.length - 3} more`;
+            }
+          }
+        }
+      }
+      
+      // If supplier name was passed, include it in the products field for display
+      if (req.body.supplier) {
+        declarationInput.products = req.body.supplier;
+      }
+      
       const declaration = await storage.createDeclaration(declarationInput);
       
       // Create activity record
       await storage.createActivity({
         type: "declaration",
-        description: `New ${declaration.type} declaration for product "${declaration.productName}" was created`,
+        description: `New ${declaration.type} declaration for product "${declaration.productName || 'Unknown'}" was created`,
         userId: 1, // Mock user ID
         entityType: "declaration",
         entityId: declaration.id,
@@ -502,6 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid input", errors: error.errors });
       } else {
+        console.error("Error creating declaration:", error);
         res.status(500).json({ message: "Error creating declaration" });
       }
     }

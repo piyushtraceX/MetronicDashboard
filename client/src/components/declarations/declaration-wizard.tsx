@@ -85,6 +85,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  // For multiple supplier selection
+  const [selectedSupplierIds, setSelectedSupplierIds] = useState<number[]>([]);
   const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
   const [poNumber, setPoNumber] = useState("");
   const [supplierSoNumber, setSupplierSoNumber] = useState("");
@@ -323,7 +325,43 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
       case 1: // Declaration Type
-        return true; // Always valid as we have a default
+        // Check if a supplier is selected in either single or multiple mode
+        if (selectedSupplierIds.length === 0 && !selectedSupplierId) {
+          toast({
+            title: "Supplier required",
+            description: "Please select at least one supplier to continue",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        // Check if PO Number is provided
+        if (!poNumber.trim()) {
+          toast({
+            title: "PO Number required",
+            description: "Please enter a PO number to continue",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        // Check if at least one valid item is present
+        const validItems = items.filter(item => 
+          item.hsnCode.trim() !== "" && 
+          item.productName.trim() !== "" && 
+          item.quantity.trim() !== ""
+        );
+        
+        if (validItems.length === 0) {
+          toast({
+            title: "Valid item required",
+            description: "Please complete at least one item with HSN Code, Product Name, and Quantity",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        return true;
 
       case 2: // GeoJSON Upload
         // Check if GeoJSON is uploaded
@@ -407,26 +445,107 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       status = "validating";
     }
     
-    // Prepare payload
-    const payload = {
-      type: declarationType,
-      items: formattedItems,
-      documents: uploadedFiles,
-      startDate: startDate ? startDate.toISOString() : null,
-      endDate: endDate ? endDate.toISOString() : null,
-      supplierId: selectedSupplierId,
-      customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
-      status: status,
-      riskLevel: "medium",
-      poNumber: poNumber,
-      supplierSoNumber: supplierSoNumber,
-      shipmentNumber: shipmentNumber,
-      comments: comments,
-      geometryValid: geometryValid,
-      satelliteValid: satelliteValid
-    };
+    // Check if we're in multiple supplier mode or single supplier mode
+    if (selectedSupplierIds.length > 0) {
+      // Multiple supplier mode - create a declaration for each supplier
+      const createMultipleDeclarations = async () => {
+        try {
+          // Show loading toast
+          toast({
+            title: "Creating declarations",
+            description: `Creating ${selectedSupplierIds.length} declarations...`,
+            variant: "default",
+          });
+          
+          let successCount = 0;
+          let errorCount = 0;
+          
+          // Create a declaration for each supplier
+          for (const supplierId of selectedSupplierIds) {
+            const payload = {
+              type: declarationType,
+              items: formattedItems,
+              documents: uploadedFiles,
+              startDate: startDate ? startDate.toISOString() : null,
+              endDate: endDate ? endDate.toISOString() : null,
+              supplierId: supplierId,
+              customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
+              status: status,
+              riskLevel: "medium",
+              poNumber: poNumber,
+              supplierSoNumber: supplierSoNumber,
+              shipmentNumber: shipmentNumber,
+              comments: comments,
+              geometryValid: geometryValid,
+              satelliteValid: satelliteValid,
+              supplier: suppliers.find(s => s.id === supplierId)?.name // Include supplier name
+            };
+            
+            try {
+              await apiRequest('/api/declarations', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+              });
+              successCount++;
+            } catch (error) {
+              console.error(`Error creating declaration for supplier ID ${supplierId}:`, error);
+              errorCount++;
+            }
+          }
+          
+          // Invalidate queries to refresh data
+          queryClient.invalidateQueries({ queryKey: ['/api/declarations'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/declarations/stats'] });
+          
+          // Show completion toast
+          toast({
+            title: "Declarations created",
+            description: `Successfully created ${successCount} declarations${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
+            variant: errorCount > 0 ? "destructive" : "default",
+          });
+          
+          // Close modal
+          onOpenChange(false);
+          
+          // Reset form
+          resetForm();
+        } catch (error) {
+          console.error("Error in creating multiple declarations:", error);
+          toast({
+            title: "Error",
+            description: "Failed to create multiple declarations. Please try again.",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      createMultipleDeclarations();
+    } else {
+      // Single supplier mode - create one declaration
+      const payload = {
+        type: declarationType,
+        items: formattedItems,
+        documents: uploadedFiles,
+        startDate: startDate ? startDate.toISOString() : null,
+        endDate: endDate ? endDate.toISOString() : null,
+        supplierId: selectedSupplierId,
+        customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
+        status: status,
+        riskLevel: "medium",
+        poNumber: poNumber,
+        supplierSoNumber: supplierSoNumber,
+        shipmentNumber: shipmentNumber,
+        comments: comments,
+        geometryValid: geometryValid,
+        satelliteValid: satelliteValid,
+        supplier: suppliers.find(s => s.id === selectedSupplierId)?.name // Include supplier name
+      };
 
-    createDeclaration.mutate(payload);
+      createDeclaration.mutate(payload);
+    }
   };
 
   // Reset form state
@@ -450,6 +569,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setEndDate(undefined);
     setSelectedSupplierId(null);
     setSelectedSupplier(null);
+    setSelectedSupplierIds([]);
     setSupplierSearchTerm("");
     setPoNumber("");
     setSupplierSoNumber("");
@@ -584,6 +704,31 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Supplier Selection</h3>
+                <div className="flex items-center mb-2">
+                  <div className="text-sm text-gray-600 mr-2">Selection Mode:</div>
+                  <Tabs
+                    value={selectedSupplierIds.length > 0 ? "multiple" : "single"}
+                    onValueChange={(value) => {
+                      // When switching to single mode, clear multi selections
+                      if (value === "single" && selectedSupplierIds.length > 0) {
+                        setSelectedSupplierIds([]);
+                      }
+                      // When switching to multiple mode, convert single selection to multi if it exists
+                      if (value === "multiple" && selectedSupplierId) {
+                        setSelectedSupplierIds([selectedSupplierId]);
+                        setSelectedSupplierId(null);
+                        setSelectedSupplier(null);
+                      }
+                    }}
+                    className="mb-2"
+                  >
+                    <TabsList className="grid w-[300px] grid-cols-2">
+                      <TabsTrigger value="single">Single Supplier</TabsTrigger>
+                      <TabsTrigger value="multiple">Multiple Suppliers</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+                
                 <div className="relative mb-4">
                   <Input 
                     type="text" 
@@ -608,12 +753,25 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             <div
                               key={supplier.id}
                               className={`px-4 py-2 cursor-pointer hover:bg-gray-50 ${
-                                selectedSupplierId === supplier.id ? 'bg-primary/5' : ''
+                                selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id) 
+                                  ? 'bg-primary/5' 
+                                  : ''
                               }`}
                               onClick={() => {
-                                setSelectedSupplierId(supplier.id);
-                                setSelectedSupplier(supplier);
-                                setSupplierSearchTerm(supplier.name);
+                                // If in multiple mode
+                                if (selectedSupplierIds.length > 0 || (selectedSupplierId === null && selectedSupplier === null)) {
+                                  // Toggle selection
+                                  if (selectedSupplierIds.includes(supplier.id)) {
+                                    setSelectedSupplierIds(prev => prev.filter(id => id !== supplier.id));
+                                  } else {
+                                    setSelectedSupplierIds(prev => [...prev, supplier.id]);
+                                  }
+                                } else {
+                                  // Single mode
+                                  setSelectedSupplierId(supplier.id);
+                                  setSelectedSupplier(supplier);
+                                  setSupplierSearchTerm(supplier.name);
+                                }
                               }}
                             >
                               <div className="font-medium">{supplier.name}</div>
@@ -626,20 +784,61 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   )}
                 </div>
 
-                {/* Show selected supplier card only if a supplier is selected */}
-                {selectedSupplierId && (
-                  <div className="p-3 border rounded-lg flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                        {suppliers.find(s => s.id === selectedSupplierId)?.name.substring(0, 2).toUpperCase() || 'SP'}
-                      </div>
-                      <div className="ml-3">
-                        <div className="font-medium">{suppliers.find(s => s.id === selectedSupplierId)?.name}</div>
-                        <div className="text-xs text-gray-400">{suppliers.find(s => s.id === selectedSupplierId)?.products || 'No products specified'}</div>
-                      </div>
+                {/* Show selected suppliers */}
+                {selectedSupplierIds.length > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between mb-2">
+                      <div className="text-sm font-medium">Selected Suppliers ({selectedSupplierIds.length})</div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-500 hover:text-red-700 h-8 px-2"
+                        onClick={() => setSelectedSupplierIds([])}
+                      >
+                        Clear All
+                      </Button>
                     </div>
-                    <Badge className="bg-primary">Selected</Badge>
+                    {selectedSupplierIds.map(id => {
+                      const supplier = suppliers.find(s => s.id === id);
+                      return supplier ? (
+                        <div key={id} className="p-3 border rounded-lg flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                              {supplier.name.substring(0, 2).toUpperCase() || 'SP'}
+                            </div>
+                            <div className="ml-3">
+                              <div className="font-medium">{supplier.name}</div>
+                              <div className="text-xs text-gray-400">{supplier.products || 'No products specified'}</div>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700 h-8 px-2"
+                            onClick={() => setSelectedSupplierIds(prev => prev.filter(suppId => suppId !== id))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : null;
+                    })}
                   </div>
+                ) : (
+                  // Show selected supplier card only if a supplier is selected in single mode
+                  selectedSupplierId && (
+                    <div className="p-3 border rounded-lg flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                          {suppliers.find(s => s.id === selectedSupplierId)?.name.substring(0, 2).toUpperCase() || 'SP'}
+                        </div>
+                        <div className="ml-3">
+                          <div className="font-medium">{suppliers.find(s => s.id === selectedSupplierId)?.name}</div>
+                          <div className="text-xs text-gray-400">{suppliers.find(s => s.id === selectedSupplierId)?.products || 'No products specified'}</div>
+                        </div>
+                      </div>
+                      <Badge className="bg-primary">Selected</Badge>
+                    </div>
+                  )
                 )}
               </div>
 
