@@ -709,15 +709,22 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   <Tabs
                     value={selectedSupplierIds.length > 0 ? "multiple" : "single"}
                     onValueChange={(value) => {
-                      // When switching to single mode, clear multi selections
-                      if (value === "single" && selectedSupplierIds.length > 0) {
+                      if (value === "single") {
+                        // Clear multiple selections
                         setSelectedSupplierIds([]);
-                      }
-                      // When switching to multiple mode, convert single selection to multi if it exists
-                      if (value === "multiple" && selectedSupplierId) {
-                        setSelectedSupplierIds([selectedSupplierId]);
-                        setSelectedSupplierId(null);
-                        setSelectedSupplier(null);
+                        // If there was exactly one supplier selected, convert it to single mode
+                        if (selectedSupplierIds.length === 1) {
+                          const supplier = suppliers.find(s => s.id === selectedSupplierIds[0]);
+                          setSelectedSupplierId(supplier?.id || null);
+                          setSelectedSupplier(supplier || null);
+                        }
+                      } else {
+                        // Convert single selection to multiple if it exists
+                        if (selectedSupplierId) {
+                          setSelectedSupplierIds([selectedSupplierId]);
+                          setSelectedSupplierId(null);
+                          setSelectedSupplier(null);
+                        }
                       }
                     }}
                     className="mb-2"
@@ -730,45 +737,88 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 </div>
                 
                 <div className="relative mb-4">
-                  <Input 
-                    type="text" 
-                    placeholder="Search suppliers..." 
-                    className="pl-9"
-                    value={supplierSearchTerm}
-                    onChange={(e) => {
-                      setSupplierSearchTerm(e.target.value);
-                    }}
-                  />
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <div className="relative">
+                    <Input 
+                      type="text" 
+                      placeholder="Type to search suppliers..." 
+                      className="pl-9"
+                      value={supplierSearchTerm}
+                      onChange={(e) => {
+                        setSupplierSearchTerm(e.target.value);
+                      }}
+                    />
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  </div>
+                  
+                  {/* Autocomplete dropdown */}
+                  {supplierSearchTerm && (
+                    <div className="absolute w-full mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-auto">
+                      {filteredSuppliers.map((supplier) => (
+                        <div 
+                          key={supplier.id}
+                          className="p-2 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            if (selectedSupplierIds.length > 0) {
+                              if (!selectedSupplierIds.includes(supplier.id)) {
+                                setSelectedSupplierIds(prev => [...prev, supplier.id]);
+                              }
+                            } else {
+                              setSelectedSupplierId(supplier.id);
+                              setSelectedSupplier(supplier);
+                            }
+                            setSupplierSearchTerm('');
+                          }}
+                        >
+                          <div className="font-medium">{supplier.name}</div>
+                          <div className="text-sm text-gray-500">{supplier.products}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-3">
-                  {/* Display all suppliers with search filtering */}
-                  {filteredSuppliers.map((supplier) => (
-                    <div 
-                      key={supplier.id}
-                      className={cn(
-                        "p-4 border rounded-lg cursor-pointer",
-                        (selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) 
-                          ? "border-primary bg-primary/5" 
-                          : "hover:bg-gray-50"
-                      )}
-                      onClick={() => {
-                        // If in multiple mode
-                        if (selectedSupplierIds.length > 0 || (selectedSupplierId === null && selectedSupplier === null)) {
-                          // Toggle selection
-                          if (selectedSupplierIds.includes(supplier.id)) {
-                            setSelectedSupplierIds(prev => prev.filter(id => id !== supplier.id));
-                          } else {
-                            setSelectedSupplierIds(prev => [...prev, supplier.id]);
-                          }
-                        } else {
-                          // Single mode
-                          setSelectedSupplierId(supplier.id);
-                          setSelectedSupplier(supplier);
-                        }
-                      }}
-                    >
+                {/* Selected suppliers display */}
+                <div className="space-y-2">
+                  {selectedSupplierIds.length > 0 ? (
+                    // Multiple selection mode
+                    selectedSupplierIds.map(id => {
+                      const supplier = suppliers.find(s => s.id === id);
+                      return supplier && (
+                        <div key={supplier.id} className="flex items-center justify-between p-2 bg-primary/5 border-primary border rounded-md">
+                          <div>
+                            <div className="font-medium">{supplier.name}</div>
+                            <div className="text-sm text-gray-500">{supplier.products}</div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedSupplierIds(prev => prev.filter(suppId => suppId !== supplier.id))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })
+                  ) : selectedSupplier ? (
+                    // Single selection mode
+                    <div className="flex items-center justify-between p-2 bg-primary/5 border-primary border rounded-md">
+                      <div>
+                        <div className="font-medium">{selectedSupplier.name}</div>
+                        <div className="text-sm text-gray-500">{selectedSupplier.products}</div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedSupplierId(null);
+                          setSelectedSupplier(null);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-start">
                           <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
