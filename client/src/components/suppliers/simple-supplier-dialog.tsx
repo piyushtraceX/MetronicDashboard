@@ -45,23 +45,25 @@ export default function SimpleSupplierDialog({
 }: SupplierDialogProps) {
   const [activeTab, setActiveTab] = useState("supplierDetails");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    // Partner Details
+  
+  // Create a default form state function to avoid duplication
+  const getDefaultFormState = () => ({
+    // Partner Details - All required fields are pre-filled with defaults
     name: initialData?.name || "",
-    partnerType: initialData?.partnerType || "",
+    partnerType: initialData?.partnerType || "supplier",
     domain: initialData?.domain || "",
     website: initialData?.website || "",
-    partnerRole: initialData?.partnerRole || "",
+    partnerRole: initialData?.partnerRole || "supplier",
     partnerRoleName: initialData?.partnerRoleName || "SUPPLIER",
     registrationType: initialData?.registrationType || "",
     category: initialData?.category || "",
     incorporationDate: initialData?.incorporationDate || null,
     
-    // Address Details
+    // Address Details - country is required
     addressType: initialData?.addressType || "",
     addressLine1: initialData?.addressLine1 || "",
     street: initialData?.street || "",
-    country: initialData?.country || "",
+    country: initialData?.country || "india",
     state: initialData?.state || "",
     city: initialData?.city || "",
     pinCode: initialData?.pinCode || "",
@@ -78,10 +80,25 @@ export default function SimpleSupplierDialog({
     mobileNumber: initialData?.mobileNumber || "",
     
     // Status
-    status: initialData?.status || "pending"
+    status: initialData?.status || "pending",
+    
+    // Optional fields that the schema might expect
+    products: initialData?.products || ""
   });
   
+  const [formData, setFormData] = useState(getDefaultFormState());
+  
   const queryClient = useQueryClient();
+  
+  // Reset the form when the dialog is closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset form data when closing
+      setFormData(getDefaultFormState());
+      setActiveTab("supplierDetails");
+    }
+    onOpenChange(open);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -124,32 +141,56 @@ export default function SimpleSupplierDialog({
         ? `/api/suppliers/${initialData.id}`
         : "/api/suppliers";
 
+      // Add required "products" field if not present (required by schema)
+      const submissionData = {
+        ...formData,
+        products: formData.products || "Default Products"
+      };
+
+      console.log("Submitting supplier data:", submissionData);
+
       const response = await fetch(endpoint, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save supplier data");
+        // Try to get the error message from the response
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          // Ignore if we can't parse the JSON
+        }
+        
+        console.error("Server response:", response.status, errorData);
+        throw new Error(`Failed to save supplier data: ${errorData?.message || response.statusText}`);
       }
+
+      const savedSupplier = await response.json();
+      console.log("Supplier saved successfully:", savedSupplier);
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      
+      // Reset form data
+      setFormData(getDefaultFormState());
       
       // Close form
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving supplier:", error);
+      alert("Failed to save supplier. See console for details.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
