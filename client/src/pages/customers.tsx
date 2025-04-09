@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -54,11 +54,23 @@ export default function Customers() {
   const [filter, setFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [customerStates, setCustomerStates] = useState<Record<number, string>>({});
   
   const { data: customers = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/customers"],
-    staleTime: 60 * 1000,
+    staleTime: 60 * 1000
   });
+  
+  // Initialize customer states when data changes
+  useEffect(() => {
+    if (customers && customers.length > 0) {
+      const stateMap: Record<number, string> = {};
+      customers.forEach((customer: any) => {
+        stateMap[customer.id] = customer.status;
+      });
+      setCustomerStates(stateMap);
+    }
+  }, [customers]);
   
   const { data: stats = { total: 0, active: 0, inactive: 0 } } = useQuery<{
     total: number;
@@ -102,10 +114,16 @@ export default function Customers() {
     setSelectedCustomer(null);
   };
   
-  // Toggle customer status function
+  // Toggle customer status function with immediate UI update
   const handleToggleStatus = async (customer: any, newStatus: boolean) => {
     try {
       const status = newStatus ? "active" : "inactive";
+      
+      // Update local state immediately for a responsive UI
+      setCustomerStates(prev => ({
+        ...prev,
+        [customer.id]: status
+      }));
       
       // Call the API to update the customer status
       const response = await fetch(`/api/customers/${customer.id}`, {
@@ -117,6 +135,11 @@ export default function Customers() {
       });
       
       if (!response.ok) {
+        // If there's an error, revert to the previous state
+        setCustomerStates(prev => ({
+          ...prev,
+          [customer.id]: customer.status // Revert to original status
+        }));
         throw new Error('Failed to update customer status');
       }
       
@@ -292,12 +315,12 @@ export default function Customers() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Switch
-                            checked={customer.status === "active"}
+                            checked={customerStates[customer.id] === "active"}
                             onCheckedChange={(checked) => handleToggleStatus(customer, checked)}
                             aria-label="Toggle customer status"
                           />
-                          <span className={`text-sm ${customer.status === "active" ? "text-green-600" : "text-gray-500"}`}>
-                            {customer.status === "active" ? "Active" : "Inactive"}
+                          <span className={`text-sm ${customerStates[customer.id] === "active" ? "text-green-600" : "text-gray-500"}`}>
+                            {customerStates[customer.id] === "active" ? "Active" : "Inactive"}
                           </span>
                         </div>
                       </TableCell>
