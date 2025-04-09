@@ -78,10 +78,6 @@ export default function Dashboard() {
           <p className="mt-1 text-sm text-gray-500">Monitor and manage your organization's compliance status</p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-3">
-          <Button>
-            <i className="fas fa-plus mr-2"></i>
-            New Assessment
-          </Button>
           <Button variant="outline">
             <i className="fas fa-download mr-2"></i>
             Export
@@ -207,11 +203,7 @@ export default function Dashboard() {
               ))}
             </div>
             
-            <div className="pt-3 border-t border-gray-100">
-              <Button variant="outline" className="w-full">
-                Run New Assessment
-              </Button>
-            </div>
+            {/* "Run New Assessment" button removed as requested */}
           </div>
         </div>
       </div>

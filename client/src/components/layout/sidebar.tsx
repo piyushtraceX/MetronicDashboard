@@ -102,25 +102,7 @@ export default function Sidebar() {
             />
           )}
           
-          {/* Risk Assessment - Not available to suppliers or customers */}
-          {!isSupplier && !isCustomer && (
-            <SidebarSection
-              icon="fa-exclamation-triangle"
-              label="Risk Assessment"
-              href="/risk-assessment"
-              active={location === "/risk-assessment"}
-            />
-          )}
-          
-          {/* Documents - Not available to suppliers or customers */}
-          {!isSupplier && !isCustomer && (
-            <SidebarSection
-              icon="fa-file-alt"
-              label="Documents"
-              href="/documents"
-              active={location === "/documents"}
-            />
-          )}
+          {/* Risk Assessment and Documents tabs removed as requested */}
           
           {/* Declarations - Available to all with role-specific labels */}
           <SidebarSection
@@ -152,23 +134,7 @@ export default function Sidebar() {
             />
           )}
           
-          {/* Compliance - Not available to suppliers or customers */}
-          {!isSupplier && !isCustomer && (
-            <SidebarSection
-              icon="fa-check-circle"
-              label="Compliance"
-              href="/compliance"
-              active={location === "/compliance"}
-            />
-          )}
-          
-          {/* Reports - Available to all */}
-          <SidebarSection
-            icon="fa-chart-bar"
-            label="Reports"
-            href="/reports"
-            active={location === "/reports"}
-          />
+          {/* Compliance and Reports tabs removed as requested */}
           
           {/* Settings - Available to all */}
           <SidebarSection
