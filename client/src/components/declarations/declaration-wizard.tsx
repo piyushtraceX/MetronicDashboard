@@ -95,7 +95,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
   // Step 4: Customer Selection (for outbound only)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  
+
   // GeoJSON upload state
   const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
   const [geometryValid, setGeometryValid] = useState<boolean | null>(null);
@@ -248,19 +248,19 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setIsValidating(true);
     setGeometryValid(null);
     setSatelliteValid(null);
-    
+
     toast({
       title: "GeoJSON uploaded",
       description: "GeoJSON file has been uploaded successfully. Validating...",
       variant: "default",
     });
-    
+
     // Simulate geometry validation check
     setTimeout(() => {
       // 50% probability of geometry validation passing/failing for equal testing scenarios
       const geometryIsValid = Math.random() < 0.5;
       setGeometryValid(geometryIsValid);
-      
+
       // If geometry validation fails, don't proceed to satellite check
       if (!geometryIsValid) {
         setIsValidating(false);
@@ -271,14 +271,14 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
         });
         return;
       }
-      
+
       // Only proceed to satellite check if geometry is valid
       setTimeout(() => {
         // 50% probability of satellite validation passing/failing
         const satelliteIsValid = Math.random() < 0.5;
         setSatelliteValid(satelliteIsValid);
         setIsValidating(false);
-        
+
         // If satellite check fails, notify the user
         if (!satelliteIsValid) {
           toast({
@@ -334,7 +334,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         // Check if PO Number is provided
         if (!poNumber.trim()) {
           toast({
@@ -344,14 +344,14 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         // Check if at least one valid item is present
         const validItems = items.filter(item => 
           item.hsnCode.trim() !== "" && 
           item.productName.trim() !== "" && 
           item.quantity.trim() !== ""
         );
-        
+
         if (validItems.length === 0) {
           toast({
             title: "Valid item required",
@@ -360,7 +360,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         return true;
 
       case 2: // GeoJSON Upload
@@ -373,7 +373,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         // Check if validation is in progress
         if (isValidating) {
           toast({
@@ -383,7 +383,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
           return false;
         }
-        
+
         // Allow proceeding even with failed validations
         // The declaration can be saved as draft but won't be submittable later
         return true;
@@ -436,7 +436,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
     // Determine declaration status based on GeoJSON validation results
     let status = "pending";
-    
+
     if (geometryValid === false) {
       status = "non-compliant-geometry";
     } else if (satelliteValid === false) {
@@ -444,7 +444,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     } else if (declarationType === "inbound") {
       status = "validating";
     }
-    
+
     // Check if we're in multiple supplier mode or single supplier mode
     if (selectedSupplierIds.length > 0) {
       // Multiple supplier mode - create a declaration for each supplier
@@ -456,10 +456,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
             description: `Creating ${selectedSupplierIds.length} declarations...`,
             variant: "default",
           });
-          
+
           let successCount = 0;
           let errorCount = 0;
-          
+
           // Create a declaration for each supplier
           for (const supplierId of selectedSupplierIds) {
             const payload = {
@@ -480,7 +480,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               satelliteValid: satelliteValid,
               supplier: suppliers.find(s => s.id === supplierId)?.name // Include supplier name
             };
-            
+
             try {
               await apiRequest('/api/declarations', {
                 method: 'POST',
@@ -495,21 +495,21 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               errorCount++;
             }
           }
-          
+
           // Invalidate queries to refresh data
           queryClient.invalidateQueries({ queryKey: ['/api/declarations'] });
           queryClient.invalidateQueries({ queryKey: ['/api/declarations/stats'] });
-          
+
           // Show completion toast
           toast({
             title: "Declarations created",
             description: `Successfully created ${successCount} declarations${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
             variant: errorCount > 0 ? "destructive" : "default",
           });
-          
+
           // Close modal
           onOpenChange(false);
-          
+
           // Reset form
           resetForm();
         } catch (error) {
@@ -521,7 +521,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           });
         }
       };
-      
+
       createMultipleDeclarations();
     } else {
       // Single supplier mode - create one declaration
@@ -735,7 +735,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     </TabsList>
                   </Tabs>
                 </div>
-                
+
                 <div className="relative mb-4">
                   <div className="relative">
                     <Input 
@@ -749,7 +749,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     />
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                   </div>
-                  
+
                   {/* Autocomplete dropdown */}
                   {supplierSearchTerm && (
                     <div className="absolute w-full mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-auto">
@@ -819,169 +819,171 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     </div>
                   ) : null}
                 </div>
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-start">
-                          <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
-                          <div>
-                            <div className="font-medium">{supplier.name}</div>
-                            <div className="text-sm text-gray-500">{supplier.products || 'No products specified'}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          {(selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) && (
-                            <Badge className="bg-primary ml-2">Selected</Badge>
-                          )}
+                <div>
+                  {filteredSuppliers.map((supplier) => (
+                    <div key={supplier.id} className="flex items-start justify-between mb-2">
+                      <div className="flex items-start">
+                        <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
+                        <div>
+                          <div className="font-medium">{supplier.name}</div>
+                          <div className="text-sm text-gray-500">{supplier.products || 'No products specified'}</div>
                         </div>
                       </div>
-                      
-                      {supplier.countries && supplier.countries.length > 0 && (
-                        <div className="text-xs text-gray-500 mt-2 pl-8">
-                          <span className="text-gray-400">Countries:</span> {supplier.countries.join(', ')}
-                        </div>
-                      )}
+                      <div className="flex items-center">
+                        {(selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) && (
+                          <Badge className="bg-primary ml-2">Selected</Badge>
+                        )}
+                      </div>
                     </div>
-                  ))}
 
-                  {/* Show empty state if no suppliers match the search */}
-                  {filteredSuppliers.length === 0 && (
-                    <div className="p-8 border rounded-lg border-dashed flex flex-col items-center justify-center text-center">
-                      <div className="text-gray-400 mb-2">
-                        <User className="h-10 w-10" />
+                    {supplier.countries && supplier.countries.length > 0 && (
+                      <div className="text-xs text-gray-500 mt-2 pl-8">
+                        <span className="text-gray-400">Countries:</span> {supplier.countries.join(', ')}
                       </div>
-                      <p className="text-gray-500 mb-1">No suppliers found</p>
-                      <p className="text-sm text-gray-400">Please try a different search term</p>
+                    )}
+                  </div>
+                ))}
+
+                {/* Show empty state if no suppliers match the search */}
+                {filteredSuppliers.length === 0 && (
+                  <div className="p-8 border rounded-lg border-dashed flex flex-col items-center justify-center text-center">
+                    <div className="text-gray-400 mb-2">
+                      <User className="h-10 w-10" />
                     </div>
-                  )}
-                </div>
-                {/* Reset selection button - only show when selections exist */}
-                {(selectedSupplierIds.length > 0 || selectedSupplierId) && (
-                  <div className="mt-4 flex justify-end">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedSupplierIds([]);
-                        setSelectedSupplierId(null);
-                        setSelectedSupplier(null);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Clear Selection
-                    </Button>
+                    <p className="text-gray-500 mb-1">No suppliers found</p>
+                    <p className="text-sm text-gray-400">Please try a different search term</p>
                   </div>
                 )}
               </div>
-
-              <div className="space-y-6 mb-6">
-                <div>
-                  <Label htmlFor="po-number" className="text-sm font-medium">
-                    PO Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="po-number"
-                    type="text"
-                    placeholder="Enter PO number"
-                    className="mt-1"
-                    value={poNumber}
-                    onChange={(e) => setPoNumber(e.target.value)}
-                    required
-                  />
+              {/* Reset selection button - only show when selections exist */}
+              {(selectedSupplierIds.length > 0 || selectedSupplierId) && (
+                <div className="mt-4 flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedSupplierIds([]);
+                      setSelectedSupplierId(null);
+                      setSelectedSupplier(null);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear Selection
+                  </Button>
                 </div>
+              )}
+            </div>
 
-                <div>
-                  <Label htmlFor="supplier-so" className="text-sm font-medium">
-                    Supplier SO Number
-                  </Label>
-                  <Input
-                    id="supplier-so"
-                    type="text"
-                    placeholder="Enter supplier SO number"
-                    className="mt-1"
-                    value={supplierSoNumber}
-                    onChange={(e) => setSupplierSoNumber(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="shipment-number" className="text-sm font-medium">
-                    Shipment Number (BL, LR etc.)
-                  </Label>
-                  <Input
-                    id="shipment-number"
-                    type="text"
-                    placeholder="Enter shipment number"
-                    className="mt-1"
-                    value={shipmentNumber}
-                    onChange={(e) => setShipmentNumber(e.target.value)}
-                  />
-                </div>
+            <div className="space-y-6 mb-6">
+              <div>
+                <Label htmlFor="po-number" className="text-sm font-medium">
+                  PO Number <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="po-number"
+                  type="text"
+                  placeholder="Enter PO number"
+                  className="mt-1"
+                  value={poNumber}
+                  onChange={(e) => setPoNumber(e.target.value)}
+                  required
+                />
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">Declaration Items</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        // This will trigger a click on the hidden file input
-                        document.getElementById('importItemsFile')?.click();
-                      }}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Import Items
-                    </Button>
-                    <input 
-                      type="file" 
-                      id="importItemsFile" 
-                      accept=".csv,.xlsx,.xls" 
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files?.length) {
-                          console.log('Selected file:', e.target.files[0].name);
-                          // Here you would handle the file import
-                          // For example, parsing the CSV/Excel and adding items
-                          toast({
-                            title: "Items imported",
-                            description: `${e.target.files[0].name} has been processed.`,
-                            variant: "default",
-                          });
-                        }
-                      }} 
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-primary border-primary"
-                      onClick={addItem}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Item
-                    </Button>
-                  </div>
+                <Label htmlFor="supplier-so" className="text-sm font-medium">
+                  Supplier SO Number
+                </Label>
+                <Input
+                  id="supplier-so"
+                  type="text"
+                  placeholder="Enter supplier SO number"
+                  className="mt-1"
+                  value={supplierSoNumber}
+                  onChange={(e) => setSupplierSoNumber(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="shipment-number" className="text-sm font-medium">
+                  Shipment Number (BL, LR etc.)
+                </Label>
+                <Input
+                  id="shipment-number"
+                  type="text"
+                  placeholder="Enter shipment number"
+                  className="mt-1"
+                  value={shipmentNumber}
+                  onChange={(e) => setShipmentNumber(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Declaration Items</h3>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // This will trigger a click on the hidden file input
+                      document.getElementById('importItemsFile')?.click();
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Items
+                  </Button>
+                  <input 
+                    type="file" 
+                    id="importItemsFile" 
+                    accept=".csv,.xlsx,.xls" 
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files?.length) {
+                        console.log('Selected file:', e.target.files[0].name);
+                        // Here you would handle the file import
+                        // For example, parsing the CSV/Excel and adding items
+                        toast({
+                          title: "Items imported",
+                          description: `${e.target.files[0].name} has been processed.`,
+                          variant: "default",
+                        });
+                      }
+                    }} 
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-primary border-primary"
+                    onClick={addItem}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
                 </div>
+              </div>
 
-                <div className="space-y-6">
-                  {items.map((item, index) => (
-                    <div key={item.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-medium">Item {index + 1}</h4>
-                        {items.length > 1 && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-red-500 hover:text-red-700 h-8 px-2"
-                            onClick={() => removeItem(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+              <div className="space-y-6">
+                {items.map((item, index) => (
+                  <div key={item.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-medium">Item {index + 1}</h4>
+                      {items.length > 1 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-500 hover:text-red-700 h-8 px-2"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
 
-                      <div className="flex flex-wrap gap-3 items-end">
-                        <div className="w-28">
-                          <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
+                    <div className="flex flex-wrap gap-3 items-end">
+                      <div className="w-28">
+                        <Label htmlFor={`hsn-code-${item.id}`}className="text-sm">HSN Code *</Label>
                           <Input 
                             id={`hsn-code-${item.id}`} 
                             placeholder="e.g. 1511.10.00"
@@ -990,7 +992,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             className="mt-1"
                           />
                         </div>
-                        
+
                         <div className="w-28">
                           <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
                             RM Id
@@ -1123,7 +1125,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       Browse Files
                     </Button>
                   )}
-                  
+
                   {/* Validation status indicators */}
                   {hasUploadedGeoJSON && (
                     <div className="mt-4 space-y-2">
@@ -1139,7 +1141,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           <span className="text-sm text-gray-500">Pending</span>
                         )}
                       </div>
-                      
+
                       {/* Only show satellite check if geometry check passed */}
                       {geometryValid === true && (
                         <div className="flex items-center justify-center space-x-2">
@@ -1155,7 +1157,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           )}
                         </div>
                       )}
-                      
+
                       {/* Warning message for failed validations */}
                       {geometryValid === false && (
                         <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
@@ -1167,7 +1169,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           </p>
                         </div>
                       )}
-                      
+
                       {geometryValid === true && satelliteValid === false && (
                         <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
                           <p className="text-sm text-red-600">
@@ -1303,7 +1305,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500 mt-2 pl-8">
                       <div><span className="text-gray-400">Country:</span> {customer.country}</div>
                       <div><span className="text-gray-400">Registration:</span> {customer.registrationNumber}</div>
@@ -1334,7 +1336,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   />
                 </div>
               )}
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -1417,7 +1419,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="col-span-2">
                     <h4 className="text-sm font-medium text-gray-500">GeoJSON Validation Status</h4>
                     {!hasUploadedGeoJSON ? (
@@ -1434,7 +1436,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             <Badge className="bg-yellow-500">Pending</Badge>
                           )}
                         </div>
-                        
+
                         {geometryValid === true && (
                           <div className="flex items-center">
                             <span className="text-sm mr-2">Satellite Check:</span>
@@ -1447,7 +1449,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             )}
                           </div>
                         )}
-                        
+
                         {(geometryValid === false || (geometryValid === true && satelliteValid === false)) && (
                           <div className="mt-2 text-sm text-red-600">
                             This declaration will be saved with non-compliant status.
