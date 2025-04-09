@@ -838,7 +838,14 @@ export class MemStorage implements IStorage {
     const threeMonthsAgo = new Date(currentDate);
     threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
     
+    const oneWeekAgo = new Date(currentDate);
+    oneWeekAgo.setDate(currentDate.getDate() - 7);
+    
+    const twoWeeksAgo = new Date(currentDate);
+    twoWeeksAgo.setDate(currentDate.getDate() - 14);
+    
     const declarations = [
+      // INBOUND DECLARATIONS
       { 
         type: "inbound", 
         supplierId: 1, 
@@ -852,22 +859,8 @@ export class MemStorage implements IStorage {
         startDate: threeMonthsAgo, 
         endDate: oneMonthAgo, 
         createdBy: 1,
-        industry: "Food & Beverage"
-      },
-      { 
-        type: "outbound", 
-        supplierId: 1, 
-        productName: "Roasted Coffee Blend", 
-        productDescription: "Medium roast coffee blend for export", 
-        hsnCode: "0901.22.00", 
-        quantity: 1800, 
-        unit: "kg", 
-        status: "pending", 
-        riskLevel: "medium", 
-        startDate: twoMonthsAgo, 
-        endDate: null, 
-        createdBy: 1,
-        industry: "Food & Beverage"
+        industry: "Food & Beverage",
+        complianceStatus: "compliant"
       },
       { 
         type: "inbound", 
@@ -882,7 +875,8 @@ export class MemStorage implements IStorage {
         startDate: oneMonthAgo, 
         endDate: null, 
         createdBy: 1,
-        industry: "Agriculture"
+        industry: "Agriculture",
+        complianceStatus: "non-compliant"
       },
       { 
         type: "inbound", 
@@ -898,6 +892,7 @@ export class MemStorage implements IStorage {
         endDate: null, 
         createdBy: 1,
         industry: "Forestry",
+        complianceStatus: "non-compliant-geometry",
         geojsonData: {
           type: "FeatureCollection",
           features: [
@@ -962,6 +957,72 @@ export class MemStorage implements IStorage {
         }
       },
       { 
+        type: "inbound", 
+        supplierId: 5, 
+        productName: "Organic Cocoa Beans", 
+        productDescription: "Premium organic cocoa beans from Tanzania", 
+        hsnCode: "1801.00.00", 
+        quantity: 3000, 
+        unit: "kg", 
+        status: "pending", 
+        riskLevel: "medium", 
+        startDate: oneWeekAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Food & Beverage",
+        complianceStatus: "compliant"
+      },
+      { 
+        type: "inbound", 
+        supplierId: 6, 
+        productName: "Natural Rubber", 
+        productDescription: "Sustainably harvested rubber for industrial use", 
+        hsnCode: "4001.21.00", 
+        quantity: 8500, 
+        unit: "kg", 
+        status: "approved", 
+        riskLevel: "low", 
+        startDate: twoWeeksAgo, 
+        endDate: oneWeekAgo, 
+        createdBy: 1,
+        industry: "Agriculture",
+        complianceStatus: "compliant"
+      },
+      { 
+        type: "inbound", 
+        supplierId: 2, 
+        productName: "Palm Kernel Oil", 
+        productDescription: "Cold-pressed palm kernel oil", 
+        hsnCode: "1513.21.00", 
+        quantity: 7500, 
+        unit: "liters", 
+        status: "rejected", 
+        riskLevel: "high", 
+        startDate: oneMonthAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Agriculture",
+        complianceStatus: "non-compliant-geometry"
+      },
+      
+      // OUTBOUND DECLARATIONS
+      { 
+        type: "outbound", 
+        supplierId: 1, 
+        productName: "Roasted Coffee Blend", 
+        productDescription: "Medium roast coffee blend for export", 
+        hsnCode: "0901.22.00", 
+        quantity: 1800, 
+        unit: "kg", 
+        status: "pending", 
+        riskLevel: "medium", 
+        startDate: twoMonthsAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Food & Beverage",
+        complianceStatus: "compliant"
+      },
+      { 
         type: "outbound", 
         supplierId: 4, 
         productName: "Organic Soy Protein", 
@@ -974,7 +1035,56 @@ export class MemStorage implements IStorage {
         startDate: threeMonthsAgo, 
         endDate: null, 
         createdBy: 1,
-        industry: "Food & Beverage"
+        industry: "Agriculture",
+        complianceStatus: "compliant"
+      },
+      { 
+        type: "outbound", 
+        supplierId: 3, 
+        productName: "Hardwood Furniture Components", 
+        productDescription: "Processed hardwood for furniture manufacturing", 
+        hsnCode: "4407.29.00", 
+        quantity: 42, 
+        unit: "m³", 
+        status: "review", 
+        riskLevel: "medium", 
+        startDate: twoWeeksAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Forestry",
+        complianceStatus: "non-compliant"
+      },
+      { 
+        type: "outbound", 
+        supplierId: 5, 
+        productName: "Chocolate Products", 
+        productDescription: "Organic chocolate bars and confections", 
+        hsnCode: "1806.32.00", 
+        quantity: 1200, 
+        unit: "kg", 
+        status: "approved", 
+        riskLevel: "low", 
+        startDate: oneMonthAgo, 
+        endDate: oneWeekAgo, 
+        createdBy: 1,
+        industry: "Food & Beverage",
+        complianceStatus: "compliant"
+      },
+      { 
+        type: "outbound", 
+        supplierId: 6, 
+        productName: "Rubber Gaskets", 
+        productDescription: "Industrial rubber components", 
+        hsnCode: "4016.93.00", 
+        quantity: 25000, 
+        unit: "pcs", 
+        status: "pending", 
+        riskLevel: "medium", 
+        startDate: oneWeekAgo, 
+        endDate: null, 
+        createdBy: 1,
+        industry: "Manufacturing",
+        complianceStatus: "non-compliant-geometry"
       }
     ];
     

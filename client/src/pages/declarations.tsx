@@ -440,7 +440,7 @@ export default function Declarations() {
   
   // For suppliers, default to outbound tab, for customers default to inbound tab
   const [activeTab, setActiveTab] = useState<string>(
-    isSupplier ? "outbound" : isCustomer ? "inbound" : "all"
+    isSupplier ? "outbound" : "inbound"
   );
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [simpleModalOpen, setSimpleModalOpen] = useState(false);
@@ -569,7 +569,7 @@ export default function Declarations() {
   
   // Fetch declarations
   const { data: declarations = [], isLoading: isLoadingDeclarations } = useQuery<Declaration[]>({
-    queryKey: ['/api/declarations', activeTab !== 'all' ? { type: activeTab } : undefined],
+    queryKey: ['/api/declarations', { type: activeTab }],
     refetchOnWindowFocus: false,
   });
   
@@ -585,14 +585,8 @@ export default function Declarations() {
     refetchOnWindowFocus: false,
   });
   
-  // For suppliers, show only outbound declarations; for customers, show only inbound
-  let filteredDeclarations = isSupplier 
-    ? declarations.filter((d) => d.type === "outbound")
-    : isCustomer
-      ? declarations.filter((d) => d.type === "inbound")
-      : (activeTab === 'all' 
-          ? declarations 
-          : declarations.filter((d) => d.type === activeTab));
+  // Filter declarations by the active tab
+  let filteredDeclarations = declarations.filter((d) => d.type === activeTab);
           
   // Apply status filter
   if (statusFilter !== "all") {
@@ -1040,7 +1034,7 @@ export default function Declarations() {
       </Dialog>
       
       <Tabs 
-        defaultValue={isSupplier ? "outbound" : isCustomer ? "inbound" : "all"} 
+        defaultValue={isSupplier ? "outbound" : "inbound"} 
         className="w-full" 
         onValueChange={setActiveTab}
       >
@@ -1053,8 +1047,7 @@ export default function Declarations() {
             <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
           </TabsList>
         ) : (
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="all">All Declarations</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
             <TabsTrigger value="outbound">Outbound Declaration</TabsTrigger>
           </TabsList>
