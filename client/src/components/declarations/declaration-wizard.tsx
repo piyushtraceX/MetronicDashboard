@@ -591,12 +591,12 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   };
 
   // Filter suppliers based on search term
-  // Only show suppliers when there's an active search with at least 2 characters
-  const filteredSuppliers = supplierSearchTerm.length >= 2 
+  // Show all suppliers by default, filter when there's a search term
+  const filteredSuppliers = supplierSearchTerm.length > 0
     ? suppliers.filter(supplier => 
         supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
       )
-    : [];
+    : suppliers;
 
   // Get step labels based on declaration type
   const getStepLabels = () => {
@@ -732,113 +732,94 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 <div className="relative mb-4">
                   <Input 
                     type="text" 
-                    placeholder="Type at least 2 characters to search suppliers..." 
+                    placeholder="Search suppliers..." 
                     className="pl-9"
                     value={supplierSearchTerm}
                     onChange={(e) => {
                       setSupplierSearchTerm(e.target.value);
-                      if (!e.target.value) {
-                        setSelectedSupplierId(null);
-                      }
                     }}
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  {supplierSearchTerm.length >= 2 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border">
-                      <div className="max-h-60 overflow-auto">
-                        {filteredSuppliers.length === 0 ? (
-                          <div className="px-4 py-2 text-sm text-gray-500">No suppliers found</div>
-                        ) : (
-                          filteredSuppliers.map((supplier) => (
-                            <div
-                              key={supplier.id}
-                              className={`px-4 py-2 cursor-pointer hover:bg-gray-50 ${
-                                selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id) 
-                                  ? 'bg-primary/5' 
-                                  : ''
-                              }`}
-                              onClick={() => {
-                                // If in multiple mode
-                                if (selectedSupplierIds.length > 0 || (selectedSupplierId === null && selectedSupplier === null)) {
-                                  // Toggle selection
-                                  if (selectedSupplierIds.includes(supplier.id)) {
-                                    setSelectedSupplierIds(prev => prev.filter(id => id !== supplier.id));
-                                  } else {
-                                    setSelectedSupplierIds(prev => [...prev, supplier.id]);
-                                  }
-                                } else {
-                                  // Single mode
-                                  setSelectedSupplierId(supplier.id);
-                                  setSelectedSupplier(supplier);
-                                  setSupplierSearchTerm(supplier.name);
-                                }
-                              }}
-                            >
-                              <div className="font-medium">{supplier.name}</div>
-                              <div className="text-xs text-gray-500">{supplier.products || 'No products specified'}</div>
-                            </div>
-                          ))
-                        )}
+                </div>
+
+                <div className="space-y-3">
+                  {/* Display all suppliers with search filtering */}
+                  {filteredSuppliers.map((supplier) => (
+                    <div 
+                      key={supplier.id}
+                      className={cn(
+                        "p-4 border rounded-lg cursor-pointer",
+                        (selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) 
+                          ? "border-primary bg-primary/5" 
+                          : "hover:bg-gray-50"
+                      )}
+                      onClick={() => {
+                        // If in multiple mode
+                        if (selectedSupplierIds.length > 0 || (selectedSupplierId === null && selectedSupplier === null)) {
+                          // Toggle selection
+                          if (selectedSupplierIds.includes(supplier.id)) {
+                            setSelectedSupplierIds(prev => prev.filter(id => id !== supplier.id));
+                          } else {
+                            setSelectedSupplierIds(prev => [...prev, supplier.id]);
+                          }
+                        } else {
+                          // Single mode
+                          setSelectedSupplierId(supplier.id);
+                          setSelectedSupplier(supplier);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-start">
+                          <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
+                          <div>
+                            <div className="font-medium">{supplier.name}</div>
+                            <div className="text-sm text-gray-500">{supplier.products || 'No products specified'}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          {(selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) && (
+                            <Badge className="bg-primary ml-2">Selected</Badge>
+                          )}
+                        </div>
                       </div>
+                      
+                      {supplier.countries && supplier.countries.length > 0 && (
+                        <div className="text-xs text-gray-500 mt-2 pl-8">
+                          <span className="text-gray-400">Countries:</span> {supplier.countries.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Show empty state if no suppliers match the search */}
+                  {filteredSuppliers.length === 0 && (
+                    <div className="p-8 border rounded-lg border-dashed flex flex-col items-center justify-center text-center">
+                      <div className="text-gray-400 mb-2">
+                        <User className="h-10 w-10" />
+                      </div>
+                      <p className="text-gray-500 mb-1">No suppliers found</p>
+                      <p className="text-sm text-gray-400">Please try a different search term</p>
                     </div>
                   )}
                 </div>
-
-                {/* Show selected suppliers */}
-                {selectedSupplierIds.length > 0 ? (
-                  <div className="space-y-2">
-                    <div className="flex justify-between mb-2">
-                      <div className="text-sm font-medium">Selected Suppliers ({selectedSupplierIds.length})</div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-red-500 hover:text-red-700 h-8 px-2"
-                        onClick={() => setSelectedSupplierIds([])}
-                      >
-                        Clear All
-                      </Button>
-                    </div>
-                    {selectedSupplierIds.map(id => {
-                      const supplier = suppliers.find(s => s.id === id);
-                      return supplier ? (
-                        <div key={id} className="p-3 border rounded-lg flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                              {supplier.name.substring(0, 2).toUpperCase() || 'SP'}
-                            </div>
-                            <div className="ml-3">
-                              <div className="font-medium">{supplier.name}</div>
-                              <div className="text-xs text-gray-400">{supplier.products || 'No products specified'}</div>
-                            </div>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-red-500 hover:text-red-700 h-8 px-2"
-                            onClick={() => setSelectedSupplierIds(prev => prev.filter(suppId => suppId !== id))}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : null;
-                    })}
+                
+                {/* Reset selection button - only show when selections exist */}
+                {(selectedSupplierIds.length > 0 || selectedSupplierId) && (
+                  <div className="mt-4 flex justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedSupplierIds([]);
+                        setSelectedSupplierId(null);
+                        setSelectedSupplier(null);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear Selection
+                    </Button>
                   </div>
-                ) : (
-                  // Show selected supplier card only if a supplier is selected in single mode
-                  selectedSupplierId && (
-                    <div className="p-3 border rounded-lg flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                          {suppliers.find(s => s.id === selectedSupplierId)?.name.substring(0, 2).toUpperCase() || 'SP'}
-                        </div>
-                        <div className="ml-3">
-                          <div className="font-medium">{suppliers.find(s => s.id === selectedSupplierId)?.name}</div>
-                          <div className="text-xs text-gray-400">{suppliers.find(s => s.id === selectedSupplierId)?.products || 'No products specified'}</div>
-                        </div>
-                      </div>
-                      <Badge className="bg-primary">Selected</Badge>
-                    </div>
-                  )
                 )}
               </div>
 
