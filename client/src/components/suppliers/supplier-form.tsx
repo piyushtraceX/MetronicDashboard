@@ -50,7 +50,7 @@ const formSchema = z.object({
   partnerType: z.string().min(1, { message: "Partner type is required" }),
   name: z.string().min(1, { message: "Partner name is required" }),
   domain: z.string().optional(),
-  website: z.string().optional(),
+  website: z.string().optional(), // Don't validate URL format to avoid form errors
   partnerRole: z.string().min(1, { message: "Partner role is required" }),
   partnerRoleName: z.string().min(1, { message: "Partner role name is required" }),
   registrationType: z.string().optional(),
@@ -73,7 +73,7 @@ const formSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   designation: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z.string().optional(), // Don't validate email format to avoid form errors
   secondaryEmail: z.string().optional(),
   mobileNumber: z.string().optional(),
 });

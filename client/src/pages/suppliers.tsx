@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 
 import { Head } from "@/components/head";
-import SupplierForm from "../components/suppliers/supplier-form";
+import SupplierForm from "@/components/suppliers/supplier-form"; // Fixed import path
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
