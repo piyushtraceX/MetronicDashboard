@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SAQResponseViewer from "@/components/supply-chain/saq-response-viewer";
-import SimpleSupplierDialog from "@/components/suppliers/simple-supplier-dialog";
+import SimplifiedSupplierForm from "@/components/suppliers/simplified-supplier-form";
 
 export default function SupplyChain() {
   const [activeTab, setActiveTab] = useState("onboarding");
@@ -390,7 +390,7 @@ export default function SupplyChain() {
       />
       
       {/* Supplier Form Dialog */}
-      <SimpleSupplierDialog
+      <SimplifiedSupplierForm
         open={openCreateForm}
         onOpenChange={(open) => setOpenCreateForm(open)}
         initialData={null}
