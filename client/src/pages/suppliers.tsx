@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 
 import { Head } from "@/components/head";
-import SupplierForm from "@/components/suppliers/supplier-form"; // Fixed import path
+import SimpleSupplierDialog from "@/components/suppliers/simple-supplier-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -321,7 +321,7 @@ export default function Suppliers() {
         </div>
       </div>
       
-      <SupplierForm 
+      <SimpleSupplierDialog 
         open={openCreateForm} 
         onOpenChange={handleCloseForm} 
         initialData={selectedSupplier}
