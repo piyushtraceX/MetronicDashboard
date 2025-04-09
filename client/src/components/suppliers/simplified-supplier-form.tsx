@@ -113,6 +113,7 @@ export default function SimplifiedSupplierForm({
         name: formData.name || "New Supplier",
         partnerType: formData.partnerType,
         partnerRole: formData.partnerRole,
+        partnerRoleName: formData.products, // Set partnerRoleName to the products value for back-compatibility
         country: formData.country,
         status: formData.status,
         products: formData.products,
