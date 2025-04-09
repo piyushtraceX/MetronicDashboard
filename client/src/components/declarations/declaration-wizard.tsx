@@ -821,28 +821,29 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 </div>
                 <div>
                   {filteredSuppliers.map((supplier) => (
-                    <div key={supplier.id} className="flex items-start justify-between mb-2">
-                      <div className="flex items-start">
-                        <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
-                        <div>
-                          <div className="font-medium">{supplier.name}</div>
-                          <div className="text-sm text-gray-500">{supplier.products || 'No products specified'}</div>
+                    <div key={supplier.id}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-start">
+                          <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
+                          <div>
+                            <div className="font-medium">{supplier.name}</div>
+                            <div className="text-sm text-gray-500">{supplier.products || 'No products specified'}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          {(selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) && (
+                            <Badge className="bg-primary ml-2">Selected</Badge>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center">
-                        {(selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) && (
-                          <Badge className="bg-primary ml-2">Selected</Badge>
-                        )}
-                      </div>
-                    </div>
 
-                    {supplier.countries && supplier.countries.length > 0 && (
-                      <div className="text-xs text-gray-500 mt-2 pl-8">
-                        <span className="text-gray-400">Countries:</span> {supplier.countries.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {supplier.countries && supplier.countries.length > 0 && (
+                        <div className="text-xs text-gray-500 mt-2 pl-8">
+                          <span className="text-gray-400">Countries:</span> {supplier.countries.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  ))}
 
                 {/* Show empty state if no suppliers match the search */}
                 {filteredSuppliers.length === 0 && (
