@@ -569,7 +569,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Outbound Declaration</DialogTitle>
           <DialogDescription>
