@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 import {
   ArrowUpDown,
@@ -101,33 +102,35 @@ export default function Customers() {
     setSelectedCustomer(null);
   };
   
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">Active</Badge>;
-      case "inactive":
-        return <Badge variant="outline">Inactive</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-500">Pending</Badge>;
-      case "suspended":
-        return <Badge variant="destructive">Suspended</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+  // Toggle customer status function
+  const handleToggleStatus = async (customer: any, newStatus: boolean) => {
+    try {
+      const status = newStatus ? "active" : "inactive";
+      
+      // Call the API to update the customer status
+      const response = await fetch(`/api/customers/${customer.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update customer status');
+      }
+      
+      // Invalidate the queries to refresh the data
+      const queryClient = useQueryClient();
+      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customers/stats'] });
+    } catch (error) {
+      console.error('Error updating customer status:', error);
+      // In a real app, you would show a toast notification here
     }
   };
   
-  const getRiskBadge = (riskLevel: string) => {
-    switch (riskLevel) {
-      case "low":
-        return <Badge className="bg-green-500">Low Risk</Badge>;
-      case "medium":
-        return <Badge className="bg-yellow-500">Medium Risk</Badge>;
-      case "high":
-        return <Badge variant="destructive">High Risk</Badge>;
-      default:
-        return <Badge variant="secondary">{riskLevel}</Badge>;
-    }
-  };
+  // This function was used for risk badges, but we've removed risk level display
   
   return (
     <>
@@ -286,7 +289,18 @@ export default function Customers() {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={customer.status === "active"}
+                            onCheckedChange={(checked) => handleToggleStatus(customer, checked)}
+                            aria-label="Toggle customer status"
+                          />
+                          <span className={`text-sm ${customer.status === "active" ? "text-green-600" : "text-gray-500"}`}>
+                            {customer.status === "active" ? "Active" : "Inactive"}
+                          </span>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="text-sm text-muted-foreground">
                           {customer.createdAt
