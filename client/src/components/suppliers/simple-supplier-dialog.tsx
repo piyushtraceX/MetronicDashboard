@@ -141,11 +141,26 @@ export default function SimpleSupplierDialog({
         ? `/api/suppliers/${initialData.id}`
         : "/api/suppliers";
 
-      // Add required "products" field if not present (required by schema)
-      const submissionData = {
+      // Prepare submission data with validations
+      let submissionData = {
         ...formData,
         products: formData.products || "Default Products"
       };
+      
+      // Fix validation issues for optional fields
+      // For empty website/email fields, remove them from submission to avoid validation
+      if (!submissionData.website) {
+        delete submissionData.website;
+      }
+      
+      if (!submissionData.email) {
+        delete submissionData.email;
+      }
+      
+      // Make sure name is not empty as it's required
+      if (!submissionData.name) {
+        submissionData.name = "New Supplier";
+      }
 
       console.log("Submitting supplier data:", submissionData);
 
