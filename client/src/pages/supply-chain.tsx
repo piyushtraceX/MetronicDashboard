@@ -49,34 +49,37 @@ export default function SupplyChain() {
 
   // Mock assessment results
   const assessmentResults = [
-    { supplier: "ABC Corp", decision: "Approved", explanation: "Meets compliance standards" },
-    { supplier: "ABC Corp", decision: "Rejected", explanation: "Does not meet compliance standards" },
-    { supplier: "ABC Corp", decision: "Review", explanation: "Few compliance standard met" },
+    { supplier: "ABC Corp", decision: "Compliant", explanation: "Meets compliance standards" },
+    { supplier: "ABC Corp", decision: "Non-Compliant", explanation: "Does not meet compliance standards" },
+    { supplier: "ABC Corp", decision: "SAQ Pending", explanation: "Awaiting SAQ completion" },
   ];
 
-  // Function to get the right status badge color
+  // Function to get the right status badge color with specific hex colors
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
-        return <Badge className="bg-green-600 hover:bg-green-700 text-white">{status}</Badge>;
+      case "compliant":
+        return <Badge style={{ backgroundColor: "#D1FAE5", color: "#065F46" }}>{status}</Badge>;
       case "rejected":
-        return <Badge className="bg-red-600 hover:bg-red-700 text-white">{status}</Badge>;
+      case "non compliant":
+      case "non-compliant":
+        return <Badge style={{ backgroundColor: "#FEE2E2", color: "#991B1B" }}>{status}</Badge>;
       case "saq pending":
       case "pending":
-        return <Badge className="bg-amber-500 hover:bg-amber-600 text-white">{status}</Badge>;
+        return <Badge style={{ backgroundColor: "#FEF3C7", color: "#92400E" }}>{status}</Badge>;
       case "review":
-        return <Badge className="bg-blue-500 hover:bg-blue-600 text-white">{status}</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">{status}</Badge>;
       case "active":
-        return <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white">{status}</Badge>;
+        return <Badge className="bg-emerald-100 text-emerald-800">{status}</Badge>;
       case "inactive":
-        return <Badge className="bg-gray-500 hover:bg-gray-600 text-white">{status}</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
       case "completed":
-        return <Badge className="bg-indigo-600 hover:bg-indigo-700 text-white">{status}</Badge>;
+        return <Badge className="bg-indigo-100 text-indigo-800">{status}</Badge>;
       case "in progress":
       case "inprogress":
-        return <Badge className="bg-purple-500 hover:bg-purple-600 text-white">{status}</Badge>;
+        return <Badge className="bg-purple-100 text-purple-800">{status}</Badge>;
       default:
-        return <Badge className="bg-gray-400 hover:bg-gray-500 text-white">{status}</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 
