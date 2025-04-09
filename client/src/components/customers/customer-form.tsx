@@ -1,19 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertCustomerSchema } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle 
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -24,42 +18,44 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
-const formSchema = insertCustomerSchema.extend({
-  displayName: z.string().min(1, { message: "Display name is required" }),
-  type: z.string().min(1, { message: "Type is required" }),
-  firstName: z.string().min(1, { message: "First name is required" }),
-  lastName: z.string().min(1, { message: "Last name is required" }),
-  email: z.string().email({ message: "Invalid email address" }),
-  workPhone: z
-    .string()
-    .min(1, { message: "Work phone is required" })
-    .optional(),
+const formSchema = z.object({
+  // Basic information
+  type: z.enum(["business", "individual"]),
+  displayName: z.string().min(1, "Display name is required"),
+  companyName: z.string().optional(),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  workPhone: z.string().optional(),
   mobilePhone: z.string().optional(),
   
+  // Billing address
   billingAttention: z.string().optional(),
-  billingCountry: z.string().min(1, { message: "Country is required" }),
-  billingAddressLine1: z.string().min(1, { message: "Address is required" }),
+  billingCountry: z.string().min(1, "Country is required"),
+  billingAddressLine1: z.string().min(1, "Address line 1 is required"),
   billingAddressLine2: z.string().optional(),
-  billingCity: z.string().min(1, { message: "City is required" }),
-  billingState: z.string().min(1, { message: "State is required" }),
-  billingPostalCode: z.string().min(1, { message: "Postal code is required" }),
+  billingCity: z.string().min(1, "City is required"),
+  billingState: z.string().min(1, "State/Province is required"),
+  billingPostalCode: z.string().min(1, "Postal code is required"),
   
+  // Shipping address (same as billing or separate)
   sameAsBilling: z.boolean().default(true),
-  
-  // These are only required if sameAsBilling is false
   shippingAttention: z.string().optional(),
   shippingCountry: z.string().optional(),
   shippingAddressLine1: z.string().optional(),
@@ -68,17 +64,7 @@ const formSchema = insertCustomerSchema.extend({
   shippingState: z.string().optional(),
   shippingPostalCode: z.string().optional(),
   
-  gstTreatment: z.string().min(1, { message: "GST treatment is required" }),
-  placeOfSupply: z.string().min(1, { message: "Place of supply is required" }),
-  taxPreference: z.string().min(1, { message: "Tax preference is required" }),
-  currency: z.string().min(1, { message: "Currency is required" }),
-  paymentTerms: z.string().min(1, { message: "Payment terms are required" }),
-  enablePortal: z.boolean().default(false),
-  portalLanguage: z.string().optional(),
-  
-  registrationNumber: z.string().optional(),
-  complianceScore: z.coerce.number().min(0).max(100).optional(),
-  riskLevel: z.string().optional(),
+  // Status
   status: z.string().default("active"),
 });
 
@@ -125,17 +111,6 @@ export default function CustomerForm({ open, onOpenChange, initialData }: Custom
       shippingState: "",
       shippingPostalCode: "",
       
-      gstTreatment: "registered",
-      placeOfSupply: "",
-      taxPreference: "taxable",
-      currency: "EUR",
-      paymentTerms: "net30",
-      enablePortal: false,
-      portalLanguage: "english",
-      
-      registrationNumber: "",
-      complianceScore: 0,
-      riskLevel: "low",
       status: "active",
     },
   });
@@ -231,11 +206,9 @@ export default function CustomerForm({ open, onOpenChange, initialData }: Custom
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="grid grid-cols-4 mb-4">
+              <TabsList className="grid grid-cols-2 mb-4">
                 <TabsTrigger value="basic-info">Basic Info</TabsTrigger>
                 <TabsTrigger value="address">Address</TabsTrigger>
-                <TabsTrigger value="financial">Financial</TabsTrigger>
-                <TabsTrigger value="compliance">Compliance</TabsTrigger>
               </TabsList>
               
               <TabsContent value="basic-info" className="space-y-4">
@@ -281,7 +254,7 @@ export default function CustomerForm({ open, onOpenChange, initialData }: Custom
                         <FormItem>
                           <FormLabel>Company Name</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -378,6 +351,35 @@ export default function CustomerForm({ open, onOpenChange, initialData }: Custom
                         <FormLabel>Mobile Phone</FormLabel>
                         <FormControl>
                           <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="inactive">Inactive</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="suspended">Suspended</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -677,344 +679,16 @@ export default function CustomerForm({ open, onOpenChange, initialData }: Custom
                   )}
                 </div>
               </TabsContent>
-              
-              <TabsContent value="financial" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="gstTreatment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>GST Treatment</FormLabel>
-                        <FormControl>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select GST treatment" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="registered">Registered Business</SelectItem>
-                              <SelectItem value="unregistered">Unregistered Business</SelectItem>
-                              <SelectItem value="consumer">Consumer</SelectItem>
-                              <SelectItem value="overseas">Overseas</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="placeOfSupply"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Place of Supply</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="taxPreference"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tax Preference</FormLabel>
-                        <FormControl>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select tax preference" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="taxable">Taxable</SelectItem>
-                              <SelectItem value="tax-exempt">Tax Exempt</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="currency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Currency</FormLabel>
-                        <FormControl>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select currency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                              <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                              <SelectItem value="GBP">British Pound (GBP)</SelectItem>
-                              <SelectItem value="CHF">Swiss Franc (CHF)</SelectItem>
-                              <SelectItem value="SEK">Swedish Krona (SEK)</SelectItem>
-                              <SelectItem value="NOK">Norwegian Krone (NOK)</SelectItem>
-                              <SelectItem value="DKK">Danish Krone (DKK)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="paymentTerms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Terms</FormLabel>
-                        <FormControl>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select payment terms" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="immediate">Due on Receipt</SelectItem>
-                              <SelectItem value="net15">Net 15</SelectItem>
-                              <SelectItem value="net30">Net 30</SelectItem>
-                              <SelectItem value="net45">Net 45</SelectItem>
-                              <SelectItem value="net60">Net 60</SelectItem>
-                              <SelectItem value="net90">Net 90</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="enablePortal"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Enable Customer Portal
-                          </FormLabel>
-                          <FormDescription>
-                            Allow customers to access documents and track status via portal
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {form.watch("enablePortal") && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="portalLanguage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Portal Language</FormLabel>
-                          <FormControl>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select language" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="english">English</SelectItem>
-                                <SelectItem value="german">German</SelectItem>
-                                <SelectItem value="french">French</SelectItem>
-                                <SelectItem value="italian">Italian</SelectItem>
-                                <SelectItem value="spanish">Spanish</SelectItem>
-                                <SelectItem value="dutch">Dutch</SelectItem>
-                                <SelectItem value="swedish">Swedish</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="compliance" className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="registrationNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Registration Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Business registration or tax identification number
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="riskLevel"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Risk Level</FormLabel>
-                        <FormControl>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select risk level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="low">Low</SelectItem>
-                              <SelectItem value="medium">Medium</SelectItem>
-                              <SelectItem value="high">High</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="complianceScore"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Compliance Score (0-100)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            max="100" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <FormControl>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="suspended">Suspended</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </TabsContent>
             </Tabs>
-
-            <DialogFooter className="flex justify-between">
-              <div className="flex space-x-2">
-                {activeTab !== "basic-info" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const tabs = ["basic-info", "address", "financial", "compliance"];
-                      const currentIndex = tabs.indexOf(activeTab);
-                      if (currentIndex > 0) {
-                        setActiveTab(tabs[currentIndex - 1]);
-                      }
-                    }}
-                  >
-                    Previous
-                  </Button>
-                )}
-                
-                {activeTab !== "compliance" && (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      const tabs = ["basic-info", "address", "financial", "compliance"];
-                      const currentIndex = tabs.indexOf(activeTab);
-                      if (currentIndex < tabs.length - 1) {
-                        setActiveTab(tabs[currentIndex + 1]);
-                      }
-                    }}
-                  >
-                    Next
-                  </Button>
-                )}
-              </div>
-              
-              <div className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? "Saving..." : isEditMode ? "Update Customer" : "Create Customer"}
-                </Button>
-              </div>
-            </DialogFooter>
+            
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Saving..." : isEditMode ? "Update Customer" : "Create Customer"}
+              </Button>
+            </div>
           </form>
         </Form>
       </DialogContent>

@@ -31,7 +31,7 @@ export interface IStorage {
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   listCustomers(status?: string): Promise<Customer[]>;
-  getCustomerStats(): Promise<{ total: number, active: number, inactive: number, highRisk: number }>;
+  getCustomerStats(): Promise<{ total: number, active: number, inactive: number }>;
   
   // Declaration management
   getDeclaration(id: number): Promise<Declaration | undefined>;
@@ -267,14 +267,13 @@ export class MemStorage implements IStorage {
     );
   }
   
-  async getCustomerStats(): Promise<{ total: number, active: number, inactive: number, highRisk: number }> {
+  async getCustomerStats(): Promise<{ total: number, active: number, inactive: number }> {
     const customers = Array.from(this.customers.values());
     
     return {
       total: customers.length,
       active: customers.filter(c => c.status === "active").length,
-      inactive: customers.filter(c => c.status !== "active").length,
-      highRisk: customers.filter(c => c.riskLevel === "high").length
+      inactive: customers.filter(c => c.status !== "active").length
     };
   }
   

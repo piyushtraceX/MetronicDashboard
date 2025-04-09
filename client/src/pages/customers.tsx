@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 
 import { Head } from "@/components/head";
-import CustomerForm from "@/components/customers/customer-form";
+import CustomerForm from "../components/customers/customer-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,11 +59,10 @@ export default function Customers() {
     staleTime: 60 * 1000,
   });
   
-  const { data: stats = { total: 0, active: 0, inactive: 0, highRisk: 0 } } = useQuery<{
+  const { data: stats = { total: 0, active: 0, inactive: 0 } } = useQuery<{
     total: number;
     active: number;
     inactive: number;
-    highRisk: number;
   }>({
     queryKey: ["/api/customers/stats"],
     staleTime: 60 * 1000,
@@ -148,7 +147,7 @@ export default function Customers() {
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
@@ -173,15 +172,6 @@ export default function Customers() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-600">{stats.inactive}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">High Risk Customers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.highRisk}</div>
             </CardContent>
           </Card>
         </div>
@@ -224,14 +214,12 @@ export default function Customers() {
                   <TableHead className="whitespace-nowrap">Customer</TableHead>
                   <TableHead className="whitespace-nowrap">Contact</TableHead>
                   <TableHead className="whitespace-nowrap">Location</TableHead>
-                  <TableHead className="whitespace-nowrap">Registration</TableHead>
                   <TableHead className="whitespace-nowrap">
                     <div className="flex items-center">
                       Status
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </div>
                   </TableHead>
-                  <TableHead className="whitespace-nowrap">Risk Level</TableHead>
                   <TableHead className="whitespace-nowrap">Added</TableHead>
                   <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
                 </TableRow>
@@ -239,7 +227,7 @@ export default function Customers() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-16">
+                    <TableCell colSpan={6} className="text-center py-16">
                       <div className="flex justify-center items-center">
                         <ClockIcon className="h-6 w-6 mr-2 animate-spin" />
                         Loading customers...
@@ -248,7 +236,7 @@ export default function Customers() {
                   </TableRow>
                 ) : filteredCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       No customers found
                     </TableCell>
                   </TableRow>
@@ -298,13 +286,7 @@ export default function Customers() {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {customer.registrationNumber || "N/A"}
-                        </div>
-                      </TableCell>
                       <TableCell>{getStatusBadge(customer.status)}</TableCell>
-                      <TableCell>{customer.riskLevel ? getRiskBadge(customer.riskLevel) : "N/A"}</TableCell>
                       <TableCell>
                         <div className="text-sm text-muted-foreground">
                           {customer.createdAt
