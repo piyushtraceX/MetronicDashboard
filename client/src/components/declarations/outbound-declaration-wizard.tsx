@@ -787,15 +787,46 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   <div>
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-medium">Declaration Items</h3>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-primary border-primary"
-                        onClick={addItem}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Item
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // This will trigger a click on the hidden file input
+                            document.getElementById('importOutboundItemsFile')?.click();
+                          }}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import Items
+                        </Button>
+                        <input 
+                          type="file" 
+                          id="importOutboundItemsFile" 
+                          accept=".csv,.xlsx,.xls" 
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              console.log('Selected file:', e.target.files[0].name);
+                              // Here you would handle the file import
+                              // For example, parsing the CSV/Excel and adding items
+                              toast({
+                                title: "Items imported",
+                                description: `${e.target.files[0].name} has been processed.`,
+                                variant: "default",
+                              });
+                            }
+                          }}
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-primary border-primary"
+                          onClick={addItem}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Item
+                        </Button>
+                      </div>
                     </div>
                     
                     <div className="space-y-6">

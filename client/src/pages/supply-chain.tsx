@@ -91,16 +91,44 @@ export default function SupplyChain() {
           <TabsContent value="onboarding" className="mt-0">
             <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
               <h2 className="text-xl font-semibold">Supplier Management</h2>
-              <Button 
-                className="mt-4 md:mt-0"
-                onClick={() => setOpenCreateForm(true)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Add Supplier
-              </Button>
+              <div className="flex space-x-2 mt-4 md:mt-0">
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    // This will trigger a click on the hidden file input
+                    document.getElementById('importSupplierFile')?.click();
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  Import
+                </Button>
+                <input 
+                  type="file" 
+                  id="importSupplierFile" 
+                  accept=".csv,.xlsx,.xls" 
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.length) {
+                      console.log('Selected file:', e.target.files[0].name);
+                      // Here you would handle the file import
+                      // For example, sending it to the server
+                    }
+                  }} 
+                />
+                <Button 
+                  onClick={() => setOpenCreateForm(true)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Add Supplier
+                </Button>
+              </div>
             </div>
 
             <div className="bg-white rounded-lg shadow mb-6 p-4">

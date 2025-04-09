@@ -253,6 +253,37 @@ function DeclarationRow({
               <span>Download Consolidated GeoJSON</span>
             </DropdownMenuItem>
             
+            <DropdownMenuItem 
+              onClick={() => {
+                // Create a sample Excel-like CSV data
+                const csvContent = `Sr No.,Product Name\n1,${declaration.productName}`;
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                
+                // Create download link and trigger click
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `declaration-${declaration.id}-products.csv`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                setTimeout(() => {
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }, 0);
+                
+                toast({
+                  title: "Product List Downloaded",
+                  description: `Product list for Declaration #${declaration.id} has been downloaded`,
+                  variant: "default",
+                });
+              }}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              <span>Download Product List</span>
+            </DropdownMenuItem>
+            
             {!isCompliant && (
               <DropdownMenuItem onClick={() => setMapModalOpen(true)} className="text-red-600">
                 <MapPin className="h-4 w-4 mr-2" />
