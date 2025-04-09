@@ -25,24 +25,56 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  products: text("products").notNull(),
-  location: text("location").notNull(),
+  partnerType: text("partner_type").notNull(),
+  partnerRole: text("partner_role").notNull(),
+  partnerRoleName: text("partner_role_name").notNull(),
+  domain: text("domain"),
+  website: text("website"),
+  registrationType: text("registration_type"),
+  category: text("category"),
+  incorporationDate: timestamp("incorporation_date"),
+  
+  // Address fields
+  addressType: text("address_type"),
+  addressLine1: text("address_line1"),
+  street: text("street"),
+  city: text("city"),
+  state: text("state"),
   country: text("country").notNull(),
-  category: text("category").notNull(),
-  status: text("status").notNull(),
-  riskLevel: text("risk_level").notNull(),
-  riskScore: integer("risk_score").notNull(),
+  pinCode: text("pin_code"),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
+  
+  // Contact fields
+  contactTitle: text("contact_title"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  designation: text("designation"),
+  email: text("email"),
+  secondaryEmail: text("secondary_email"),
+  mobileNumber: text("mobile_number"),
+  
+  // System fields
+  status: text("status").notNull().default("pending"),
+  riskLevel: text("risk_level").default("low"),
+  riskScore: integer("risk_score").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
-export const insertSupplierSchema = createInsertSchema(suppliers).pick({
-  name: true,
-  products: true,
-  category: true,
-  status: true,
-  riskLevel: true,
-  riskScore: true,
-});
+export const insertSupplierSchema = createInsertSchema(suppliers)
+  .omit({ id: true, createdAt: true, lastUpdated: true })
+  .extend({
+    // Make some fields optional for the API
+    products: z.string().optional(),
+    riskLevel: z.string().optional(),
+    riskScore: z.number().optional(),
+    status: z.string().optional().default("pending"),
+    
+    // Additional validations
+    email: z.string().email().optional(),
+    website: z.string().url().optional(),
+  });
 
 // Declarations
 export const declarations = pgTable("declarations", {

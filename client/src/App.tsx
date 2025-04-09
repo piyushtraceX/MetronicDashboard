@@ -9,6 +9,7 @@ import RiskAssessment from "@/pages/risk-assessment";
 import Documents from "@/pages/documents";
 import Declarations from "@/pages/declarations";
 import Customers from "@/pages/customers";
+import Suppliers from "@/pages/suppliers";
 import Compliance from "@/pages/compliance";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
@@ -49,6 +50,11 @@ function Router() {
       <Route path="/customers">
         <AppLayout>
           <Customers />
+        </AppLayout>
+      </Route>
+      <Route path="/suppliers">
+        <AppLayout>
+          <Suppliers />
         </AppLayout>
       </Route>
       <Route path="/compliance">

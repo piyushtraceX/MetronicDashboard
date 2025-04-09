@@ -184,6 +184,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.get("/api/suppliers/stats", async (req, res) => {
+    try {
+      // Count suppliers by status
+      const suppliers = await storage.listSuppliers();
+      const total = suppliers.length;
+      const active = suppliers.filter(s => s.status === 'active').length;
+      const inactive = suppliers.filter(s => s.status === 'inactive').length;
+      const pending = suppliers.filter(s => s.status === 'pending').length;
+      
+      res.json({
+        total,
+        active,
+        inactive,
+        pending
+      });
+    } catch (error) {
+      console.error("Error fetching supplier stats:", error);
+      res.status(500).json({ message: "Error fetching supplier statistics" });
+    }
+  });
+  
+  app.patch("/api/suppliers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const supplierInput = insertSupplierSchema.partial().parse(req.body);
+      
+      const supplier = await storage.getSupplier(id);
+      if (!supplier) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
+      
+      const updatedSupplier = await storage.updateSupplier(id, supplierInput);
+      
+      // Create activity record
+      await storage.createActivity({
+        type: "supplier",
+        description: `Supplier ${supplier.name} was updated`,
+        userId: 1, // Would use req.user.id in a real app
+        entityType: "supplier",
+        entityId: id,
+        metadata: null
+      });
+      
+      res.json(updatedSupplier);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input", errors: error.errors });
+      } else {
+        console.error("Error updating supplier:", error);
+        res.status(500).json({ message: "Error updating supplier" });
+      }
+    }
+  });
+  
   app.post("/api/suppliers", async (req, res) => {
     try {
       const supplierInput = insertSupplierSchema.parse(req.body);

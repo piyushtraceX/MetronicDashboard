@@ -140,6 +140,16 @@ export default function Sidebar() {
             />
           )}
           
+          {/* Suppliers - Not available to suppliers or customers */}
+          {!isSupplier && !isCustomer && (
+            <SidebarSection
+              icon="fa-building"
+              label="Suppliers"
+              href="/suppliers"
+              active={location === "/suppliers"}
+            />
+          )}
+          
           {/* Supplier Assessment Questionnaires - Only available to suppliers */}
           {isSupplier && (
             <SidebarSection
