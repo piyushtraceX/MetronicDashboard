@@ -105,18 +105,25 @@ function DeclarationRow({
   const [notifySupplierOpen, setNotifySupplierOpen] = useState(false);
   const { toast } = useToast();
   
-  // Determine compliance status (in a real app, this would come from the API)
+  // Determine compliance status based on declaration status
   let complianceStatus = declaration.complianceStatus;
-  if (!complianceStatus) {
-    // If not explicitly set, determine from risk level as before
-    complianceStatus = (declaration.riskLevel === "low" || declaration.riskLevel === "medium") 
-      ? "compliant" 
-      : "non-compliant";
-  }
   
-  // For the demo, set some declarations to have geometry issues
-  if (!declaration.complianceStatus && declaration.id % 3 === 0) {
-    complianceStatus = "non-compliant-geometry";
+  // If not explicitly set, determine from the status field
+  if (!complianceStatus) {
+    // Status field values can be: "approved", "review", "rejected", "pending", "validating",
+    // "non-compliant-geometry", "non-compliant-satellite"
+    if (declaration.status === "non-compliant-geometry" || declaration.status === "non-compliant-satellite") {
+      complianceStatus = declaration.status; // Use the exact non-compliant reason
+    } else if (declaration.status === "approved") {
+      complianceStatus = "compliant";
+    } else if (declaration.status === "rejected") {
+      complianceStatus = "non-compliant";
+    } else {
+      // For pending, review, validating - determine by risk level
+      complianceStatus = (declaration.riskLevel === "low" || declaration.riskLevel === "medium") 
+        ? "compliant" 
+        : "non-compliant";
+    }
   }
   
   const isCompliant = complianceStatus === "compliant";
@@ -216,19 +223,23 @@ function DeclarationRow({
           "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
           complianceStatus === "compliant" ? "bg-green-100 text-green-800" : 
           complianceStatus === "non-compliant-geometry" ? "bg-orange-100 text-orange-800" : 
+          complianceStatus === "non-compliant-satellite" ? "bg-amber-100 text-amber-800" : 
           "bg-red-100 text-red-800"
         )}>
           <span className={cn(
             "mr-1 h-2 w-2 rounded-full",
             complianceStatus === "compliant" ? "bg-green-500" : 
             complianceStatus === "non-compliant-geometry" ? "bg-orange-500" : 
+            complianceStatus === "non-compliant-satellite" ? "bg-amber-500" : 
             "bg-red-500"
           )}></span>
           {complianceStatus === "compliant" 
             ? "Compliant" 
             : complianceStatus === "non-compliant-geometry" 
               ? "Non-Compliant Geometry"
-              : "Non-Compliant"}
+              : complianceStatus === "non-compliant-satellite"
+                ? "Non-Compliant Satellite"
+                : "Non-Compliant"}
         </span>
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
