@@ -545,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create a sanitized version of the request body with only the fields from our schema
       // Ensure types match the schema exactly
-      const sanitizedBody = {
+      const sanitizedBody: any = {
         type: String(req.body.type || ""),
         supplierId: Number(req.body.supplierId || 1),
         productName: String(req.body.productName || ""),
