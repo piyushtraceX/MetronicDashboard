@@ -59,7 +59,7 @@ interface Declaration {
   lastUpdated: string;
   industry: string | null;
   rmId?: string | null;
-  complianceStatus?: "compliant" | "non-compliant" | "non-compliant-geometry";
+  complianceStatus?: "compliant" | "non-compliant" | "non-compliant-geometry" | "non-compliant-satellite";
 }
 
 interface DeclarationStats {
