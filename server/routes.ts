@@ -439,7 +439,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const type = req.query.type as string || "all"; // "inbound", "outbound", or "all"
       const declarations = await storage.listDeclarations(type);
-      res.json(declarations);
+      
+      // Load all suppliers to get their names
+      const suppliers = await storage.listSuppliers();
+      
+      // Create a map of supplier IDs to supplier names for quick lookup
+      const supplierMap = new Map();
+      suppliers.forEach(supplier => {
+        supplierMap.set(supplier.id, supplier.name);
+      });
+      
+      // Add supplier names to declarations
+      const enhancedDeclarations = declarations.map(declaration => {
+        return {
+          ...declaration,
+          supplier: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`
+        };
+      });
+      
+      res.json(enhancedDeclarations);
     } catch (error) {
       res.status(500).json({ message: "Error fetching declarations" });
     }
@@ -454,10 +472,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Declaration not found" });
       }
       
+      // Get supplier information
+      const supplier = await storage.getSupplier(declaration.supplierId);
+      
+      // Add supplier name to declaration
+      const declarationWithSupplier = {
+        ...declaration,
+        supplier: supplier ? supplier.name : `Supplier ${declaration.supplierId}`
+      };
+      
       // Add additional fields for outbound declarations (for demo)
       if (declaration.type === "outbound") {
         const enhancedDeclaration = {
-          ...declaration,
+          ...declarationWithSupplier,
           customerPONumber: declaration.id % 2 === 0 ? `PO-${10000 + declaration.id}` : null,
           soNumber: declaration.id % 2 === 0 ? `SO-${20000 + declaration.id}` : null,
           shipmentNumber: declaration.id % 2 === 0 ? `SHM-${30000 + declaration.id}` : null,
@@ -472,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(enhancedDeclaration);
       }
       
-      res.json(declaration);
+      res.json(declarationWithSupplier);
     } catch (error) {
       res.status(500).json({ message: "Error fetching declaration" });
     }
@@ -506,10 +533,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // If supplier name was passed, include it in the products field for display
-      if (req.body.supplier) {
-        declarationInput.products = req.body.supplier;
-      }
+      // Note: We don't need to store the supplier name anymore
+      // as we now include it in the API response from supplier data
       
       const declaration = await storage.createDeclaration(declarationInput);
       

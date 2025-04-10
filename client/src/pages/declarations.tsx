@@ -367,18 +367,20 @@ function DeclarationRow({
                 <Input 
                   id="supplier-name" 
                   placeholder="Enter supplier name" 
-                  defaultValue={`Contact Person for Supplier ${declaration.supplierId}`}
+                  defaultValue={declaration.supplier || `Supplier ${declaration.supplierId}`}
                   readOnly 
                   className="bg-gray-50"
                 />
               </div>
               
               <div>
-                <Label htmlFor="supplier-company" className="text-sm font-medium">Supplier Company</Label>
+                <Label htmlFor="supplier-contact" className="text-sm font-medium">Contact Person</Label>
                 <Input 
-                  id="supplier-company" 
-                  placeholder="Enter supplier company" 
-                  defaultValue={`Supplier ${declaration.supplierId}`} 
+                  id="supplier-contact" 
+                  placeholder="Enter contact person" 
+                  defaultValue={suppliers.find(s => s.id === declaration.supplierId)?.contactPerson || "Unknown Contact"}
+                  readOnly
+                  className="bg-gray-50"
                 />
               </div>
               
@@ -387,7 +389,7 @@ function DeclarationRow({
                 <Input 
                   id="supplier-email" 
                   placeholder="Enter supplier email" 
-                  defaultValue={`supplier${declaration.supplierId}@example.com`}
+                  defaultValue={suppliers.find(s => s.id === declaration.supplierId)?.email || `supplier${declaration.supplierId}@example.com`}
                   readOnly 
                   className="bg-gray-50"
                   type="email" 
