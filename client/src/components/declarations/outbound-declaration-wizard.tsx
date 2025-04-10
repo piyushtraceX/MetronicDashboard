@@ -497,6 +497,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         startDate: startDate ? startDate.toISOString() : null,
         endDate: endDate ? endDate.toISOString() : null,
         industry: "Food & Beverage", // Default industry
+        createdBy: 1, // Required field for the server
+        
+        // GeoJSON data if available
+        geojsonData: hasUploadedGeoJSON ? { valid: geometryValid } : null,
         
         // Store additional metadata for frontend use
         _metadata: {

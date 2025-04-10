@@ -453,7 +453,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     // Create one declaration with the selected supplier
     const payload = {
       type: declarationType,
-      supplierId: selectedSupplierId,
+      supplierId: selectedSupplierId || 1, // Ensure we always have a supplier ID
       productName: firstProduct,
       productDescription: formattedItems[0]?.scientificName || "",
       hsnCode: formattedItems[0]?.hsnCode || "",
@@ -464,6 +464,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       startDate: startDate ? startDate.toISOString() : null,
       endDate: endDate ? endDate.toISOString() : null,
       industry: "Food & Beverage", // Default industry
+      createdBy: 1, // Required field for the server
+      
+      // GeoJSON data if available 
+      geojsonData: hasUploadedGeoJSON ? { valid: geometryValid } : null,
       
       // Store additional metadata for frontend use
       _metadata: {

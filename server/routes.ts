@@ -507,6 +507,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/declarations", async (req, res) => {
     try {
+      // Log the incoming request for debugging
+      console.log("Declaration submission payload:", JSON.stringify(req.body, null, 2));
+      
+      // Log the expected schema for debugging
+      console.log("Expected schema:", JSON.stringify(insertDeclarationSchema, null, 2));
+      
       const declarationInput = insertDeclarationSchema.parse(req.body);
       
       // Set created by to mock user
@@ -551,6 +557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(declaration);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", JSON.stringify(error.errors, null, 2));
         res.status(400).json({ message: "Invalid input", errors: error.errors });
       } else {
         console.error("Error creating declaration:", error);
