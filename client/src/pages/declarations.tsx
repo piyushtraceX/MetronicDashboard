@@ -92,12 +92,14 @@ function DeclarationRow({
   declaration, 
   onViewClick,
   selected = false,
-  onSelectChange
+  onSelectChange,
+  suppliersList = []
 }: { 
   declaration: Declaration; 
   onViewClick: (id: number) => void;
   selected?: boolean;
   onSelectChange?: (id: number, selected: boolean) => void;
+  suppliersList?: any[];
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [notifySupplierOpen, setNotifySupplierOpen] = useState(false);
@@ -378,7 +380,7 @@ function DeclarationRow({
                 <Input 
                   id="supplier-contact" 
                   placeholder="Enter contact person" 
-                  defaultValue={suppliers.find(s => s.id === declaration.supplierId)?.contactPerson || "Unknown Contact"}
+                  defaultValue={suppliersList.find(s => s.id === declaration.supplierId)?.contactPerson || "Unknown Contact"}
                   readOnly
                   className="bg-gray-50"
                 />
@@ -389,7 +391,7 @@ function DeclarationRow({
                 <Input 
                   id="supplier-email" 
                   placeholder="Enter supplier email" 
-                  defaultValue={suppliers.find(s => s.id === declaration.supplierId)?.email || `supplier${declaration.supplierId}@example.com`}
+                  defaultValue={suppliersList.find(s => s.id === declaration.supplierId)?.email || `supplier${declaration.supplierId}@example.com`}
                   readOnly 
                   className="bg-gray-50"
                   type="email" 
@@ -1200,6 +1202,7 @@ export default function Declarations() {
                         setSelectedDeclarationId(id);
                         setDetailViewOpen(true);
                       }}
+                      suppliersList={suppliers}
                     />
                   ))
                 )}
