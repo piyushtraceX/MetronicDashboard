@@ -81,6 +81,7 @@ export const declarations = pgTable("declarations", {
   id: serial("id").primaryKey(),
   type: text("type").notNull(), // "inbound" or "outbound"
   supplierId: integer("supplier_id").notNull(),
+  customerId: integer("customer_id"), // For outbound declarations
   productName: text("product_name").notNull(),
   productDescription: text("product_description"),
   hsnCode: text("hsn_code"),
@@ -101,6 +102,7 @@ export const declarations = pgTable("declarations", {
 export const insertDeclarationSchema = createInsertSchema(declarations).pick({
   type: true,
   supplierId: true,
+  customerId: true,  // Added customerId for outbound declarations
   productName: true,
   productDescription: true,
   hsnCode: true,

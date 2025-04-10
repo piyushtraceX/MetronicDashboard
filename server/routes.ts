@@ -443,22 +443,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Load all suppliers to get their names
       const suppliers = await storage.listSuppliers();
       
+      // Load all customers to get their names
+      const customers = await storage.listCustomers();
+      
       // Create a map of supplier IDs to supplier names for quick lookup
       const supplierMap = new Map();
       suppliers.forEach(supplier => {
         supplierMap.set(supplier.id, supplier.name);
       });
       
-      // Add supplier names to declarations
+      // Create a map of customer IDs to customer names for quick lookup
+      const customerMap = new Map();
+      customers.forEach(customer => {
+        const displayName = customer.displayName || 
+                           (customer.companyName || `${customer.firstName} ${customer.lastName}`);
+        customerMap.set(customer.id, displayName);
+      });
+      
+      // Add appropriate partner names to declarations based on type
       const enhancedDeclarations = declarations.map(declaration => {
-        return {
-          ...declaration,
-          supplier: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`
-        };
+        if (declaration.type === "inbound") {
+          return {
+            ...declaration,
+            supplier: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`
+          };
+        } else {
+          // For outbound declarations, use customer name
+          const customerId = declaration.customerId || (declaration.id % 4 + 1); // Fallback for existing data
+          return {
+            ...declaration,
+            supplier: customerMap.get(customerId) || `Customer ${customerId}`,
+            customerId: customerId
+          };
+        }
       });
       
       res.json(enhancedDeclarations);
     } catch (error) {
+      console.error("Error fetching declarations:", error);
       res.status(500).json({ message: "Error fetching declarations" });
     }
   });
@@ -472,23 +494,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Declaration not found" });
       }
       
-      // Get supplier information
-      const supplier = await storage.getSupplier(declaration.supplierId);
-      
-      // Add supplier name to declaration
-      const declarationWithSupplier = {
-        ...declaration,
-        supplier: supplier ? supplier.name : `Supplier ${declaration.supplierId}`
-      };
-      
-      // Add additional fields for outbound declarations (for demo)
-      if (declaration.type === "outbound") {
+      if (declaration.type === "inbound") {
+        // Get supplier information for inbound declarations
+        const supplier = await storage.getSupplier(declaration.supplierId);
+        
+        // Add supplier name to declaration
+        const declarationWithSupplier = {
+          ...declaration,
+          supplier: supplier ? supplier.name : `Supplier ${declaration.supplierId}`
+        };
+        
+        return res.json(declarationWithSupplier);
+      } else {
+        // For outbound declarations, get customer information
+        const customerId = declaration.customerId || (declaration.id % 4 + 1); // Fallback for existing data
+        const customer = await storage.getCustomer(customerId);
+        
+        const customerName = customer ? 
+          (customer.displayName || customer.companyName || `${customer.firstName} ${customer.lastName}`) : 
+          `Customer ${customerId}`;
+        
+        // Add customer name to declaration
         const enhancedDeclaration = {
-          ...declarationWithSupplier,
+          ...declaration,
+          supplier: customerName, // Using "supplier" field to maintain UI compatibility
           customerPONumber: declaration.id % 2 === 0 ? `PO-${10000 + declaration.id}` : null,
           soNumber: declaration.id % 2 === 0 ? `SO-${20000 + declaration.id}` : null,
           shipmentNumber: declaration.id % 2 === 0 ? `SHM-${30000 + declaration.id}` : null,
-          customerId: declaration.id % 4 + 1, // Mock customer ID between 1-4
+          customerId: customerId,
           documents: [
             "Compliance Certificate.pdf",
             "Origin Documentation.pdf",
@@ -496,11 +529,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ].filter(Boolean),
           hasGeoJSON: !!declaration.geojsonData
         };
+        
         return res.json(enhancedDeclaration);
       }
-      
-      res.json(declarationWithSupplier);
     } catch (error) {
+      console.error("Error fetching declaration:", error);
       res.status(500).json({ message: "Error fetching declaration" });
     }
   });
@@ -529,6 +562,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         industry: req.body.industry ? String(req.body.industry) : undefined,
         rmId: req.body.rmId ? String(req.body.rmId) : undefined
       };
+      
+      // Add customerId for outbound declarations
+      if (sanitizedBody.type === "outbound" && req.body.customerId) {
+        sanitizedBody.customerId = Number(req.body.customerId);
+      }
       
       console.log("Sanitized payload:", JSON.stringify(sanitizedBody, null, 2));
       
