@@ -447,11 +447,11 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     }
     
     // Get the first product name as the primary name for the declaration
-    // Need to ensure this matches the expected schema
+    // Need to match the schema exactly as expected by the server
     const firstProduct = formattedItems[0]?.productName || "Unnamed Product";
     
-    // Create one declaration with the selected supplier
-    const payload = {
+    // Create declaration with complete type definition
+    const payload: any = {
       type: declarationType,
       supplierId: selectedSupplierId || 1, // Ensure we always have a supplier ID
       productName: firstProduct,
@@ -461,26 +461,28 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       unit: formattedItems[0]?.unit || "kg",
       status: status,
       riskLevel: "medium",
-      startDate: startDate ? startDate.toISOString() : null,
-      endDate: endDate ? endDate.toISOString() : null,
-      industry: "Food & Beverage", // Default industry
       createdBy: 1, // Required field for the server
-      
-      // GeoJSON data if available 
-      geojsonData: hasUploadedGeoJSON ? { valid: geometryValid } : null,
-      
-      // Store additional metadata for frontend use
-      _metadata: {
-        items: formattedItems,
-        documents: uploadedFiles,
-        poNumber: poNumber,
-        supplierSoNumber: supplierSoNumber,
-        shipmentNumber: shipmentNumber,
-        comments: comments,
-        geometryValid: geometryValid,
-        satelliteValid: satelliteValid,
-      }
+      industry: "Food & Beverage", // Default industry
+      rmId: formattedItems[0]?.rmId || ""
     };
+    
+    // Add optional fields only if they have values
+    if (startDate) {
+      payload.startDate = startDate.toISOString();
+    }
+    
+    if (endDate) {
+      payload.endDate = endDate.toISOString();
+    }
+    
+    // Add GeoJSON data field if available
+    if (hasUploadedGeoJSON) {
+      payload.geojsonData = {
+        valid: geometryValid,
+        type: "FeatureCollection",
+        features: []
+      };
+    }
 
     createDeclaration.mutate(payload);
   };

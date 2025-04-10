@@ -557,7 +557,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(declaration);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("Validation error details:", JSON.stringify(error.errors, null, 2));
+        console.error("Failed declaration payload:", JSON.stringify(req.body, null, 2));
         res.status(400).json({ message: "Invalid input", errors: error.errors });
       } else {
         console.error("Error creating declaration:", error);

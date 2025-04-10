@@ -482,8 +482,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       }));
       
       // Get the first product name as the primary name for the declaration
+      // Need to match the schema exactly as expected by the server
       const firstProduct = formattedItems[0]?.productName || "Unnamed Product";
       
+      // Create declaration with only the exact fields expected by the server schema
       payload = {
         type: "outbound",
         supplierId: 1, // Default supplier ID for outbound declarations
@@ -494,28 +496,28 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         unit: formattedItems[0]?.unit || "kg",
         status: status,
         riskLevel: "medium",
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
-        industry: "Food & Beverage", // Default industry
         createdBy: 1, // Required field for the server
-        
-        // GeoJSON data if available
-        geojsonData: hasUploadedGeoJSON ? { valid: geometryValid } : null,
-        
-        // Store additional metadata for frontend use
-        _metadata: {
-          items: formattedItems,
-          documents: uploadedFiles,
-          customerId: selectedCustomer?.id || null,
-          customerPONumber: customerPONumber.trim() || null,
-          soNumber: soNumber.trim() || null,
-          shipmentNumber: shipmentNumber.trim() || null,
-          hasGeoJSON: hasUploadedGeoJSON,
-          geometryValid: geometryValid,
-          satelliteValid: satelliteValid,
-          comments: comments.trim() || null
-        }
-      };
+        industry: "Food & Beverage", // Default industry
+        rmId: formattedItems[0]?.rmId || ""
+      } as any;
+      
+      // Add optional fields only if they have values
+      if (startDate) {
+        payload.startDate = startDate.toISOString();
+      }
+      
+      if (endDate) {
+        payload.endDate = endDate.toISOString();
+      }
+      
+      // Add GeoJSON data field if available
+      if (hasUploadedGeoJSON) {
+        payload.geojsonData = {
+          valid: geometryValid,
+          type: "FeatureCollection",
+          features: []
+        };
+      }
     }
     
     createDeclaration.mutate(payload);
