@@ -117,63 +117,24 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     { id: 2, name: "XYZ Declaration", code: "#B67890", product: "Rubber", quantity: "2,000 Tons", status: "Approved" }
   ];
   
-  const customers: Customer[] = [
-    { 
-      id: 1, 
-      name: "EuroFood Retailers GmbH", 
-      type: "EU-Based Entity",
-      company: "EuroFood Group",
-      country: "Germany",
-      registrationNumber: "DE78901234",
-      contactPerson: "Hans Mueller",
-      contactEmail: "h.mueller@eurofood.example",
-      complianceScore: 92
-    },
-    { 
-      id: 2, 
-      name: "Global Trade Partners Ltd", 
-      type: "Non-EU Distributor",
-      company: "GTP International",
-      country: "United Kingdom",
-      registrationNumber: "GB45678901",
-      contactPerson: "Sarah Johnson",
-      contactEmail: "sjohnson@gtp.example",
-      complianceScore: 85
-    },
-    { 
-      id: 3, 
-      name: "Nordic Organic Markets AB", 
-      type: "Retail Chain",
-      company: "Nordic Foods Group",
-      country: "Sweden",
-      registrationNumber: "SE12345678",
-      contactPerson: "Erik Andersson",
-      contactEmail: "e.andersson@nordicorganic.example",
-      complianceScore: 95
-    },
-    { 
-      id: 4, 
-      name: "Mediterranean Distributors S.L.", 
-      type: "EU-Based Entity",
-      company: "Med Group",
-      country: "Spain",
-      registrationNumber: "ES87654321",
-      contactPerson: "Carmen Rodriguez",
-      contactEmail: "rodriguez@meddist.example",
-      complianceScore: 88
-    },
-    { 
-      id: 5, 
-      name: "Asian Markets Co., Ltd.", 
-      type: "Non-EU Distributor",
-      company: "AMC Holdings",
-      country: "Singapore",
-      registrationNumber: "SG67890123",
-      contactPerson: "Lim Wei Ling",
-      contactEmail: "wlim@asianmarkets.example",
-      complianceScore: 82
-    }
-  ];
+  // Fetch customers from API
+  const { data: apiCustomers = [], isLoading: isLoadingCustomers } = useQuery<any[]>({
+    queryKey: ['/api/customers'],
+    refetchOnWindowFocus: false,
+  });
+  
+  // Transform API customers to match the Customer interface
+  const customers: Customer[] = apiCustomers.map(customer => ({
+    id: customer.id,
+    name: customer.companyName || `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
+    type: customer.type || "Customer",
+    company: customer.companyName || "",
+    country: customer.country || "",
+    registrationNumber: customer.registrationNumber || "N/A",
+    contactPerson: customer.contactPerson || `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
+    contactEmail: customer.email || "",
+    complianceScore: customer.complianceScore !== undefined ? customer.complianceScore : 75
+  }));
   
   // Query to get available inbound declarations (would be replaced with actual API call)
   const { data: declarations = [] } = useQuery<any[]>({
@@ -488,6 +449,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       payload = {
         type: "outbound",
         supplierId: 1, // Always use default supplier ID for outbound declarations
+        customerId: selectedCustomer?.id || null, // Include customerId for outbound declarations
         productName: firstProduct,
         productDescription: formattedItems[0]?.scientificName || "",
         hsnCode: formattedItems[0]?.hsnCode || "",
