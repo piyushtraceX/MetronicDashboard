@@ -88,6 +88,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   // For multiple supplier selection
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<number[]>([]);
   const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
   const [poNumber, setPoNumber] = useState("");
   const [supplierSoNumber, setSupplierSoNumber] = useState("");
   const [shipmentNumber, setShipmentNumber] = useState("");
@@ -491,6 +492,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setSelectedSupplier(null);
     setSelectedSupplierIds([]);
     setSupplierSearchTerm("");
+    setShowSupplierDropdown(false);
     setPoNumber("");
     setSupplierSoNumber("");
     setShipmentNumber("");
@@ -633,79 +635,77 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     value={supplierSearchTerm}
                     onChange={(e) => {
                       setSupplierSearchTerm(e.target.value);
+                      if (e.target.value.length >= 1) {
+                        // Show dropdown when typing
+                        setShowSupplierDropdown(true);
+                      } else {
+                        setShowSupplierDropdown(false);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (supplierSearchTerm.length >= 1) {
+                        setShowSupplierDropdown(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      // Small delay to allow for click to register
+                      setTimeout(() => {
+                        setShowSupplierDropdown(false);
+                      }, 200);
                     }}
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                </div>
-
-                <div className="space-y-3">
-                  {/* Display all suppliers with search filtering */}
-                  {filteredSuppliers.map((supplier) => (
-                    <div 
-                      key={supplier.id}
-                      className={cn(
-                        "p-4 border rounded-lg cursor-pointer",
-                        selectedSupplierId === supplier.id
-                          ? "border-primary bg-primary/5" 
-                          : "hover:bg-gray-50"
-                      )}
-                      onClick={() => {
-                        // Set as selected supplier (single mode only)
-                        setSelectedSupplierId(supplier.id);
-                        setSelectedSupplier(supplier);
-                        // Clear any multi-selections
-                        setSelectedSupplierIds([]);
-                      }}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-start">
-                          <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
-                          <div>
-                            <div className="font-medium">{supplier.name}</div>
-                            <div className="text-sm text-gray-500">{supplier.products || 'No products specified'}</div>
+                  
+                  {/* Dropdown with filtered suppliers */}
+                  {showSupplierDropdown && filteredSuppliers.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-md border overflow-hidden">
+                      <div className="max-h-60 overflow-y-auto">
+                        {filteredSuppliers.map((supplier) => (
+                          <div 
+                            key={supplier.id}
+                            className="px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
+                            onClick={() => {
+                              setSelectedSupplierId(supplier.id);
+                              setSelectedSupplier(supplier);
+                              setSupplierSearchTerm('');
+                              setShowSupplierDropdown(false);
+                            }}
+                          >
+                            <div className="flex items-center">
+                              <User className="h-4 w-4 text-gray-500 mr-2" />
+                              <div>
+                                <div className="font-medium">{supplier.name}</div>
+                                <div className="text-xs text-gray-500">{supplier.products || 'No products specified'}</div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center">
-                          {selectedSupplierId === supplier.id && (
-                            <Badge className="bg-primary ml-2">Selected</Badge>
-                          )}
-                        </div>
+                        ))}
                       </div>
-                      
-                      {supplier.countries && supplier.countries.length > 0 && (
-                        <div className="text-xs text-gray-500 mt-2 pl-8">
-                          <span className="text-gray-400">Countries:</span> {supplier.countries.join(', ')}
-                        </div>
-                      )}
                     </div>
-                  ))}
-
-                  {/* Show empty state if no suppliers match the search */}
-                  {filteredSuppliers.length === 0 && (
-                    <div className="p-8 border rounded-lg border-dashed flex flex-col items-center justify-center text-center">
-                      <div className="text-gray-400 mb-2">
-                        <User className="h-10 w-10" />
+                  )}
+                  
+                  {/* Show "No suppliers found" in dropdown */}
+                  {showSupplierDropdown && supplierSearchTerm && filteredSuppliers.length === 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-md border">
+                      <div className="px-4 py-3 text-center text-sm text-gray-500">
+                        No suppliers found
                       </div>
-                      <p className="text-gray-500 mb-1">No suppliers found</p>
-                      <p className="text-sm text-gray-400">Please try a different search term</p>
                     </div>
                   )}
                 </div>
-                
-                {/* Reset selection button - only show when a supplier is selected */}
+
+                {/* Show selected supplier as a tile */}
                 {selectedSupplierId && (
-                  <div className="mt-4 flex justify-end">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedSupplierId(null);
-                        setSelectedSupplier(null);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Clear Selection
-                    </Button>
+                  <div className="p-4 border rounded-md">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <User className="h-5 w-5 text-gray-500" />
+                      </div>
+                      <div className="ml-3 flex-grow">
+                        <div className="font-medium">{selectedSupplier?.name}</div>
+                        <div className="text-sm text-gray-500">{selectedSupplier?.products || 'No products specified'}</div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
