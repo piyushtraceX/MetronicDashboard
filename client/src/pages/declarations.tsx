@@ -43,6 +43,7 @@ interface Declaration {
   id: number;
   type: "inbound" | "outbound";
   supplierId: number;
+  supplier?: string; // Supplier name
   productName: string;
   productDescription: string | null;
   hsnCode: string | null;
@@ -182,7 +183,7 @@ function DeclarationRow({
         />
       </td>
       <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
-        <div className="font-medium text-gray-900">Supplier {declaration.supplierId}</div>
+        <div className="font-medium text-gray-900">{declaration.supplier || `Supplier ${declaration.supplierId}`}</div>
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {declaration.industry || "Not specified"} / {declaration.productName}
