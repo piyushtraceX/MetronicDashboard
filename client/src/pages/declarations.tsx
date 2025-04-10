@@ -44,6 +44,10 @@ interface Declaration {
   type: "inbound" | "outbound";
   supplierId: number;
   supplier?: string; // Supplier name
+  customerId?: number; // Customer ID for outbound declarations
+  customer?: string; // Customer name for outbound declarations
+  partnerName?: string; // Partner name - could be supplier or customer depending on type
+  partnerType?: "supplier" | "customer"; // Type of partner
   productName: string;
   productDescription: string | null;
   hsnCode: string | null;

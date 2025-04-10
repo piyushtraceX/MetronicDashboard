@@ -465,14 +465,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (declaration.type === "inbound") {
           return {
             ...declaration,
-            supplier: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`
+            supplier: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`,
+            partnerName: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`,
+            partnerType: "supplier"
           };
         } else {
           // For outbound declarations, use customer name
           const customerId = declaration.customerId || (declaration.id % 4 + 1); // Fallback for existing data
           return {
             ...declaration,
-            supplier: customerMap.get(customerId) || `Customer ${customerId}`,
+            supplier: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`,
+            customer: customerMap.get(customerId) || `Customer ${customerId}`,
+            partnerName: customerMap.get(customerId) || `Customer ${customerId}`,
+            partnerType: "customer",
             customerId: customerId
           };
         }
@@ -501,7 +506,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Add supplier name to declaration
         const declarationWithSupplier = {
           ...declaration,
-          supplier: supplier ? supplier.name : `Supplier ${declaration.supplierId}`
+          supplier: supplier ? supplier.name : `Supplier ${declaration.supplierId}`,
+          partnerName: supplier ? supplier.name : `Supplier ${declaration.supplierId}`,
+          partnerType: "supplier"
         };
         
         return res.json(declarationWithSupplier);
@@ -513,11 +520,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const customerName = customer ? 
           (customer.displayName || customer.companyName || `${customer.firstName} ${customer.lastName}`) : 
           `Customer ${customerId}`;
+
+        // Get supplier information too for completeness
+        const supplier = await storage.getSupplier(declaration.supplierId);
+        const supplierName = supplier ? supplier.name : `Supplier ${declaration.supplierId}`;
         
         // Add customer name to declaration
         const enhancedDeclaration = {
           ...declaration,
-          supplier: customerName, // Using "supplier" field to maintain UI compatibility
+          supplier: supplierName,
+          customer: customerName,
+          partnerName: customerName, // Using partnerName field for consistent UI
+          partnerType: "customer",
           customerPONumber: declaration.id % 2 === 0 ? `PO-${10000 + declaration.id}` : null,
           soNumber: declaration.id % 2 === 0 ? `SO-${20000 + declaration.id}` : null,
           shipmentNumber: declaration.id % 2 === 0 ? `SHM-${30000 + declaration.id}` : null,
