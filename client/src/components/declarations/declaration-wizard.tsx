@@ -325,11 +325,11 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
       case 1: // Declaration Type
-        // Check if a supplier is selected in either single or multiple mode
-        if (selectedSupplierIds.length === 0 && !selectedSupplierId) {
+        // Check if a supplier is selected
+        if (!selectedSupplierId) {
           toast({
             title: "Supplier required",
-            description: "Please select at least one supplier to continue",
+            description: "Please select a supplier to continue",
             variant: "destructive",
           });
           return false;
@@ -445,107 +445,27 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       status = "validating";
     }
     
-    // Check if we're in multiple supplier mode or single supplier mode
-    if (selectedSupplierIds.length > 0) {
-      // Multiple supplier mode - create a declaration for each supplier
-      const createMultipleDeclarations = async () => {
-        try {
-          // Show loading toast
-          toast({
-            title: "Creating declarations",
-            description: `Creating ${selectedSupplierIds.length} declarations...`,
-            variant: "default",
-          });
-          
-          let successCount = 0;
-          let errorCount = 0;
-          
-          // Create a declaration for each supplier
-          for (const supplierId of selectedSupplierIds) {
-            const payload = {
-              type: declarationType,
-              items: formattedItems,
-              documents: uploadedFiles,
-              startDate: startDate ? startDate.toISOString() : null,
-              endDate: endDate ? endDate.toISOString() : null,
-              supplierId: supplierId,
-              customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
-              status: status,
-              riskLevel: "medium",
-              poNumber: poNumber,
-              supplierSoNumber: supplierSoNumber,
-              shipmentNumber: shipmentNumber,
-              comments: comments,
-              geometryValid: geometryValid,
-              satelliteValid: satelliteValid,
-              supplier: suppliers.find(s => s.id === supplierId)?.name // Include supplier name
-            };
-            
-            try {
-              await apiRequest('/api/declarations', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-              });
-              successCount++;
-            } catch (error) {
-              console.error(`Error creating declaration for supplier ID ${supplierId}:`, error);
-              errorCount++;
-            }
-          }
-          
-          // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ['/api/declarations'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/declarations/stats'] });
-          
-          // Show completion toast
-          toast({
-            title: "Declarations created",
-            description: `Successfully created ${successCount} declarations${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
-            variant: errorCount > 0 ? "destructive" : "default",
-          });
-          
-          // Close modal
-          onOpenChange(false);
-          
-          // Reset form
-          resetForm();
-        } catch (error) {
-          console.error("Error in creating multiple declarations:", error);
-          toast({
-            title: "Error",
-            description: "Failed to create multiple declarations. Please try again.",
-            variant: "destructive",
-          });
-        }
-      };
-      
-      createMultipleDeclarations();
-    } else {
-      // Single supplier mode - create one declaration
-      const payload = {
-        type: declarationType,
-        items: formattedItems,
-        documents: uploadedFiles,
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
-        supplierId: selectedSupplierId,
-        customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
-        status: status,
-        riskLevel: "medium",
-        poNumber: poNumber,
-        supplierSoNumber: supplierSoNumber,
-        shipmentNumber: shipmentNumber,
-        comments: comments,
-        geometryValid: geometryValid,
-        satelliteValid: satelliteValid,
-        supplier: suppliers.find(s => s.id === selectedSupplierId)?.name // Include supplier name
-      };
+    // Create one declaration with the selected supplier
+    const payload = {
+      type: declarationType,
+      items: formattedItems,
+      documents: uploadedFiles,
+      startDate: startDate ? startDate.toISOString() : null,
+      endDate: endDate ? endDate.toISOString() : null,
+      supplierId: selectedSupplierId,
+      customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
+      status: status,
+      riskLevel: "medium",
+      poNumber: poNumber,
+      supplierSoNumber: supplierSoNumber,
+      shipmentNumber: shipmentNumber,
+      comments: comments,
+      geometryValid: geometryValid,
+      satelliteValid: satelliteValid,
+      supplier: suppliers.find(s => s.id === selectedSupplierId)?.name // Include supplier name
+    };
 
-      createDeclaration.mutate(payload);
-    }
+    createDeclaration.mutate(payload);
   };
 
   // Reset form state
@@ -704,30 +624,6 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Supplier Selection</h3>
-                <div className="flex items-center mb-2">
-                  <div className="text-sm text-gray-600 mr-2">Selection Mode:</div>
-                  <Tabs
-                    value={selectedSupplierIds.length > 0 ? "multiple" : "single"}
-                    onValueChange={(value) => {
-                      // When switching to single mode, clear multi selections
-                      if (value === "single" && selectedSupplierIds.length > 0) {
-                        setSelectedSupplierIds([]);
-                      }
-                      // When switching to multiple mode, convert single selection to multi if it exists
-                      if (value === "multiple" && selectedSupplierId) {
-                        setSelectedSupplierIds([selectedSupplierId]);
-                        setSelectedSupplierId(null);
-                        setSelectedSupplier(null);
-                      }
-                    }}
-                    className="mb-2"
-                  >
-                    <TabsList className="grid w-[300px] grid-cols-2">
-                      <TabsTrigger value="single">Single Supplier</TabsTrigger>
-                      <TabsTrigger value="multiple">Multiple Suppliers</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
                 
                 <div className="relative mb-4">
                   <Input 
@@ -749,24 +645,16 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       key={supplier.id}
                       className={cn(
                         "p-4 border rounded-lg cursor-pointer",
-                        (selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) 
+                        selectedSupplierId === supplier.id
                           ? "border-primary bg-primary/5" 
                           : "hover:bg-gray-50"
                       )}
                       onClick={() => {
-                        // If in multiple mode
-                        if (selectedSupplierIds.length > 0 || (selectedSupplierId === null && selectedSupplier === null)) {
-                          // Toggle selection
-                          if (selectedSupplierIds.includes(supplier.id)) {
-                            setSelectedSupplierIds(prev => prev.filter(id => id !== supplier.id));
-                          } else {
-                            setSelectedSupplierIds(prev => [...prev, supplier.id]);
-                          }
-                        } else {
-                          // Single mode
-                          setSelectedSupplierId(supplier.id);
-                          setSelectedSupplier(supplier);
-                        }
+                        // Set as selected supplier (single mode only)
+                        setSelectedSupplierId(supplier.id);
+                        setSelectedSupplier(supplier);
+                        // Clear any multi-selections
+                        setSelectedSupplierIds([]);
                       }}
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -778,7 +666,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           </div>
                         </div>
                         <div className="flex items-center">
-                          {(selectedSupplierId === supplier.id || selectedSupplierIds.includes(supplier.id)) && (
+                          {selectedSupplierId === supplier.id && (
                             <Badge className="bg-primary ml-2">Selected</Badge>
                           )}
                         </div>
@@ -804,14 +692,13 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   )}
                 </div>
                 
-                {/* Reset selection button - only show when selections exist */}
-                {(selectedSupplierIds.length > 0 || selectedSupplierId) && (
+                {/* Reset selection button - only show when a supplier is selected */}
+                {selectedSupplierId && (
                   <div className="mt-4 flex justify-end">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        setSelectedSupplierIds([]);
                         setSelectedSupplierId(null);
                         setSelectedSupplier(null);
                       }}
