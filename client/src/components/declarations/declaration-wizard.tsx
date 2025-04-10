@@ -447,42 +447,21 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     }
     
     // Get the first product name as the primary name for the declaration
-    // Need to match the schema exactly as expected by the server
     const firstProduct = formattedItems[0]?.productName || "Unnamed Product";
     
-    // Create declaration with complete type definition
-    const payload: any = {
+    // Create a simplified payload with only required fields
+    const payload = {
       type: declarationType,
       supplierId: selectedSupplierId || 1, // Ensure we always have a supplier ID
       productName: firstProduct,
       productDescription: formattedItems[0]?.scientificName || "",
       hsnCode: formattedItems[0]?.hsnCode || "",
-      quantity: formattedItems[0]?.quantity || 0,
+      quantity: Number(formattedItems[0]?.quantity) || 0,
       unit: formattedItems[0]?.unit || "kg",
       status: status,
       riskLevel: "medium",
-      createdBy: 1, // Required field for the server
-      industry: "Food & Beverage", // Default industry
-      rmId: formattedItems[0]?.rmId || ""
+      industry: "Food & Beverage" // Default industry
     };
-    
-    // Add optional fields only if they have values
-    if (startDate) {
-      payload.startDate = startDate.toISOString();
-    }
-    
-    if (endDate) {
-      payload.endDate = endDate.toISOString();
-    }
-    
-    // Add GeoJSON data field if available
-    if (hasUploadedGeoJSON) {
-      payload.geojsonData = {
-        valid: geometryValid,
-        type: "FeatureCollection",
-        features: []
-      };
-    }
 
     createDeclaration.mutate(payload);
   };

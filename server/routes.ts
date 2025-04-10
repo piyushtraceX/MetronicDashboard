@@ -510,13 +510,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log the incoming request for debugging
       console.log("Declaration submission payload:", JSON.stringify(req.body, null, 2));
       
-      // Log the expected schema for debugging
-      console.log("Expected schema:", JSON.stringify(insertDeclarationSchema, null, 2));
+      // Create a sanitized version of the request body with only the fields from our schema
+      // Ensure types match the schema exactly
+      const sanitizedBody = {
+        type: String(req.body.type || ""),
+        supplierId: Number(req.body.supplierId || 1),
+        productName: String(req.body.productName || ""),
+        productDescription: req.body.productDescription ? String(req.body.productDescription) : undefined,
+        hsnCode: req.body.hsnCode ? String(req.body.hsnCode) : undefined,
+        quantity: req.body.quantity !== undefined ? Number(req.body.quantity) : undefined,
+        unit: req.body.unit ? String(req.body.unit) : undefined,
+        status: String(req.body.status || "pending"),
+        riskLevel: String(req.body.riskLevel || "medium"),
+        geojsonData: req.body.geojsonData || undefined,
+        startDate: req.body.startDate || undefined,
+        endDate: req.body.endDate || undefined,
+        createdBy: 1, // Always set this to 1 for consistency
+        industry: req.body.industry ? String(req.body.industry) : undefined,
+        rmId: req.body.rmId ? String(req.body.rmId) : undefined
+      };
       
-      const declarationInput = insertDeclarationSchema.parse(req.body);
+      console.log("Sanitized payload:", JSON.stringify(sanitizedBody, null, 2));
       
-      // Set created by to mock user
-      declarationInput.createdBy = 1;
+      const declarationInput = insertDeclarationSchema.parse(sanitizedBody);
       
       // Extract product names from items if they exist
       if (req.body.items && Array.isArray(req.body.items) && req.body.items.length > 0) {
