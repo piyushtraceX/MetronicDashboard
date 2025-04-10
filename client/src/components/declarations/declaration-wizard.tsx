@@ -258,8 +258,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     
     // Simulate geometry validation check
     setTimeout(() => {
-      // 50% probability of geometry validation passing/failing for equal testing scenarios
-      const geometryIsValid = Math.random() < 0.5;
+      // 80% probability of geometry validation passing, 20% failing
+      const geometryIsValid = Math.random() < 0.8;
       setGeometryValid(geometryIsValid);
       
       // If geometry validation fails, don't proceed to satellite check
@@ -275,8 +275,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       
       // Only proceed to satellite check if geometry is valid
       setTimeout(() => {
-        // 50% probability of satellite validation passing/failing
-        const satelliteIsValid = Math.random() < 0.5;
+        // 75% probability of satellite validation passing, 25% failing
+        const satelliteIsValid = Math.random() < 0.75;
         setSatelliteValid(satelliteIsValid);
         setIsValidating(false);
         
