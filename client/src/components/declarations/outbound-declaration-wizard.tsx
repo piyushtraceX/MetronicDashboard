@@ -481,22 +481,36 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         rmId: item.rmId || null
       }));
       
+      // Get the first product name as the primary name for the declaration
+      const firstProduct = formattedItems[0]?.productName || "Unnamed Product";
+      
       payload = {
         type: "outbound",
-        items: formattedItems,
-        documents: uploadedFiles,
+        supplierId: 1, // Default supplier ID for outbound declarations
+        productName: firstProduct,
+        productDescription: formattedItems[0]?.scientificName || "",
+        hsnCode: formattedItems[0]?.hsnCode || "",
+        quantity: formattedItems[0]?.quantity || 0,
+        unit: formattedItems[0]?.unit || "kg",
+        status: status,
+        riskLevel: "medium",
         startDate: startDate ? startDate.toISOString() : null,
         endDate: endDate ? endDate.toISOString() : null,
-        customerId: selectedCustomer?.id || null,
-        customerPONumber: customerPONumber.trim() || null,
-        soNumber: soNumber.trim() || null,
-        shipmentNumber: shipmentNumber.trim() || null,
-        hasGeoJSON: hasUploadedGeoJSON,
-        geometryValid: geometryValid,
-        satelliteValid: satelliteValid,
-        comments: comments.trim() || null,
-        status,
-        riskLevel: "medium"
+        industry: "Food & Beverage", // Default industry
+        
+        // Store additional metadata for frontend use
+        _metadata: {
+          items: formattedItems,
+          documents: uploadedFiles,
+          customerId: selectedCustomer?.id || null,
+          customerPONumber: customerPONumber.trim() || null,
+          soNumber: soNumber.trim() || null,
+          shipmentNumber: shipmentNumber.trim() || null,
+          hasGeoJSON: hasUploadedGeoJSON,
+          geometryValid: geometryValid,
+          satelliteValid: satelliteValid,
+          comments: comments.trim() || null
+        }
       };
     }
     

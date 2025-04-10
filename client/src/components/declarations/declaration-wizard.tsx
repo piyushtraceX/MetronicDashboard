@@ -446,24 +446,36 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       status = "validating";
     }
     
+    // Get the first product name as the primary name for the declaration
+    // Need to ensure this matches the expected schema
+    const firstProduct = formattedItems[0]?.productName || "Unnamed Product";
+    
     // Create one declaration with the selected supplier
     const payload = {
       type: declarationType,
-      items: formattedItems,
-      documents: uploadedFiles,
-      startDate: startDate ? startDate.toISOString() : null,
-      endDate: endDate ? endDate.toISOString() : null,
       supplierId: selectedSupplierId,
-      customerId: declarationType === "outbound" ? selectedCustomer?.id || null : null,
+      productName: firstProduct,
+      productDescription: formattedItems[0]?.scientificName || "",
+      hsnCode: formattedItems[0]?.hsnCode || "",
+      quantity: formattedItems[0]?.quantity || 0,
+      unit: formattedItems[0]?.unit || "kg",
       status: status,
       riskLevel: "medium",
-      poNumber: poNumber,
-      supplierSoNumber: supplierSoNumber,
-      shipmentNumber: shipmentNumber,
-      comments: comments,
-      geometryValid: geometryValid,
-      satelliteValid: satelliteValid,
-      supplier: suppliers.find(s => s.id === selectedSupplierId)?.name // Include supplier name
+      startDate: startDate ? startDate.toISOString() : null,
+      endDate: endDate ? endDate.toISOString() : null,
+      industry: "Food & Beverage", // Default industry
+      
+      // Store additional metadata for frontend use
+      _metadata: {
+        items: formattedItems,
+        documents: uploadedFiles,
+        poNumber: poNumber,
+        supplierSoNumber: supplierSoNumber,
+        shipmentNumber: shipmentNumber,
+        comments: comments,
+        geometryValid: geometryValid,
+        satelliteValid: satelliteValid,
+      }
     };
 
     createDeclaration.mutate(payload);
