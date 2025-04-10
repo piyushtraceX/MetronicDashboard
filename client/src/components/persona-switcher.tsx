@@ -66,6 +66,14 @@ export const personas = [
     description: "Receives and processes inbound declarations",
     avatar: "Cu",
     email: "customer@eudrportal.com"
+  },
+  {
+    id: 8,
+    name: "EU Operator",
+    role: "eu_operator",
+    description: "Responsible for EU market entry compliance",
+    avatar: "EU",
+    email: "operator@eudrportal.com"
   }
 ];
 

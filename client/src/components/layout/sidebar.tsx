@@ -61,9 +61,10 @@ export default function Sidebar() {
   const { isOpen } = useSidebar();
   const { user } = useAuth();
   
-  // Check if user is a supplier or customer
+  // Check user roles
   const isSupplier = user?.role === 'supplier';
   const isCustomer = user?.role === 'customer';
+  const isEuOperator = user?.role === 'eu_operator';
   
   return (
     <aside className={`bg-[#1e1e2d] text-[#9899ac] w-64 flex-shrink-0 transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:block fixed md:static z-30 h-screen`}>
@@ -92,7 +93,7 @@ export default function Sidebar() {
             active={location === "/"}
           />
           
-          {/* Supply Chain - Not available to suppliers or customers */}
+          {/* Supply Chain - Available to EU Operators and internal roles */}
           {!isSupplier && !isCustomer && (
             <SidebarSection
               icon="fa-sitemap"
@@ -102,12 +103,30 @@ export default function Sidebar() {
             />
           )}
           
+          {/* Due Diligence - Only available to EU Operators */}
+          {isEuOperator && (
+            <SidebarSection
+              icon="fa-check-double"
+              label="Due Diligence"
+              href="/due-diligence"
+              active={location === "/due-diligence"}
+            />
+          )}
+          
           {/* Risk Assessment and Documents tabs removed as requested */}
           
           {/* Declarations - Available to all with role-specific labels */}
           <SidebarSection
             icon="fa-file-signature"
-            label={isSupplier ? "Outbound Declarations" : isCustomer ? "Inbound Declarations" : "Declarations"}
+            label={
+              isSupplier 
+                ? "Outbound Declarations" 
+                : isCustomer 
+                  ? "Inbound Declarations" 
+                  : isEuOperator 
+                    ? "Import Declarations" 
+                    : "Declarations"
+            }
             href="/declarations"
             active={location === "/declarations"}
           />
@@ -116,7 +135,7 @@ export default function Sidebar() {
           {!isSupplier && !isCustomer && (
             <SidebarSection
               icon="fa-users"
-              label="Customers"
+              label={isEuOperator ? "Importers & Traders" : "Customers"}
               href="/customers"
               active={location === "/customers"}
             />
@@ -131,6 +150,16 @@ export default function Sidebar() {
               label="Supplier Assessment"
               href="/saqs"
               active={location === "/saqs"}
+            />
+          )}
+          
+          {/* Regulatory Updates - Only available to EU Operators */}
+          {isEuOperator && (
+            <SidebarSection
+              icon="fa-scroll"
+              label="Regulatory Updates"
+              href="/regulatory-updates"
+              active={location === "/regulatory-updates"}
             />
           )}
           
