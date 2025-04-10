@@ -585,9 +585,14 @@ export default function Declarations() {
   const [allotRmIdModalOpen, setAllotRmIdModalOpen] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
   
-  // Fetch declarations
+  // Fetch declarations - make sure the query updates when activeTab changes
   const { data: declarations = [], isLoading: isLoadingDeclarations } = useQuery<Declaration[]>({
-    queryKey: ['/api/declarations', { type: activeTab }],
+    queryKey: ['/api/declarations', activeTab],
+    queryFn: async () => {
+      // Pass type as a query parameter
+      console.log(`Fetching declarations with type: ${activeTab}`);
+      return apiRequest(`/api/declarations?type=${activeTab}`);
+    },
     refetchOnWindowFocus: false,
   });
   
@@ -603,8 +608,8 @@ export default function Declarations() {
     refetchOnWindowFocus: false,
   });
   
-  // Filter declarations by the active tab
-  let filteredDeclarations = declarations.filter((d) => d.type === activeTab);
+  // Since we're already filtering by type on the server, we don't need to filter by type again
+  let filteredDeclarations = [...declarations];
           
   // Apply status filter
   if (statusFilter !== "all") {
