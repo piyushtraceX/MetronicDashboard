@@ -185,7 +185,9 @@ function DeclarationRow({
         />
       </td>
       <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
-        <div className="font-medium text-gray-900">{declaration.supplier || `Supplier ${declaration.supplierId}`}</div>
+        <div className="font-medium text-gray-900">
+          {suppliersList.find(s => s.id === declaration.supplierId)?.name || declaration.supplier || `Supplier ${declaration.supplierId}`}
+        </div>
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {declaration.industry || "Not specified"} / {declaration.productName}
@@ -369,7 +371,7 @@ function DeclarationRow({
                 <Input 
                   id="supplier-name" 
                   placeholder="Enter supplier name" 
-                  defaultValue={declaration.supplier || `Supplier ${declaration.supplierId}`}
+                  defaultValue={suppliersList.find(s => s.id === declaration.supplierId)?.name || declaration.supplier || `Supplier ${declaration.supplierId}`}
                   readOnly 
                   className="bg-gray-50"
                 />
@@ -585,7 +587,7 @@ export default function Declarations() {
   });
   
   // Fetch suppliers (simplified for this example)
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliers = [] } = useQuery<any[]>({
     queryKey: ['/api/suppliers'],
     refetchOnWindowFocus: false,
   });
