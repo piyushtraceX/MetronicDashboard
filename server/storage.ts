@@ -713,6 +713,34 @@ export class MemStorage implements IStorage {
         phone: "+1234567890",
         complianceScore: 95,
       },
+      {
+        name: "AsiaRubber Plantations",
+        products: "Natural Rubber, Latex",
+        category: "Tier 1",
+        status: "Compliant",
+        riskLevel: "Medium",
+        riskScore: 78,
+        country: "Thailand",
+        registrationNumber: "REGTHA4456789",
+        contactPerson: "Supachai Wong",
+        email: "s.wong@asiarubber.example",
+        phone: "+6623456789",
+        complianceScore: 75,
+      },
+      {
+        name: "EcoRubber Solutions",
+        products: "Rubber Wood, Sustainable Rubber",
+        category: "Tier 1",
+        status: "Compliant",
+        riskLevel: "Low",
+        riskScore: 88,
+        country: "Malaysia",
+        registrationNumber: "REGMYS7890123",
+        contactPerson: "Lee Mei Ling",
+        email: "mlee@ecorubber.example",
+        phone: "+60123456789",
+        complianceScore: 85,
+      },
     ];
 
     suppliers.forEach((supplier) => {
@@ -1224,6 +1252,40 @@ export class MemStorage implements IStorage {
         industry: "Manufacturing",
         complianceStatus: "non-compliant-geometry",
       },
+      {
+        type: "outbound",
+        supplierId: 5,
+        customerId: 2,
+        productName: "Rubber Gloves",
+        productDescription: "Medical-grade natural rubber examination gloves",
+        hsnCode: "4015.19.00",
+        quantity: 50000,
+        unit: "pairs",
+        status: "approved",
+        riskLevel: "low",
+        startDate: oneMonthAgo,
+        endDate: null,
+        createdBy: 1,
+        industry: "Medical Supplies",
+        complianceStatus: "compliant",
+      },
+      {
+        type: "outbound",
+        supplierId: 6,
+        customerId: 3,
+        productName: "Rubber Flooring Tiles",
+        productDescription: "Sustainable rubber flooring for commercial spaces",
+        hsnCode: "4016.91.00",
+        quantity: 5000,
+        unit: "m²",
+        status: "pending",
+        riskLevel: "medium", 
+        startDate: twoWeeksAgo,
+        endDate: null,
+        createdBy: 1,
+        industry: "Construction",
+        complianceStatus: "compliant",
+      },
     ];
 
     declarations.forEach((declaration) => {
@@ -1259,6 +1321,20 @@ export class MemStorage implements IStorage {
         status: "Valid",
         uploadedBy: 1,
         documentType: "Compliance",
+      },
+      {
+        title: "AsiaRubber Plantations Certification",
+        supplierId: 5,
+        status: "Valid",
+        uploadedBy: 1,
+        documentType: "Certification",
+      },
+      {
+        title: "EcoRubber Sustainability Report",
+        supplierId: 6,
+        status: "Valid",
+        uploadedBy: 1,
+        documentType: "Report",
       },
     ];
 
@@ -1314,6 +1390,14 @@ export class MemStorage implements IStorage {
         status: "pending",
         priority: "low",
       },
+      {
+        title: "Complete compliance assessment for AsiaRubber Plantations",
+        description: "Review rubber plantation sustainability practices and new certification documentation",
+        assignedTo: 1,
+        dueDate: inThreeDays,
+        status: "pending",
+        priority: "medium",
+      },
     ];
 
     tasks.forEach((task) => {
@@ -1356,6 +1440,15 @@ export class MemStorage implements IStorage {
         userId: 1,
         entityType: "supplier",
         entityId: 3,
+        metadata: null,
+      },
+      {
+        type: "certification",
+        description:
+          "AsiaRubber Plantations received FSC certification for sustainable rubber production",
+        userId: 1,
+        entityType: "supplier",
+        entityId: 5,
         metadata: null,
       },
     ];
@@ -1510,6 +1603,24 @@ export class MemStorage implements IStorage {
         completedAt: null,
         score: null,
         answers: null,
+      },
+      {
+        title: "Rubber Production Sustainability Assessment",
+        description: "Assessment of sustainable practices in natural rubber sourcing and production",
+        supplierId: 5,
+        customerId: 2,
+        status: "in-progress",
+        completedAt: null,
+        score: null,
+        answers: JSON.stringify({
+          landConversion: "No conversion of forest to rubber plantations since 2020",
+          chemicalUse: "Reduced chemical usage by 40% in last 3 years",
+          waterManagement: "Implementing closed water systems in processing",
+          laborConditions: "Full compliance with ILO standards",
+          communityEngagement: "Regular consultations with local communities",
+          certifications: "In process for FSC certification",
+          traceabilitySystem: "Digital tracking implemented for 80% of production"
+        }),
       },
     ];
 
