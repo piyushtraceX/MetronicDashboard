@@ -197,8 +197,18 @@ function DeclarationRow({
       </td>
       <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
         <div className="font-medium text-gray-900">
-          {suppliersList.find(s => s.id === declaration.supplierId)?.name || declaration.supplier || `Supplier ${declaration.supplierId}`}
+          {/* Use partnerName if available, otherwise fall back to appropriate name based on declaration type */}
+          {declaration.partnerName || 
+           (declaration.type === "outbound" 
+             ? (declaration.customer || `Customer ${declaration.customerId}`)
+             : (suppliersList.find(s => s.id === declaration.supplierId)?.name || declaration.supplier || `Supplier ${declaration.supplierId}`)
+           )}
         </div>
+        {declaration.partnerType && (
+          <div className="text-xs text-gray-500 mt-1">
+            {declaration.partnerType.charAt(0).toUpperCase() + declaration.partnerType.slice(1)}
+          </div>
+        )}
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {declaration.industry || "Not specified"} / {declaration.productName}
@@ -370,45 +380,57 @@ function DeclarationRow({
           </DialogContent>
         </Dialog>
         
-        {/* Notify Supplier Modal */}
+        {/* Notify Partner Modal - Works for both suppliers and customers */}
         <Dialog open={notifySupplierOpen} onOpenChange={setNotifySupplierOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Notify Supplier</DialogTitle>
+              <DialogTitle>Notify {declaration.partnerType === 'customer' ? 'Customer' : 'Supplier'}</DialogTitle>
               <DialogDescription>
-                Send email notification to the supplier about non-compliant areas.
+                Send email notification to the {declaration.partnerType === 'customer' ? 'customer' : 'supplier'} about non-compliant areas.
               </DialogDescription>
             </DialogHeader>
             
             <div className="py-4 space-y-4">
               <div>
-                <Label htmlFor="supplier-name" className="text-sm font-medium">Supplier Name</Label>
+                <Label htmlFor="partner-name" className="text-sm font-medium">{declaration.partnerType === 'customer' ? 'Customer' : 'Supplier'} Name</Label>
                 <Input 
-                  id="supplier-name" 
-                  placeholder="Enter supplier name" 
-                  defaultValue={suppliersList.find(s => s.id === declaration.supplierId)?.name || declaration.supplier || `Supplier ${declaration.supplierId}`}
+                  id="partner-name" 
+                  placeholder={`Enter ${declaration.partnerType === 'customer' ? 'customer' : 'supplier'} name`}
+                  defaultValue={declaration.partnerName || 
+                    (declaration.type === "outbound" 
+                      ? (declaration.customer || `Customer ${declaration.customerId}`)
+                      : (suppliersList.find(s => s.id === declaration.supplierId)?.name || declaration.supplier || `Supplier ${declaration.supplierId}`)
+                    )}
                   readOnly 
                   className="bg-gray-50"
                 />
               </div>
               
               <div>
-                <Label htmlFor="supplier-contact" className="text-sm font-medium">Contact Person</Label>
+                <Label htmlFor="partner-contact" className="text-sm font-medium">Contact Person</Label>
                 <Input 
-                  id="supplier-contact" 
+                  id="partner-contact" 
                   placeholder="Enter contact person" 
-                  defaultValue={suppliersList.find(s => s.id === declaration.supplierId)?.contactPerson || "Unknown Contact"}
+                  defaultValue={
+                    declaration.type === "outbound"
+                      ? "Unknown Contact" // Would come from customer data in real implementation
+                      : (suppliersList.find(s => s.id === declaration.supplierId)?.contactPerson || "Unknown Contact")
+                  }
                   readOnly
                   className="bg-gray-50"
                 />
               </div>
               
               <div>
-                <Label htmlFor="supplier-email" className="text-sm font-medium">Supplier Email</Label>
+                <Label htmlFor="partner-email" className="text-sm font-medium">{declaration.partnerType === 'customer' ? 'Customer' : 'Supplier'} Email</Label>
                 <Input 
-                  id="supplier-email" 
-                  placeholder="Enter supplier email" 
-                  defaultValue={suppliersList.find(s => s.id === declaration.supplierId)?.email || `supplier${declaration.supplierId}@example.com`}
+                  id="partner-email" 
+                  placeholder={`Enter ${declaration.partnerType === 'customer' ? 'customer' : 'supplier'} email`}
+                  defaultValue={
+                    declaration.type === "outbound"
+                      ? `customer${declaration.customerId}@example.com` // Would come from customer data in real implementation
+                      : (suppliersList.find(s => s.id === declaration.supplierId)?.email || `supplier${declaration.supplierId}@example.com`)
+                  }
                   readOnly 
                   className="bg-gray-50"
                   type="email" 
@@ -423,7 +445,7 @@ function DeclarationRow({
                 onClick={() => {
                   toast({
                     title: "Email Notification Sent",
-                    description: "The supplier has been notified about the non-compliant areas.",
+                    description: `The ${declaration.partnerType === 'customer' ? 'customer' : 'supplier'} has been notified about the non-compliant areas.`,
                     variant: "default",
                   });
                   setNotifySupplierOpen(false);
