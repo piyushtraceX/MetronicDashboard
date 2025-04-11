@@ -635,7 +635,10 @@ export default function Declarations() {
   });
   
   // Since we're already filtering by type on the server, we don't need to filter by type again
-  let filteredDeclarations = [...declarations];
+  // First filter by declaration type (inbound/outbound) based on active tab
+  let filteredDeclarations = [...declarations].filter(
+    (d) => d.type === activeTab
+  );
           
   // Apply status filter
   if (statusFilter !== "all") {
@@ -1143,7 +1146,10 @@ export default function Declarations() {
           <div className="w-full md:w-1/3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <Input placeholder="Search suppliers..." className="pl-9" />
+              <Input 
+                placeholder={activeTab === "inbound" ? "Search suppliers..." : "Search customers..."} 
+                className="pl-9" 
+              />
             </div>
           </div>
           
@@ -1200,7 +1206,7 @@ export default function Declarations() {
                     />
                   </th>
                   <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
-                    Supplier Name
+                    {activeTab === "inbound" ? "Supplier Name" : "Customer Name"}
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Industry/Product
@@ -1232,7 +1238,7 @@ export default function Declarations() {
                 ) : filteredDeclarations.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="py-10 text-center text-gray-500">
-                      No declarations found
+                      No {activeTab === "inbound" ? "inbound" : "outbound"} declarations found
                     </td>
                   </tr>
                 ) : (
