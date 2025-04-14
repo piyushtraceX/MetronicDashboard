@@ -12,6 +12,9 @@ export const users = pgTable("users", {
   avatar: text("avatar"),
   role: text("role").default("user"),
   createdAt: timestamp("created_at").defaultNow(),
+  trialStartDate: timestamp("trial_start_date").defaultNow(),
+  trialEndDate: timestamp("trial_end_date"),
+  subscriptionStatus: text("subscription_status").default("trial"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
