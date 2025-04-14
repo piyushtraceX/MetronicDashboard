@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,68 +14,114 @@ import Compliance from "@/pages/compliance";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import SAQs from "@/pages/saqs";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
 import AppLayout from "@/layouts/app-layout";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Head } from "@/components/head";
+import { ProtectedRoute } from "@/components/protected-route";
 
 function Router() {
+  const { user } = useAuth();
+  
   return (
     <Switch>
-      {/* App Routes - No authentication required */}
+      {/* Authentication Routes */}
+      <Route path="/login">
+        {user ? <Redirect to="/" /> : <Login />}
+      </Route>
+      
+      <Route path="/register">
+        {user ? <Redirect to="/" /> : <Register />}
+      </Route>
+      
+      {/* Protected App Routes */}
       <Route path="/">
-        <AppLayout>
-          <Dashboard />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Dashboard />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/supply-chain">
-        <AppLayout>
-          <SupplyChain />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <SupplyChain />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/risk-assessment">
-        <AppLayout>
-          <RiskAssessment />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <RiskAssessment />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/documents">
-        <AppLayout>
-          <Documents />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Documents />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/declarations">
-        <AppLayout>
-          <Declarations />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Declarations />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/customers">
-        <AppLayout>
-          <Customers />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Customers />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/suppliers">
-        <AppLayout>
-          <Suppliers />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Suppliers />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/compliance">
-        <AppLayout>
-          <Compliance />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Compliance />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/reports">
-        <AppLayout>
-          <Reports />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Reports />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/settings">
-        <AppLayout>
-          <Settings />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <Settings />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
+      
       <Route path="/saqs">
-        <AppLayout>
-          <SAQs />
-        </AppLayout>
+        <ProtectedRoute>
+          <AppLayout>
+            <SAQs />
+          </AppLayout>
+        </ProtectedRoute>
       </Route>
       
       {/* Fallback to 404 */}

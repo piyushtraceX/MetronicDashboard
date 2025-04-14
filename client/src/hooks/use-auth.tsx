@@ -40,13 +40,21 @@ const defaultUser: User = {
   subscriptionStatus: "trial"
 };
 
+// Create a dummy User for the context default
+const dummyUser: User = {
+  id: 0,
+  username: "dummy",
+  email: "dummy@example.com",
+  role: "user"
+};
+
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: false,
   isAuthenticated: false,
   login: async () => {},
   logout: async () => {},
-  register: async () => { throw new Error("Not implemented"); },
+  register: async () => dummyUser, // Return dummy user to satisfy TypeScript
   switchPersona: async () => {},
 });
 

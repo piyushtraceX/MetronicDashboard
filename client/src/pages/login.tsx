@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import AuthLayout from "@/layouts/auth-layout";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Valid email is required"),
   password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().optional(),
 });
@@ -26,7 +26,7 @@ export default function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
       rememberMe: false,
     },
@@ -35,7 +35,7 @@ export default function Login() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      await login(data.username, data.password);
+      await login(data.email, data.password);
     } catch (error) {
       console.error("Login error:", error);
     } finally {
@@ -50,15 +50,16 @@ export default function Login() {
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="username">Username or Email</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              placeholder="Enter your username or email"
-              {...register("username")}
-              className={errors.username ? "border-red-300" : ""}
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              {...register("email")}
+              className={errors.email ? "border-red-300" : ""}
             />
-            {errors.username && (
-              <p className="text-sm text-red-500">{errors.username.message}</p>
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
             )}
           </div>
           
