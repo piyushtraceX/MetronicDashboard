@@ -19,7 +19,7 @@ const registerSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   industryType: z.string().min(1, "Industry type is required"),
-  complianceFocus: z.array(z.string()).min(1, "Select at least one compliance focus"),
+  complianceFocus: z.array(z.string()).default([]), // Make compliance focus optional
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
   acceptTerms: z.boolean().refine(val => val === true, {
@@ -95,8 +95,17 @@ export default function Register() {
       currentValues.splice(index, 1);
     }
     
+    // Update the selected values
     setSelectedComplianceFocus(currentValues);
     setValue('complianceFocus', currentValues, { shouldValidate: true });
+    
+    // Show a toast if removing the last option (but still allow it)
+    if (currentValues.length === 0 && index !== -1) {
+      toast({
+        title: "Note",
+        description: "At least one compliance focus is required",
+      });
+    }
   };
   
   const onSubmit = async (data: RegisterFormValues) => {
@@ -345,11 +354,15 @@ export default function Register() {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="acceptTerms"
-                  {...register("acceptTerms")}
+                  checked={watch("acceptTerms")}
+                  onCheckedChange={(checked) => {
+                    setValue("acceptTerms", checked === true, { shouldValidate: true });
+                  }}
                 />
                 <Label 
                   htmlFor="acceptTerms" 
                   className="text-sm font-normal cursor-pointer"
+                  onClick={() => setValue("acceptTerms", !watch("acceptTerms"), { shouldValidate: true })}
                 >
                   I accept the <a href="#" className="text-primary underline">Terms of Service</a> and <a href="#" className="text-primary underline">Privacy Policy</a>
                 </Label>
