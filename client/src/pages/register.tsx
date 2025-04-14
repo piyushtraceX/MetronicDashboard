@@ -106,16 +106,27 @@ export default function Register() {
       const username = `${data.firstName.toLowerCase()}.${data.lastName.toLowerCase()}`;
       const fullName = `${data.firstName} ${data.lastName}`;
       
-      // In a real implementation, we'd also store the company and industry data
-      await registerUser(username, data.email, data.password, fullName);
+      // Register with all collected data
+      const newUser = await registerUser(
+        username, 
+        data.email, 
+        data.password, 
+        fullName,
+        data.companyName,
+        data.industryType,
+        data.complianceFocus
+      );
+      
+      // Save user ID for the confirmation page
+      localStorage.setItem('registeredUserId', String(newUser.id));
       
       toast({
         title: "Registration Successful",
-        description: "Your 15-day trial has started. You can now log in.",
+        description: "Your 15-day trial has started.",
       });
       
-      // Redirect to login
-      setLocation("/login");
+      // Redirect to registration confirmation page
+      setLocation("/registration-confirmation");
     } catch (error) {
       console.error("Registration error:", error);
       toast({

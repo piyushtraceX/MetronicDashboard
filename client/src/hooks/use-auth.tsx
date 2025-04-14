@@ -15,6 +15,9 @@ interface User {
   trialStartDate?: string;
   trialEndDate?: string;
   subscriptionStatus?: "trial" | "active" | "expired";
+  companyName?: string;
+  industry?: string;
+  complianceFocus?: string[];
 }
 
 interface AuthContextType {
@@ -23,7 +26,15 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (username: string, email: string, password: string, fullName?: string) => Promise<User>;
+  register: (
+    username: string, 
+    email: string, 
+    password: string, 
+    fullName?: string,
+    companyName?: string,
+    industry?: string,
+    complianceFocus?: string[]
+  ) => Promise<User>;
   switchPersona: (personaId: number) => Promise<void>;
 }
 
@@ -182,7 +193,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   // Register function with 15-day trial
-  const register = async (username: string, email: string, password: string, fullName?: string) => {
+  const register = async (
+    username: string, 
+    email: string, 
+    password: string, 
+    fullName?: string,
+    companyName?: string,
+    industry?: string,
+    complianceFocus?: string[]
+  ) => {
     try {
       // In a real app, this would make a POST request to the server
       // For our demo, we'll create a new user with trial information locally
@@ -198,7 +217,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar: fullName ? fullName.charAt(0).toUpperCase() : username.charAt(0).toUpperCase(),
         trialStartDate: now.toISOString(),
         trialEndDate: trialEndDate.toISOString(),
-        subscriptionStatus: 'trial'
+        subscriptionStatus: 'trial',
+        companyName,
+        industry,
+        complianceFocus
       };
       
       // Store the user information (this would normally be done by the server)
