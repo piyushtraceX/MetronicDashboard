@@ -12,6 +12,9 @@ interface User {
   fullName?: string;
   avatar?: string;
   role: string;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  subscriptionStatus?: "trial" | "active" | "expired";
 }
 
 interface AuthContextType {
@@ -20,7 +23,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (username: string, email: string, password: string, fullName?: string) => Promise<void>;
+  register: (username: string, email: string, password: string, fullName?: string) => Promise<User>;
   switchPersona: (personaId: number) => Promise<void>;
 }
 
@@ -31,7 +34,10 @@ const defaultUser: User = {
   email: "admin@eudrportal.com",
   fullName: "Administrator",
   role: "admin",
-  avatar: "A"
+  avatar: "A",
+  trialStartDate: new Date().toISOString(),
+  trialEndDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days from now
+  subscriptionStatus: "trial"
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -40,7 +46,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   login: async () => {},
   logout: async () => {},
-  register: async () => {},
+  register: async () => { throw new Error("Not implemented"); },
   switchPersona: async () => {},
 });
 
@@ -63,10 +69,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
   
-  // Enhanced login function that also supports persona switching
+  // Enhanced login function that supports persona switching and registered users
   const login = async (email: string, password: string) => {
     try {
-      // Find the persona with matching email
+      // First, check if this is a registered user
+      const registeredUserJson = localStorage.getItem('registeredUser:' + email);
+      if (registeredUserJson) {
+        const registeredUser = JSON.parse(registeredUserJson);
+        
+        // Check if trial has expired
+        const now = new Date();
+        const trialEndDate = new Date(registeredUser.trialEndDate);
+        
+        if (now > trialEndDate && registeredUser.subscriptionStatus === 'trial') {
+          // Trial expired - update the subscription status
+          registeredUser.subscriptionStatus = 'expired';
+          localStorage.setItem('registeredUser:' + email, JSON.stringify(registeredUser));
+          
+          setUser(registeredUser);
+          
+          toast({
+            title: "Trial Expired",
+            description: "Your trial period has ended. Please upgrade to continue using all features.",
+            variant: "destructive",
+          });
+          
+          // Could redirect to a subscription page here
+          return;
+        }
+        
+        // Valid registered user - log them in
+        setUser(registeredUser);
+        
+        const daysLeft = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (registeredUser.subscriptionStatus === 'trial') {
+          toast({
+            title: "Logged In Successfully",
+            description: `Welcome back! You have ${daysLeft} days left in your trial.`,
+          });
+        } else {
+          toast({
+            title: "Logged In Successfully",
+            description: "Welcome back!",
+          });
+        }
+        
+        return;
+      }
+      
+      // If not registered, check if it's a persona
       const matchingPersona = personas.find(p => p.email === email);
       
       if (matchingPersona) {
@@ -77,7 +129,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: matchingPersona.email,
           fullName: matchingPersona.name,
           role: matchingPersona.role,
-          avatar: matchingPersona.avatar
+          avatar: matchingPersona.avatar,
+          // Add trial info to personas too for consistency
+          trialStartDate: new Date().toISOString(),
+          trialEndDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+          subscriptionStatus: "trial"
         };
         
         setUser(newUser);
@@ -87,14 +143,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: `You are now using the ${matchingPersona.name} persona`,
         });
       } else {
-        // If no matching persona, use default
-        setUser(defaultUser);
+        // If no registered user or matching persona, show error
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password",
+          variant: "destructive",
+        });
+        return;
       }
     } catch (error) {
       console.error("Login error:", error);
       toast({
         title: "Error",
-        description: "Failed to switch persona",
+        description: "Failed to log in",
         variant: "destructive",
       });
     }
@@ -112,12 +173,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
   
-  // Register function (not actually used but included for API completeness)
+  // Register function with 15-day trial
   const register = async (username: string, email: string, password: string, fullName?: string) => {
-    toast({
-      title: "Registration",
-      description: "This is a demo application with simplified authentication",
-    });
+    try {
+      // In a real app, this would make a POST request to the server
+      // For our demo, we'll create a new user with trial information locally
+      const now = new Date();
+      const trialEndDate = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000); // 15 days from now
+      
+      const newUser: User = {
+        id: Math.floor(Math.random() * 1000) + 10, // Random ID (not 1-9 which are reserved for personas)
+        username,
+        email,
+        fullName: fullName || username,
+        role: 'user',
+        avatar: fullName ? fullName.charAt(0).toUpperCase() : username.charAt(0).toUpperCase(),
+        trialStartDate: now.toISOString(),
+        trialEndDate: trialEndDate.toISOString(),
+        subscriptionStatus: 'trial'
+      };
+      
+      // Store the user information (this would normally be done by the server)
+      localStorage.setItem('registeredUser:' + email, JSON.stringify(newUser));
+      
+      // But don't log in automatically - redirect to login
+      
+      return newUser;
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Registration Failed",
+        description: "There was an error creating your account.",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
   
   // Function specifically for switching personas
