@@ -226,7 +226,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Store the user information (this would normally be done by the server)
       localStorage.setItem('registeredUser:' + email, JSON.stringify(newUser));
       
-      // But don't log in automatically - redirect to login
+      // Auto-login the user after registration so they can access protected pages
+      setUser(newUser);
+      localStorage.setItem('currentUser', JSON.stringify(newUser));
       
       return newUser;
     } catch (error) {

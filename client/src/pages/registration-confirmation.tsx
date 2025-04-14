@@ -8,12 +8,12 @@ export default function RegistrationConfirmation() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   
-  // If no user, redirect to login
+  // Check if user exists. In real app, we'd fetch the user details from API
   useEffect(() => {
     if (!user) {
-      setLocation("/login");
+      console.log("No user found in registration confirmation");
     }
-  }, [user, setLocation]);
+  }, [user]);
   
   const handleGoToDashboard = () => {
     setLocation("/onboarding/welcome");

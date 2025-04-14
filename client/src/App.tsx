@@ -43,11 +43,15 @@ function Router() {
       </Route>
       
       <Route path="/onboarding/welcome">
-        <OnboardingWelcome />
+        <ProtectedRoute>
+          <OnboardingWelcome />
+        </ProtectedRoute>
       </Route>
       
       <Route path="/onboarding/organization-profile">
-        <OrganizationProfile />
+        <ProtectedRoute>
+          <OrganizationProfile />
+        </ProtectedRoute>
       </Route>
       
       {/* Protected App Routes */}
