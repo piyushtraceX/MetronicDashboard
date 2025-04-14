@@ -16,6 +16,9 @@ import Settings from "@/pages/settings";
 import SAQs from "@/pages/saqs";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import RegistrationConfirmation from "@/pages/registration-confirmation";
+import OnboardingWelcome from "@/pages/onboarding/welcome";
+import OrganizationProfile from "@/pages/onboarding/organization-profile";
 import AppLayout from "@/layouts/app-layout";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Head } from "@/components/head";
@@ -33,6 +36,18 @@ function Router() {
       
       <Route path="/register">
         {user ? <Redirect to="/" /> : <Register />}
+      </Route>
+      
+      <Route path="/registration-confirmation">
+        <RegistrationConfirmation />
+      </Route>
+      
+      <Route path="/onboarding/welcome">
+        <OnboardingWelcome />
+      </Route>
+      
+      <Route path="/onboarding/organization-profile">
+        <OrganizationProfile />
       </Route>
       
       {/* Protected App Routes */}
