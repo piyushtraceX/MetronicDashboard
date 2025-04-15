@@ -173,38 +173,36 @@ export default function BulkUploadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md md:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Bulk Upload Suppliers</DialogTitle>
+          <DialogTitle>Bulk Upload</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-2">
-          <div className="border rounded-lg p-4 bg-blue-50">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <FileTextIcon className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Download Template</span>
+          <div className="flex items-center justify-between border-b pb-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-green-100 p-1 rounded">
+                <FileTextIcon className="h-5 w-5 text-green-600" />
               </div>
-              <Button 
-                size="sm" 
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={handleDownloadTemplate}
-              >
-                Download Template
-              </Button>
+              <span className="text-sm">Download Template</span>
+              <span className="text-xs text-gray-500">Use our standard format for bulk upload</span>
             </div>
-            
-            <div className="text-xs text-blue-600 mt-2">
-              Use our standard CSV template with the following columns:
-              <ul className="list-disc list-inside mt-1 pl-2">
-                <li>Sr No - A sequential number for each row</li>
-                <li>Supplier Name - The name of the supplier</li>
-                <li>Supplier Email - The email address of the supplier</li>
-              </ul>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={handleDownloadTemplate}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download Template
+            </Button>
           </div>
           
           <div
-            className={`border-2 border-dashed rounded-lg p-6 text-center ${
-              isDragging ? 'border-primary bg-primary/5' : 'border-border'
+            className={`border border-dashed rounded-lg p-6 text-center ${
+              isDragging ? 'border-primary bg-primary/5' : 'border-gray-300'
             }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -220,16 +218,20 @@ export default function BulkUploadDialog({
             />
             
             <div className="flex flex-col items-center justify-center space-y-2">
-              <div className="bg-primary/10 rounded-full p-3">
-                <CloudUpload className="h-6 w-6 text-primary" />
+              <div className="bg-blue-100 rounded-full p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
               </div>
               <div className="text-sm font-medium">
                 {fileName ? fileName : "Drop your file here"}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-gray-500">
                 or click to browse from your computer
               </div>
-              <div className="text-xs text-muted-foreground mt-2">
+              <div className="text-xs text-gray-500 mt-2">
                 Supported formats: .CSV, .XLSX (max 5MB)
               </div>
             </div>
@@ -237,47 +239,54 @@ export default function BulkUploadDialog({
           
           {file && validation && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">Validation Results</div>
-                <Button variant="ghost" size="sm" onClick={clearFile} className="h-8 w-8 p-0">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              {validation.success && fileName && (
+                <div className="flex items-center bg-green-50 text-green-700 p-2 rounded-md">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
+                  <span className="text-sm">{fileName}</span>
+                  <Button variant="ghost" size="sm" onClick={clearFile} className="h-6 w-6 p-0 ml-auto">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              
+              <div className="text-sm font-medium">Validation Results</div>
               
               {validation.success ? (
                 <div className="space-y-2">
                   {validation.successCount && validation.successCount > 0 && (
-                    <Alert className="bg-green-50 text-green-800 border-green-200">
-                      <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
-                      <AlertDescription>
-                        {validation.successCount} rows parsed successfully
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-center text-sm text-green-700">
+                      <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center mr-2 flex-shrink-0">
+                        <CheckCircle2 className="h-3 w-3 text-white" />
+                      </div>
+                      <span>{validation.successCount} rows parsed successfully</span>
+                    </div>
                   )}
                   
                   {validation.warningCount && validation.warningCount > 0 && (
-                    <Alert className="bg-yellow-50 text-yellow-800 border-yellow-200">
-                      <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />
-                      <AlertDescription>
-                        {validation.warningCount} rows with warnings
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-center text-sm text-yellow-700">
+                      <div className="h-4 w-4 rounded-full bg-yellow-500 flex items-center justify-center mr-2 flex-shrink-0">
+                        <AlertCircle className="h-3 w-3 text-white" />
+                      </div>
+                      <span>{validation.warningCount} rows with warnings</span>
+                    </div>
                   )}
                   
                   {validation.errorCount && validation.errorCount > 0 && (
-                    <Alert className="bg-red-50 text-red-800 border-red-200">
-                      <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-                      <AlertDescription>
-                        {validation.errorCount} row with errors
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-center text-sm text-red-700">
+                      <div className="h-4 w-4 rounded-full bg-red-500 flex items-center justify-center mr-2 flex-shrink-0">
+                        <AlertCircle className="h-3 w-3 text-white" />
+                      </div>
+                      <span>{validation.errorCount} row with errors</span>
+                    </div>
                   )}
                 </div>
               ) : (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  <AlertDescription>{validation.message}</AlertDescription>
-                </Alert>
+                <div className="flex items-center text-sm text-red-700">
+                  <div className="h-4 w-4 rounded-full bg-red-500 flex items-center justify-center mr-2 flex-shrink-0">
+                    <AlertCircle className="h-3 w-3 text-white" />
+                  </div>
+                  <span>{validation.message}</span>
+                </div>
               )}
             </div>
           )}
@@ -290,7 +299,7 @@ export default function BulkUploadDialog({
           <Button
             onClick={handleUpload}
             disabled={!file || !validation?.success || uploadMutation.isPending}
-            className="gap-2"
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
           >
             {uploadMutation.isPending ? (
               <UploadCloud className="h-4 w-4 animate-spin" />
