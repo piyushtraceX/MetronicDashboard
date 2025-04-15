@@ -90,6 +90,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   // Dates state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [validityPeriod, setValidityPeriod] = useState<string>("custom");
+  const [showCustomDates, setShowCustomDates] = useState(true);
   
   // GeoJSON upload state for fresh declarations
   const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
@@ -632,61 +634,155 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   {/* Declaration Validity Period - FIRST */}
                   <div className="mb-6">
                     <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="start-date">Start Date</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              id="start-date"
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal mt-1",
-                                !startDate && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {startDate ? format(startDate, "PPP") : "Select start date"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={startDate}
-                              onSelect={setStartDate}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <div>
-                        <Label htmlFor="end-date">End Date</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              id="end-date"
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal mt-1",
-                                !endDate && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {endDate ? format(endDate, "PPP") : "Select end date"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={endDate}
-                              onSelect={setEndDate}
-                              initialFocus
-                              disabled={(date) => startDate ? date < startDate : false}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
+                    
+                    {/* Period options */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <Button 
+                        variant={validityPeriod === "30days" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("30days");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const thirtyDaysLater = new Date(today);
+                          thirtyDaysLater.setDate(today.getDate() + 30);
+                          setEndDate(thirtyDaysLater);
+                        }}
+                      >
+                        30 days
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "6months" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("6months");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const sixMonthsLater = new Date(today);
+                          sixMonthsLater.setMonth(today.getMonth() + 6);
+                          setEndDate(sixMonthsLater);
+                        }}
+                      >
+                        6 months
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "9months" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("9months");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const nineMonthsLater = new Date(today);
+                          nineMonthsLater.setMonth(today.getMonth() + 9);
+                          setEndDate(nineMonthsLater);
+                        }}
+                      >
+                        9 months
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "1year" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("1year");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const oneYearLater = new Date(today);
+                          oneYearLater.setFullYear(today.getFullYear() + 1);
+                          setEndDate(oneYearLater);
+                        }}
+                      >
+                        1 year
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "custom" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("custom");
+                          setShowCustomDates(true);
+                        }}
+                      >
+                        Custom
+                      </Button>
                     </div>
+                    
+                    {/* Display selected date range */}
+                    {!showCustomDates && startDate && endDate && (
+                      <div className="p-3 bg-muted rounded-md mb-4">
+                        <p className="text-sm font-medium">Selected period:</p>
+                        <p className="text-sm">
+                          {format(startDate, "PP")} to {format(endDate, "PP")}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Custom date selector */}
+                    {showCustomDates && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="start-date">Start Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="start-date"
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal mt-1",
+                                  !startDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate ? format(startDate, "PPP") : "Select start date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={startDate}
+                                onSelect={(date) => {
+                                  setStartDate(date);
+                                  // If end date is before start date, clear end date
+                                  if (endDate && date && endDate < date) {
+                                    setEndDate(undefined);
+                                  }
+                                }}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div>
+                          <Label htmlFor="end-date">End Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="end-date"
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal mt-1",
+                                  !endDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate ? format(endDate, "PPP") : "Select end date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={endDate}
+                                onSelect={setEndDate}
+                                initialFocus
+                                disabled={(date) => startDate ? date < startDate : false}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Declaration Items - SECOND */}
