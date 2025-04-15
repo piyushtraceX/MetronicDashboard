@@ -47,6 +47,7 @@ import {
   MapPin,
   FileText,
   ClockIcon,
+  ChevronDown,
 } from "lucide-react";
 
 export default function Suppliers() {
@@ -190,28 +191,42 @@ export default function Suppliers() {
               Manage your suppliers and partners
             </p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Supplier
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => setOpenCreateForm(true)}>
-                <Building className="mr-2 h-4 w-4" />
-                <span>Add Manually</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowBulkUpload(true)}>
-                <FileText className="mr-2 h-4 w-4" />
-                <span>Bulk Upload</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowInviteSupplier(true)}>
-                <Mail className="mr-2 h-4 w-4" />
-                <span>Invite Supplier</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="relative group">
+            <Button 
+              className="flex items-center" 
+              onClick={() => setOpenCreateForm(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Supplier
+              <ChevronDown className="ml-2 h-4 w-4 opacity-70" />
+            </Button>
+            
+            <div className="absolute right-0 z-10 mt-1 hidden w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none group-hover:block">
+              <div className="py-1" role="menu" aria-orientation="vertical">
+                <button
+                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={() => setOpenCreateForm(true)}
+                >
+                  <Building className="mr-2 h-4 w-4" />
+                  <span>Add Manually</span>
+                </button>
+                <button
+                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={() => setShowBulkUpload(true)}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Bulk Upload</span>
+                </button>
+                <button
+                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={() => setShowInviteSupplier(true)}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  <span>Invite Supplier</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
