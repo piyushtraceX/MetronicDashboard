@@ -515,6 +515,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     setUploadedFiles([]);
     setStartDate(undefined);
     setEndDate(undefined);
+    setValidityPeriod("custom");
+    setShowCustomDates(true);
     setSelectedCustomer(null);
     setCustomerSearchTerm("");
     setShowCustomerResults(false);
