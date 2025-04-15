@@ -813,7 +813,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                     <div className="space-y-4">
                       {items.map((item, index) => (
                         <div key={item.id} className="p-4 border rounded-md">
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center justify-between mb-4">
                             <h4 className="font-medium">Item {index + 1}</h4>
                             {items.length > 1 && (
                               <Button
@@ -826,9 +826,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                             )}
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-6 gap-4">
                             <div>
-                              <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center">
+                              <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center mb-2">
                                 HSN Code <span className="text-red-500 ml-1">*</span>
                               </Label>
                               <Input
@@ -836,12 +836,11 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                 placeholder="e.g. 1511.10.00"
                                 value={item.hsnCode}
                                 onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
                             <div>
-                              <Label htmlFor={`rm-id-${item.id}`} className="flex items-center">
+                              <Label htmlFor={`rm-id-${item.id}`} className="flex items-center mb-2">
                                 RM ID 
                                 <span className="ml-1 text-gray-400">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -856,12 +855,11 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                 placeholder="e.g. RM12345"
                                 value={item.rmId || ''}
                                 onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
                             <div>
-                              <Label htmlFor={`product-name-${item.id}`} className="flex items-center">
+                              <Label htmlFor={`product-name-${item.id}`} className="flex items-center mb-2">
                                 Product Name <span className="text-red-500 ml-1">*</span>
                               </Label>
                               <Input
@@ -869,12 +867,11 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                 placeholder="e.g. Palm Oil"
                                 value={item.productName}
                                 onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
                             <div>
-                              <Label htmlFor={`scientific-name-${item.id}`}>
+                              <Label htmlFor={`scientific-name-${item.id}`} className="mb-2">
                                 Scientific Name
                               </Label>
                               <Input
@@ -882,12 +879,11 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                 placeholder="e.g. Elaeis guineensis"
                                 value={item.scientificName}
                                 onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
                             <div>
-                              <Label htmlFor={`quantity-${item.id}`} className="flex items-center">
+                              <Label htmlFor={`quantity-${item.id}`} className="flex items-center mb-2">
                                 Quantity <span className="text-red-500 ml-1">*</span>
                               </Label>
                               <Input
@@ -900,19 +896,18 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                   const value = e.target.value.replace(/[^0-9.]/g, '');
                                   updateItem(item.id, 'quantity', value);
                                 }}
-                                className="mt-1"
                               />
                             </div>
                             
                             <div>
-                              <Label htmlFor={`unit-${item.id}`}>
+                              <Label htmlFor={`unit-${item.id}`} className="mb-2">
                                 Unit
                               </Label>
                               <Select
                                 value={item.unit}
                                 onValueChange={(value) => updateItem(item.id, 'unit', value)}
                               >
-                                <SelectTrigger id={`unit-${item.id}`} className="mt-1">
+                                <SelectTrigger id={`unit-${item.id}`}>
                                   <SelectValue placeholder="Select unit" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -998,12 +993,12 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   <div>
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-medium">Declaration Items</h3>
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => {
-                            // This will trigger a click on the hidden file input
+                            // Import items functionality
                             document.getElementById('importOutboundItemsFile')?.click();
                           }}
                         >
@@ -1017,22 +1012,19 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                           className="hidden"
                           onChange={(e) => {
                             if (e.target.files?.length) {
-                              console.log('Selected file:', e.target.files[0].name);
-                              // Here you would handle the file import
-                              // For example, parsing the CSV/Excel and adding items
                               toast({
-                                title: "Items imported",
-                                description: `${e.target.files[0].name} has been processed.`,
-                                variant: "default",
+                                title: "File selected",
+                                description: `${e.target.files[0].name} will be processed`,
                               });
+                              // Actual import logic would go here
                             }
                           }}
                         />
+                        
                         <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-primary border-primary"
-                          onClick={addItem}
+                          variant="default" 
+                          size="sm"
+                          onClick={() => addItem()}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Add Item
@@ -1040,104 +1032,112 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                       </div>
                     </div>
                     
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       {items.map((item, index) => (
-                        <div key={item.id} className="p-4 border rounded-lg">
-                          <div className="flex justify-between items-center mb-3">
+                        <div key={item.id} className="p-4 border rounded-md">
+                          <div className="flex items-center justify-between mb-4">
                             <h4 className="font-medium">Item {index + 1}</h4>
                             {items.length > 1 && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-red-500 hover:text-red-700 h-8 px-2"
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => removeItem(item.id)}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4 text-red-500" />
                               </Button>
                             )}
                           </div>
                           
-                          <div className="flex flex-wrap gap-3 items-end">
-                            <div className="w-28">
-                              <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
-                              <Input 
-                                id={`hsn-code-${item.id}`} 
+                          <div className="grid grid-cols-6 gap-4">
+                            <div>
+                              <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center mb-2">
+                                HSN Code <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`hsn-code-${item.id}`}
                                 placeholder="e.g. 1511.10.00"
                                 value={item.hsnCode}
                                 onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
-                            <div className="w-28">
-                              <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
-                                RM ID
-                                <span 
-                                  className="ml-1 text-gray-400 cursor-help"
-                                  title="RM Id refers to the raw material id of this product in your ERP"
-                                >
-                                  ⓘ
+                            <div>
+                              <Label htmlFor={`rm-id-${item.id}`} className="flex items-center mb-2">
+                                RM ID 
+                                <span className="ml-1 text-gray-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                  </svg>
                                 </span>
                               </Label>
-                              <Input 
-                                id={`rm-id-${item.id}`} 
+                              <Input
+                                id={`rm-id-${item.id}`}
                                 placeholder="e.g. RM12345"
-                                value={item.rmId || ""}
+                                value={item.rmId || ''}
                                 onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
-                            <div className="w-44">
-                              <Label htmlFor={`product-name-${item.id}`} className="text-sm">Product Name *</Label>
-                              <Input 
-                                id={`product-name-${item.id}`} 
+                            <div>
+                              <Label htmlFor={`product-name-${item.id}`} className="flex items-center mb-2">
+                                Product Name <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`product-name-${item.id}`}
                                 placeholder="e.g. Palm Oil"
                                 value={item.productName}
                                 onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
-                            <div className="w-44">
-                              <Label htmlFor={`scientific-name-${item.id}`} className="text-sm">Scientific Name</Label>
-                              <Input 
-                                id={`scientific-name-${item.id}`} 
+                            <div>
+                              <Label htmlFor={`scientific-name-${item.id}`} className="mb-2">
+                                Scientific Name
+                              </Label>
+                              <Input
+                                id={`scientific-name-${item.id}`}
                                 placeholder="e.g. Elaeis guineensis"
                                 value={item.scientificName}
                                 onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
-                                className="mt-1"
                               />
                             </div>
                             
-                            <div className="w-28">
-                              <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity *</Label>
-                              <Input 
-                                id={`quantity-${item.id}`} 
-                                type="number"
-                                min="0"
-                                step="0.01"
+                            <div>
+                              <Label htmlFor={`quantity-${item.id}`} className="flex items-center mb-2">
+                                Quantity <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`quantity-${item.id}`}
+                                type="text"
                                 placeholder="e.g. 5000"
                                 value={item.quantity}
-                                onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                                className="mt-1"
+                                onChange={(e) => {
+                                  // Only allow numeric input with decimal point
+                                  const value = e.target.value.replace(/[^0-9.]/g, '');
+                                  updateItem(item.id, 'quantity', value);
+                                }}
                               />
                             </div>
-
-                            <div className="w-28">
-                              <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
-                              <Select 
-                                value={item.unit} 
+                            
+                            <div>
+                              <Label htmlFor={`unit-${item.id}`} className="mb-2">
+                                Unit
+                              </Label>
+                              <Select
+                                value={item.unit}
                                 onValueChange={(value) => updateItem(item.id, 'unit', value)}
                               >
-                                <SelectTrigger id={`unit-${item.id}`} className="mt-1">
+                                <SelectTrigger id={`unit-${item.id}`}>
                                   <SelectValue placeholder="Select unit" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="kg">kg</SelectItem>
-                                  <SelectItem value="tons">tons</SelectItem>
+                                  <SelectItem value="ton">ton</SelectItem>
                                   <SelectItem value="liters">liters</SelectItem>
                                   <SelectItem value="m³">m³</SelectItem>
+                                  <SelectItem value="pieces">pieces</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
