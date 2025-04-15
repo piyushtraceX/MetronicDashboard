@@ -314,6 +314,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Bulk upload suppliers
+  app.post("/api/suppliers/bulk", async (req, res) => {
+    try {
+      // In a real application, this would process the uploaded file
+      // For demo, we'll add a few suppliers randomly
+      const randomSuppliers = [
+        {
+          name: "Global Timber Co.",
+          email: "contact@globaltimber.com",
+          phone: "+1 555-123-4567",
+          country: "Canada",
+          city: "Vancouver",
+          status: "active",
+          industry: "Timber",
+          products: "Wood, Pulp",
+          certifications: ["FSC", "PEFC"]
+        },
+        {
+          name: "EcoRubber Solutions",
+          email: "info@ecorubber.com",
+          phone: "+60 3-1234-5678",
+          country: "Malaysia",
+          city: "Kuala Lumpur",
+          status: "active",
+          industry: "Agriculture",
+          products: "Rubber Wood, Sustainable Rubber",
+          certifications: ["EUDR"]
+        },
+        {
+          name: "AsiaRubber Plantations",
+          email: "support@asiarubber.com",
+          phone: "+66 2-345-6789",
+          country: "Thailand",
+          city: "Bangkok", 
+          status: "active",
+          industry: "Agriculture",
+          products: "Natural Rubber, Latex",
+          certifications: ["ISO 14001"]
+        }
+      ];
+      
+      const suppliers = [];
+      
+      for (const supplierData of randomSuppliers) {
+        const supplier = await storage.createSupplier({
+          name: supplierData.name,
+          email: supplierData.email,
+          mobileNumber: supplierData.phone,
+          country: supplierData.country,
+          city: supplierData.city,
+          postalCode: null,
+          address: null,
+          website: null,
+          notes: null,
+          products: supplierData.products,
+          status: supplierData.status
+        });
+        
+        suppliers.push(supplier);
+        
+        // Create activity for each supplier
+        await storage.createActivity({
+          type: "supplier",
+          description: `New supplier ${supplier.name} was added via bulk upload`,
+          userId: 1, // Mock user ID
+          entityType: "supplier",
+          entityId: supplier.id,
+          metadata: null
+        });
+      }
+      
+      res.status(201).json({ 
+        success: true, 
+        message: `${suppliers.length} suppliers imported successfully`,
+        suppliers
+      });
+    } catch (error) {
+      console.error("Error in bulk upload:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error processing bulk upload" 
+      });
+    }
+  });
+  
+  // Invite suppliers
+  app.post("/api/suppliers/invite", async (req, res) => {
+    try {
+      const { emails, message } = req.body;
+      
+      if (!emails || !Array.isArray(emails) || emails.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "No email addresses provided" 
+        });
+      }
+      
+      // In a real application, this would send invitation emails
+      // For demo, we'll just log the emails and return success
+      console.log(`Sending invitations to ${emails.length} suppliers`);
+      console.log(`Custom message: ${message || 'None'}`);
+      
+      // Add activity for the invitation
+      await storage.createActivity({
+        type: "invitation",
+        description: `Sent invitations to ${emails.length} suppliers`,
+        userId: 1, // Mock user ID
+        entityType: "supplier",
+        entityId: null,
+        metadata: { emailCount: emails.length }
+      });
+      
+      res.status(200).json({ 
+        success: true, 
+        message: `Invitations sent to ${emails.length} suppliers`,
+        emails
+      });
+    } catch (error) {
+      console.error("Error sending invitations:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error sending invitations" 
+      });
+    }
+  });
+  
   app.put("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

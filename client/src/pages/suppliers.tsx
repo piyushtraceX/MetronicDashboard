@@ -61,7 +61,7 @@ export default function Suppliers() {
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
   
   // Mutation for bulk uploading suppliers
-  const bulkUploadMutation = useMutation({
+  const bulkUploadMutation = useMutation<any, Error, FormData>({
     mutationFn: async (formData: FormData) => {
       const response = await fetch("/api/suppliers/bulk", {
         method: "POST",
@@ -90,7 +90,7 @@ export default function Suppliers() {
   });
   
   // Mutation for inviting suppliers
-  const inviteSupplierMutation = useMutation({
+  const inviteSupplierMutation = useMutation<any, Error, { emails: string[], message?: string }>({
     mutationFn: async (data: { emails: string[], message?: string }) => {
       const response = await fetch("/api/suppliers/invite", {
         method: "POST",
