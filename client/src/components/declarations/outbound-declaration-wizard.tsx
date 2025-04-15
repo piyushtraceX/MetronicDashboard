@@ -295,6 +295,33 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
             });
             return false;
           }
+          
+          // Check dates for existing declarations
+          if (!startDate || !endDate) {
+            toast({
+              title: "Dates required",
+              description: "Please select both start and end dates for the declaration validity period",
+              variant: "destructive",
+            });
+            return false;
+          }
+          
+          // Check if items have required fields
+          const validItems = items.some(item => 
+            item.hsnCode.trim() !== "" && 
+            item.productName.trim() !== "" && 
+            item.quantity.trim() !== "" && 
+            parseFloat(item.quantity) > 0
+          );
+          
+          if (!validItems) {
+            toast({
+              title: "Required fields missing",
+              description: "Please fill in HSN Code, Product Name and Quantity for at least one item",
+              variant: "destructive",
+            });
+            return false;
+          }
         } else {
           // For fresh declarations, check if items have required fields
           const validItems = items.some(item => 
@@ -678,6 +705,229 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                         )}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Declaration Validity Period */}
+                  <div className="mb-6 mt-6">
+                    <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="start-date">Start Date</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="start-date"
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal mt-1",
+                                !startDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {startDate ? format(startDate, "PPP") : "Select start date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={startDate}
+                              onSelect={setStartDate}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div>
+                        <Label htmlFor="end-date">End Date</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="end-date"
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal mt-1",
+                                !endDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {endDate ? format(endDate, "PPP") : "Select end date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={endDate}
+                              onSelect={setEndDate}
+                              initialFocus
+                              disabled={(date) => startDate ? date < startDate : false}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Declaration Items */}
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-medium">Declaration Items</h3>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Import items functionality
+                            document.getElementById('importItemsFile')?.click();
+                          }}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import Items
+                        </Button>
+                        <input 
+                          type="file" 
+                          id="importItemsFile" 
+                          className="hidden" 
+                          accept=".csv,.xlsx,.xls"
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              toast({
+                                title: "File selected",
+                                description: `${e.target.files[0].name} will be processed`,
+                              });
+                              // Actual import logic would go here
+                            }
+                          }}
+                        />
+                        
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => addItem()}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Item
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {items.map((item, index) => (
+                        <div key={item.id} className="p-4 border rounded-md">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium">Item {index + 1}</h4>
+                            {items.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(item.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                              <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center">
+                                HSN Code <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`hsn-code-${item.id}`}
+                                placeholder="e.g. 1511.10.00"
+                                value={item.hsnCode}
+                                onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`rm-id-${item.id}`} className="flex items-center">
+                                RM ID 
+                                <span className="ml-1 text-gray-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                  </svg>
+                                </span>
+                              </Label>
+                              <Input
+                                id={`rm-id-${item.id}`}
+                                placeholder="e.g. RM12345"
+                                value={item.rmId || ''}
+                                onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`product-name-${item.id}`} className="flex items-center">
+                                Product Name <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`product-name-${item.id}`}
+                                placeholder="e.g. Palm Oil"
+                                value={item.productName}
+                                onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`scientific-name-${item.id}`}>
+                                Scientific Name
+                              </Label>
+                              <Input
+                                id={`scientific-name-${item.id}`}
+                                placeholder="e.g. Elaeis guineensis"
+                                value={item.scientificName}
+                                onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`quantity-${item.id}`} className="flex items-center">
+                                Quantity <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`quantity-${item.id}`}
+                                type="text"
+                                placeholder="e.g. 5000"
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  // Only allow numeric input with decimal point
+                                  const value = e.target.value.replace(/[^0-9.]/g, '');
+                                  updateItem(item.id, 'quantity', value);
+                                }}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`unit-${item.id}`}>
+                                Unit
+                              </Label>
+                              <Select
+                                value={item.unit}
+                                onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                              >
+                                <SelectTrigger id={`unit-${item.id}`} className="mt-1">
+                                  <SelectValue placeholder="Select unit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="kg">kg</SelectItem>
+                                  <SelectItem value="ton">ton</SelectItem>
+                                  <SelectItem value="liters">liters</SelectItem>
+                                  <SelectItem value="m³">m³</SelectItem>
+                                  <SelectItem value="pieces">pieces</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : (
