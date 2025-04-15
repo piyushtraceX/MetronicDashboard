@@ -1,10 +1,14 @@
 import { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
 
 import { Head } from "@/components/head";
 import SimpleSupplierDialog from "@/components/suppliers/simple-supplier-dialog";
+import BulkUploadDialog from "@/components/suppliers/bulk-upload-dialog";
+import InviteSupplierDialog from "@/components/suppliers/invite-supplier-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,10 +50,74 @@ import {
 } from "lucide-react";
 
 export default function Suppliers() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [openCreateForm, setOpenCreateForm] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showInviteSupplier, setShowInviteSupplier] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
+  
+  // Mutation for bulk uploading suppliers
+  const bulkUploadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch("/api/suppliers/bulk", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error("Failed to upload suppliers");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers/stats"] });
+      toast({
+        title: "Suppliers imported",
+        description: "Suppliers were successfully imported from file.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Import failed",
+        description: error.message || "There was an error importing suppliers.",
+      });
+    },
+  });
+  
+  // Mutation for inviting suppliers
+  const inviteSupplierMutation = useMutation({
+    mutationFn: async (data: { emails: string[], message?: string }) => {
+      const response = await fetch("/api/suppliers/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to send invitations");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invitations sent",
+        description: "Invitations were successfully sent to the suppliers.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to send invitations",
+        description: error.message || "There was an error sending invitations.",
+      });
+    },
+  });
   
   const { data: suppliers = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/suppliers"],
@@ -122,10 +190,28 @@ export default function Suppliers() {
               Manage your suppliers and partners
             </p>
           </div>
-          <Button onClick={() => setOpenCreateForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Supplier
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Supplier
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setOpenCreateForm(true)}>
+                <Building className="mr-2 h-4 w-4" />
+                <span>Add Manually</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowBulkUpload(true)}>
+                <FileText className="mr-2 h-4 w-4" />
+                <span>Bulk Upload</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowInviteSupplier(true)}>
+                <Mail className="mr-2 h-4 w-4" />
+                <span>Invite Supplier</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -325,6 +411,22 @@ export default function Suppliers() {
         open={openCreateForm} 
         onOpenChange={handleCloseForm} 
         initialData={selectedSupplier}
+      />
+      
+      <BulkUploadDialog
+        open={showBulkUpload}
+        onOpenChange={setShowBulkUpload}
+        uploadMutation={bulkUploadMutation}
+        onUploadComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/suppliers/stats"] });
+        }}
+      />
+      
+      <InviteSupplierDialog
+        open={showInviteSupplier}
+        onOpenChange={setShowInviteSupplier}
+        inviteMutation={inviteSupplierMutation}
       />
     </>
   );
