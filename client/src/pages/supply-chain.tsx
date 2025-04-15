@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -9,15 +9,81 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Eye, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import SAQResponseViewer from "@/components/supply-chain/saq-response-viewer";
 import SimplifiedSupplierForm from "@/components/suppliers/simplified-supplier-form";
+import BulkUploadDialog from "@/components/suppliers/bulk-upload-dialog";
+import InviteSupplierDialog from "@/components/suppliers/invite-supplier-dialog";
 
 export default function SupplyChain() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [activeTab, setActiveTab] = useState("onboarding");
   const [viewResponseOpen, setViewResponseOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedResponseId, setSelectedResponseId] = useState("");
   const [openCreateForm, setOpenCreateForm] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showInviteSupplier, setShowInviteSupplier] = useState(false);
+  
+  // Mutation for bulk uploading suppliers
+  const bulkUploadMutation = useMutation<any, Error, FormData>({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch("/api/suppliers/bulk", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error("Failed to upload suppliers");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      toast({
+        title: "Suppliers imported",
+        description: "Suppliers were successfully imported from file.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Import failed",
+        description: error.message || "There was an error importing suppliers.",
+      });
+    },
+  });
+  
+  // Mutation for inviting suppliers
+  const inviteSupplierMutation = useMutation<any, Error, { emails: string[], message?: string }>({
+    mutationFn: async (data: { emails: string[], message?: string }) => {
+      const response = await fetch("/api/suppliers/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to send invitations");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invitations sent",
+        description: "Invitations were successfully sent to the suppliers.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to send invitations",
+        description: error.message || "There was an error sending invitations.",
+      });
+    },
+  });
   
   // Fetch real suppliers from the API
   const { data: supplierData, isLoading, error } = useQuery({
@@ -150,7 +216,10 @@ export default function SupplyChain() {
                 <div className="relative group">
                   <Button 
                     className="flex items-center"
-                    onClick={() => setOpenCreateForm(true)}
+                    onClick={(e) => {
+                      // Prevent default action and don't open any dialog
+                      e.preventDefault();
+                    }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
                       <line x1="12" y1="5" x2="12" y2="19" />
@@ -178,7 +247,7 @@ export default function SupplyChain() {
                       <button
                         className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                         onClick={() => {
-                          document.getElementById('importSupplierFile')?.click();
+                          setShowBulkUpload(true);
                         }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
@@ -192,8 +261,7 @@ export default function SupplyChain() {
                       <button
                         className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                         onClick={() => {
-                          // Handle Invite Supplier functionality
-                          alert("Invite Supplier feature will be implemented soon");
+                          setShowInviteSupplier(true);
                         }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
@@ -498,6 +566,23 @@ export default function SupplyChain() {
         open={openCreateForm}
         onOpenChange={(open) => setOpenCreateForm(open)}
         initialData={null}
+      />
+      
+      {/* Bulk Upload Dialog */}
+      <BulkUploadDialog
+        open={showBulkUpload}
+        onOpenChange={setShowBulkUpload}
+        uploadMutation={bulkUploadMutation}
+        onUploadComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+        }}
+      />
+      
+      {/* Invite Supplier Dialog */}
+      <InviteSupplierDialog
+        open={showInviteSupplier}
+        onOpenChange={setShowInviteSupplier}
+        inviteMutation={inviteSupplierMutation}
       />
     </div>
   );

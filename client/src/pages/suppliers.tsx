@@ -194,7 +194,10 @@ export default function Suppliers() {
           <div className="relative group">
             <Button 
               className="flex items-center" 
-              onClick={() => setOpenCreateForm(true)}
+              onClick={(e) => {
+                // Prevent default action and don't open any dialog
+                e.preventDefault();
+              }}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Supplier
