@@ -627,88 +627,10 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
           {currentStep === 2 && (
             <div>
               {declarationSource === "existing" ? (
-                /* Select from existing inbound declarations */
+                /* Create outbound declaration from existing inbound declarations */
                 <div>
-                  <h3 className="text-lg font-medium mb-4">Select Declaration</h3>
-                  <div className="relative mb-4">
-                    <Input 
-                      type="text" 
-                      placeholder="Search declarations..." 
-                      className="pl-9"
-                      value={declarationSearchTerm}
-                      onChange={(e) => setDeclarationSearchTerm(e.target.value)}
-                    />
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  </div>
-                  
-                  <div className="overflow-hidden rounded-md border">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-50 border-b">
-                          <th className="py-3 px-4 text-left font-medium">Declaration Name</th>
-                          <th className="py-3 px-4 text-left font-medium">Code</th>
-                          <th className="py-3 px-4 text-left font-medium">Product</th>
-                          <th className="py-3 px-4 text-left font-medium">Quantity</th>
-                          <th className="py-3 px-4 text-left font-medium">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredDeclarations.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
-                              No declarations found matching your search
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredDeclarations.map((declaration) => (
-                            <tr 
-                              key={declaration.id}
-                              className={cn(
-                                "border-b cursor-pointer hover:bg-gray-50",
-                                selectedDeclarationIds.includes(declaration.id) ? "bg-primary/5" : ""
-                              )}
-                              onClick={() => {
-                                if (selectedDeclarationIds.includes(declaration.id)) {
-                                  // Remove if already selected
-                                  setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
-                                } else {
-                                  // Add to selection if not already selected
-                                  setSelectedDeclarationIds(prev => [...prev, declaration.id]);
-                                }
-                              }}
-                            >
-                              <td className="py-3 px-4">
-                                <div className="flex items-center">
-                                  <Checkbox 
-                                    className="mr-2" 
-                                    checked={selectedDeclarationIds.includes(declaration.id)} 
-                                    onCheckedChange={(checked: boolean) => {
-                                      if (checked) {
-                                        setSelectedDeclarationIds(prev => [...prev, declaration.id]);
-                                      } else {
-                                        setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
-                                      }
-                                    }}
-                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                                  />
-                                  {declaration.name}
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">{declaration.code}</td>
-                              <td className="py-3 px-4">{declaration.product}</td>
-                              <td className="py-3 px-4">{declaration.quantity}</td>
-                              <td className="py-3 px-4">
-                                <Badge className="bg-green-500">{declaration.status}</Badge>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Declaration Validity Period */}
-                  <div className="mb-6 mt-6">
+                  {/* Declaration Validity Period - FIRST */}
+                  <div className="mb-6">
                     <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -767,8 +689,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                     </div>
                   </div>
                   
-                  {/* Declaration Items */}
-                  <div>
+                  {/* Declaration Items - SECOND */}
+                  <div className="mb-6">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-medium">Declaration Items</h3>
                       <div className="flex gap-2">
@@ -922,6 +844,87 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Select Declaration - THIRD */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Select Declaration</h3>
+                    <div className="relative mb-4">
+                      <Input 
+                        type="text" 
+                        placeholder="Search declarations..." 
+                        className="pl-9"
+                        value={declarationSearchTerm}
+                        onChange={(e) => setDeclarationSearchTerm(e.target.value)}
+                      />
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    </div>
+                    
+                    <div className="overflow-hidden rounded-md border">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-50 border-b">
+                            <th className="py-3 px-4 text-left font-medium">Declaration Name</th>
+                            <th className="py-3 px-4 text-left font-medium">Code</th>
+                            <th className="py-3 px-4 text-left font-medium">Product</th>
+                            <th className="py-3 px-4 text-left font-medium">Quantity</th>
+                            <th className="py-3 px-4 text-left font-medium">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredDeclarations.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
+                                No declarations found matching your search
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredDeclarations.map((declaration) => (
+                              <tr 
+                                key={declaration.id}
+                                className={cn(
+                                  "border-b cursor-pointer hover:bg-gray-50",
+                                  selectedDeclarationIds.includes(declaration.id) ? "bg-primary/5" : ""
+                                )}
+                                onClick={() => {
+                                  if (selectedDeclarationIds.includes(declaration.id)) {
+                                    // Remove if already selected
+                                    setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
+                                  } else {
+                                    // Add to selection if not already selected
+                                    setSelectedDeclarationIds(prev => [...prev, declaration.id]);
+                                  }
+                                }}
+                              >
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center">
+                                    <Checkbox 
+                                      className="mr-2" 
+                                      checked={selectedDeclarationIds.includes(declaration.id)} 
+                                      onCheckedChange={(checked: boolean) => {
+                                        if (checked) {
+                                          setSelectedDeclarationIds(prev => [...prev, declaration.id]);
+                                        } else {
+                                          setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
+                                        }
+                                      }}
+                                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                    />
+                                    {declaration.name}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">{declaration.code}</td>
+                                <td className="py-3 px-4">{declaration.product}</td>
+                                <td className="py-3 px-4">{declaration.quantity}</td>
+                                <td className="py-3 px-4">
+                                  <Badge className="bg-green-500">{declaration.status}</Badge>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
