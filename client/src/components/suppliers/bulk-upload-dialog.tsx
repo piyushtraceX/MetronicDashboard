@@ -111,11 +111,29 @@ export default function BulkUploadDialog({
   };
   
   const handleDownloadTemplate = () => {
+    // Create a CSV template with the required headers
+    const headers = ["Sr No", "Supplier Name", "Supplier Email"];
+    const csvContent = headers.join(",") + "\n1,,\n2,,\n3,,"; // Add a few empty rows
+    
+    // Create a Blob from the CSV string
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    
+    // Create a download link and trigger the download
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", "supplier_template.csv");
+    link.style.visibility = "hidden";
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
     toast({
       title: "Template downloaded",
-      description: "The template file has been downloaded successfully."
+      description: "The supplier template has been downloaded successfully."
     });
-    // In a real application, this would trigger a download
   };
   
   const handleUpload = () => {
@@ -159,18 +177,29 @@ export default function BulkUploadDialog({
         </DialogHeader>
         
         <div className="space-y-4 py-2">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <FileTextIcon className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Download Template</span>
+          <div className="border rounded-lg p-4 bg-blue-50">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <FileTextIcon className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">Download Template</span>
+              </div>
+              <Button 
+                size="sm" 
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleDownloadTemplate}
+              >
+                Download Template
+              </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
-              Download Template
-            </Button>
-          </div>
-          
-          <div className="text-xs text-muted-foreground">
-            Use our standard format for bulk upload
+            
+            <div className="text-xs text-blue-600 mt-2">
+              Use our standard CSV template with the following columns:
+              <ul className="list-disc list-inside mt-1 pl-2">
+                <li>Sr No - A sequential number for each row</li>
+                <li>Supplier Name - The name of the supplier</li>
+                <li>Supplier Email - The email address of the supplier</li>
+              </ul>
+            </div>
           </div>
           
           <div
