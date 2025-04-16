@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import satelliteMapReal from "../../assets/satellite-map-real.jpg";
+import satelliteMapAgricultural from "../../assets/satellite-map-agricultural.jpg";
 
 type ValidationDetailsDialogProps = {
   open: boolean;

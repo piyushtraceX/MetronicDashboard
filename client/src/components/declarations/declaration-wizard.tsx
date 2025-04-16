@@ -547,739 +547,473 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Create Declaration</DialogTitle>
           <DialogDescription>
-            Create an inbound declaration with proper compliance documentation.
+            {declarationType === "inbound" 
+              ? "Create a new inbound declaration from a supplier" 
+              : "Create a new outbound declaration for a customer"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mb-8">
+        <div className="py-4">
           <Stepper 
-            steps={getStepLabels()}
-            currentStep={currentStep}
-            completedSteps={completedSteps}
+            steps={getStepLabels()} 
+            currentStep={currentStep} 
+            completedSteps={completedSteps} 
           />
         </div>
 
-        <div className="py-4">
-          {/* Step removed - Declaration Type is now set by the main buttons */}
+        <Tabs 
+          defaultValue="inbound" 
+          value={declarationType}
+          onValueChange={(value) => setDeclarationType(value as DeclarationType)}
+          className="mb-4"
+        >
+          <TabsList>
+            <TabsTrigger value="inbound">Inbound</TabsTrigger>
+            <TabsTrigger value="outbound">Outbound</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-          {/* Step 1: Declaration Details - Items */}
-          {currentStep === 1 && (
-            <div>
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
-                
-                {/* Period options */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Button 
-                    variant={validityPeriod === "30days" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("30days");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const thirtyDaysLater = new Date(today);
-                      thirtyDaysLater.setDate(today.getDate() + 30);
-                      setEndDate(thirtyDaysLater);
-                    }}
-                  >
-                    30 days
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "6months" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("6months");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const sixMonthsLater = new Date(today);
-                      sixMonthsLater.setMonth(today.getMonth() + 6);
-                      setEndDate(sixMonthsLater);
-                    }}
-                  >
-                    6 months
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "9months" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("9months");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const nineMonthsLater = new Date(today);
-                      nineMonthsLater.setMonth(today.getMonth() + 9);
-                      setEndDate(nineMonthsLater);
-                    }}
-                  >
-                    9 months
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "1year" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("1year");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const oneYearLater = new Date(today);
-                      oneYearLater.setFullYear(today.getFullYear() + 1);
-                      setEndDate(oneYearLater);
-                    }}
-                  >
-                    1 year
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "custom" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("custom");
-                      setShowCustomDates(true);
-                    }}
-                  >
-                    Custom
-                  </Button>
-                </div>
-                
-                {/* Display selected date range */}
-                {!showCustomDates && startDate && endDate && (
-                  <div className="p-3 bg-muted rounded-md mb-4">
-                    <p className="text-sm font-medium">Selected period:</p>
-                    <p className="text-sm">
-                      {format(startDate, "PP")} to {format(endDate, "PP")}
-                    </p>
-                  </div>
-                )}
-                
-                {/* Custom date selector */}
-                {showCustomDates && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="start-date">Start Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            id="start-date"
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !startDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startDate ? format(startDate, "PPP") : "Select start date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={startDate}
-                            onSelect={(date) => {
-                              setStartDate(date);
-                              // If end date is before start date, clear end date
-                              if (endDate && date && endDate < date) {
-                                setEndDate(undefined);
-                              }
-                            }}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="end-date">End Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            id="end-date"
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !endDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endDate ? format(endDate, "PPP") : "Select end date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={endDate}
-                            onSelect={setEndDate}
-                            fromDate={startDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                )}
+        {/* Step 1: Items & Supplier */}
+        {currentStep === 1 && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="poNumber">PO Number</Label>
+                <Input 
+                  id="poNumber" 
+                  placeholder="Enter PO number" 
+                  value={poNumber}
+                  onChange={(e) => setPoNumber(e.target.value)}
+                />
               </div>
+              <div>
+                <Label htmlFor="supplierSONumber">Supplier SO Number</Label>
+                <Input 
+                  id="supplierSONumber" 
+                  placeholder="Enter supplier SO number (if available)" 
+                  value={supplierSoNumber}
+                  onChange={(e) => setSupplierSoNumber(e.target.value)}
+                />
+              </div>
+            </div>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">Supplier Selection</h3>
-                
-                <div className="relative mb-4">
-                  <Input 
-                    type="text" 
-                    placeholder="Search suppliers..." 
-                    className="pl-9"
-                    value={supplierSearchTerm}
-                    onChange={(e) => {
-                      setSupplierSearchTerm(e.target.value);
-                      if (e.target.value.length >= 1) {
-                        // Show dropdown when typing
-                        setShowSupplierDropdown(true);
-                      } else {
-                        setShowSupplierDropdown(false);
-                      }
-                    }}
-                    onFocus={() => {
-                      if (supplierSearchTerm.length >= 1) {
-                        setShowSupplierDropdown(true);
-                      }
-                    }}
-                    onBlur={() => {
-                      // Small delay to allow for click to register
-                      setTimeout(() => {
-                        setShowSupplierDropdown(false);
-                      }, 200);
-                    }}
-                  />
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  
-                  {/* Dropdown with filtered suppliers */}
-                  {showSupplierDropdown && filteredSuppliers.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-md border overflow-hidden">
-                      <div className="max-h-60 overflow-y-auto">
-                        {filteredSuppliers.map((supplier) => (
-                          <div 
+            <div>
+              <Label>Supplier</Label>
+              <div className="relative">
+                <div 
+                  className={cn(
+                    "flex items-center justify-between p-2 border rounded-md cursor-pointer",
+                    selectedSupplier ? "border-primary/30 bg-primary/5" : ""
+                  )}
+                  onClick={() => setShowSupplierDropdown(!showSupplierDropdown)}
+                >
+                  {selectedSupplier ? (
+                    <div className="flex items-center">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <User className="h-4 w-4" />
+                      </div>
+                      <div className="ml-2">
+                        <div className="font-medium">{selectedSupplier.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {selectedSupplier.products}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">Select a supplier</span>
+                  )}
+                  <Search className="h-4 w-4 text-gray-500" />
+                </div>
+
+                {/* Dropdown for suppliers */}
+                {showSupplierDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-64 overflow-y-auto">
+                    <div className="p-2 border-b">
+                      <Input 
+                        placeholder="Search suppliers..." 
+                        value={supplierSearchTerm}
+                        onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      {filteredSuppliers.length > 0 ? (
+                        filteredSuppliers.map(supplier => (
+                          <div
                             key={supplier.id}
-                            className="px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
+                            className="p-2 hover:bg-gray-100 cursor-pointer"
                             onClick={() => {
                               setSelectedSupplierId(supplier.id);
                               setSelectedSupplier(supplier);
-                              setSupplierSearchTerm('');
                               setShowSupplierDropdown(false);
                             }}
                           >
-                            <div className="flex items-center">
-                              <User className="h-4 w-4 text-gray-500 mr-2" />
-                              <div>
-                                <div className="font-medium">{supplier.name}</div>
-                                <div className="text-xs text-gray-500">{supplier.products || 'No products specified'}</div>
-                              </div>
+                            <div className="font-medium">{supplier.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {supplier.products}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Show "No suppliers found" in dropdown */}
-                  {showSupplierDropdown && supplierSearchTerm && filteredSuppliers.length === 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-md border">
-                      <div className="px-4 py-3 text-center text-sm text-gray-500">
-                        No suppliers found
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Show selected supplier as a tile */}
-                {selectedSupplierId && (
-                  <div className="p-4 border rounded-md">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <User className="h-5 w-5 text-gray-500" />
-                      </div>
-                      <div className="ml-3 flex-grow">
-                        <div className="font-medium">{selectedSupplier?.name}</div>
-                        <div className="text-sm text-gray-500">{selectedSupplier?.products || 'No products specified'}</div>
-                      </div>
+                        ))
+                      ) : (
+                        <div className="p-2 text-center text-gray-500">
+                          No suppliers found
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="space-y-6 mb-6">
-                <div>
-                  <Label htmlFor="po-number" className="text-sm font-medium">
-                    PO Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="po-number"
-                    type="text"
-                    placeholder="Enter PO number"
-                    className="mt-1"
-                    value={poNumber}
-                    onChange={(e) => setPoNumber(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="supplier-so" className="text-sm font-medium">
-                    Supplier SO Number
-                  </Label>
-                  <Input
-                    id="supplier-so"
-                    type="text"
-                    placeholder="Enter supplier SO number"
-                    className="mt-1"
-                    value={supplierSoNumber}
-                    onChange={(e) => setSupplierSoNumber(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="shipment-number" className="text-sm font-medium">
-                    Shipment Number (BL, LR etc.)
-                  </Label>
-                  <Input
-                    id="shipment-number"
-                    type="text"
-                    placeholder="Enter shipment number"
-                    className="mt-1"
-                    value={shipmentNumber}
-                    onChange={(e) => setShipmentNumber(e.target.value)}
-                  />
-                </div>
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Label>Declaration Validity Period</Label>
+                <Select 
+                  value={validityPeriod} 
+                  onValueChange={(value) => {
+                    setValidityPeriod(value);
+                    
+                    const now = new Date();
+                    setStartDate(now);
+                    
+                    let end = new Date();
+                    if (value === "30days") {
+                      end.setDate(now.getDate() + 30);
+                      setShowCustomDates(false);
+                    } else if (value === "6months") {
+                      end.setMonth(now.getMonth() + 6);
+                      setShowCustomDates(false);
+                    } else if (value === "9months") {
+                      end.setMonth(now.getMonth() + 9);
+                      setShowCustomDates(false);
+                    } else if (value === "1year") {
+                      end.setFullYear(now.getFullYear() + 1);
+                      setShowCustomDates(false);
+                    } else {
+                      setShowCustomDates(true);
+                    }
+                    
+                    if (value !== "custom") {
+                      setEndDate(end);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30days">30 Days</SelectItem>
+                    <SelectItem value="6months">6 Months</SelectItem>
+                    <SelectItem value="9months">9 Months</SelectItem>
+                    <SelectItem value="1year">1 Year</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">Declaration Items</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        // This will trigger a click on the hidden file input
-                        document.getElementById('importItemsFile')?.click();
-                      }}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Import Items
-                    </Button>
-                    <input 
-                      type="file" 
-                      id="importItemsFile" 
-                      accept=".csv,.xlsx,.xls" 
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files?.length) {
-                          console.log('Selected file:', e.target.files[0].name);
-                          // Here you would handle the file import
-                          // For example, parsing the CSV/Excel and adding items
-                          toast({
-                            title: "Items imported",
-                            description: `${e.target.files[0].name} has been processed.`,
-                            variant: "default",
-                          });
-                        }
-                      }} 
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-primary border-primary"
-                      onClick={addItem}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Item
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  {items.map((item, index) => (
-                    <div key={item.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-medium">Item {index + 1}</h4>
-                        {items.length > 1 && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-red-500 hover:text-red-700 h-8 px-2"
-                            onClick={() => removeItem(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startDate">Start Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !startDate && "text-muted-foreground"
                         )}
+                        disabled={!showCustomDates}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label htmlFor="endDate">End Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !endDate && "text-muted-foreground"
+                        )}
+                        disabled={!showCustomDates}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Label>Declaration Items</Label>
+                <Button variant="outline" size="sm" onClick={addItem}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Item
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {items.map((item, index) => (
+                  <div key={item.id} className="p-4 border rounded-md bg-slate-50">
+                    <div className="grid grid-cols-6 gap-4">
+                      <div className="col-span-1">
+                        <Label htmlFor={`hsn-${item.id}`}>HSN Code</Label>
+                        <Input 
+                          id={`hsn-${item.id}`} 
+                          placeholder="HSN code" 
+                          value={item.hsnCode}
+                          onChange={(e) => updateItem(item.id, "hsnCode", e.target.value)}
+                        />
                       </div>
-
-                      <div className="flex flex-wrap gap-3 items-end">
-                        <div className="w-28">
-                          <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
-                          <Input 
-                            id={`hsn-code-${item.id}`} 
-                            placeholder="e.g. 1511.10.00"
-                            value={item.hsnCode}
-                            onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-                        
-                        <div className="w-28">
-                          <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
-                            RM Id
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-3.5 w-3.5 ml-1 text-gray-400 hover:text-gray-600 cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs max-w-xs">RM Id refers to the raw material id of this product in your ERP</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </Label>
-                          <Input 
-                            id={`rm-id-${item.id}`} 
-                            placeholder="e.g. RM13579"
-                            value={item.rmId}
-                            onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="w-44">
-                          <Label htmlFor={`product-name-${item.id}`} className="text-sm">Product Name *</Label>
-                          <Input 
-                            id={`product-name-${item.id}`} 
-                            placeholder="e.g. Palm Oil"
-                            value={item.productName}
-                            onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="w-44">
-                          <Label htmlFor={`scientific-name-${item.id}`} className="text-sm">Scientific Name</Label>
-                          <Input 
-                            id={`scientific-name-${item.id}`} 
-                            placeholder="e.g. Elaeis guineensis"
-                            value={item.scientificName}
-                            onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="w-28">
-                          <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity *</Label>
+                      <div className="col-span-2">
+                        <Label htmlFor={`product-${item.id}`}>Product Name</Label>
+                        <Input 
+                          id={`product-${item.id}`} 
+                          placeholder="Product name" 
+                          value={item.productName}
+                          onChange={(e) => updateItem(item.id, "productName", e.target.value)}
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label htmlFor={`scientific-${item.id}`}>Scientific Name</Label>
+                        <Input 
+                          id={`scientific-${item.id}`} 
+                          placeholder="Scientific name" 
+                          value={item.scientificName}
+                          onChange={(e) => updateItem(item.id, "scientificName", e.target.value)}
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Label htmlFor={`quantity-${item.id}`}>Quantity</Label>
+                        <div className="flex items-center space-x-2">
                           <Input 
                             id={`quantity-${item.id}`} 
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="e.g. 5000"
+                            type="number" 
+                            placeholder="Quantity" 
                             value={item.quantity}
-                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                            className="mt-1"
+                            onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
                           />
-                        </div>
-
-                        <div className="w-28">
-                          <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
                           <Select 
                             value={item.unit} 
-                            onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                            onValueChange={(value) => updateItem(item.id, "unit", value)}
                           >
-                            <SelectTrigger id={`unit-${item.id}`} className="mt-1">
-                              <SelectValue placeholder="Select unit" />
+                            <SelectTrigger className="w-20">
+                              <SelectValue placeholder="Unit" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="kg">kg</SelectItem>
                               <SelectItem value="tons">tons</SelectItem>
-                              <SelectItem value="liters">liters</SelectItem>
-                              <SelectItem value="m³">m³</SelectItem>
+                              <SelectItem value="lbs">lbs</SelectItem>
+                              <SelectItem value="l">liters</SelectItem>
+                              <SelectItem value="pcs">pieces</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
+                      <div className="flex items-end">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => removeItem(item.id)}
+                          disabled={items.length <= 1}
+                        >
+                          <Trash2 className="h-4 w-4 text-gray-500" />
+                        </Button>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Step 2: GeoJSON Upload */}
-          {currentStep === 2 && (
+        {/* Step 2: GeoJSON Upload */}
+        {currentStep === 2 && (
+          <div className="space-y-8">
             <div>
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">GeoJSON Upload</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Please upload a GeoJSON file containing the geographical data associated with this declaration.
-                </p>
-
-                <div 
-                  className={cn(
-                    "border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50",
-                    hasUploadedGeoJSON ? 
-                      (geometryValid === false || satelliteValid === false) 
-                        ? "border-red-300 bg-red-50" 
-                        : "border-green-300 bg-green-50"
-                      : "border-gray-300"
-                  )}
-                  onClick={!hasUploadedGeoJSON ? handleGeoJSONUpload : undefined}
-                  style={{ cursor: hasUploadedGeoJSON ? 'default' : 'pointer' }}
-                >
-                  <div className="mx-auto flex justify-center">
-                    <Upload className={cn(
-                      "h-12 w-12",
-                      hasUploadedGeoJSON ? 
-                        (geometryValid === false || satelliteValid === false) 
-                          ? "text-red-500" 
-                          : "text-green-500" 
-                        : "text-gray-400"
-                    )} />
-                  </div>
-                  <p className="mt-4 text-sm text-gray-600">
-                    {hasUploadedGeoJSON ? 
-                      (isValidating ? "Validating GeoJSON file..." : "GeoJSON file uploaded successfully") : 
-                      "Drag and drop your GeoJSON file here, or click to browse"}
-                  </p>
-                  {!hasUploadedGeoJSON && (
-                    <Button 
-                      variant="secondary" 
-                      className="mt-4"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleGeoJSONUpload(e);
-                      }}
-                    >
-                      Browse Files
-                    </Button>
-                  )}
-                  
-                  {/* Validation status indicators */}
-                  {hasUploadedGeoJSON && (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="text-sm font-medium">Geometry Check:</span>
-                        {isValidating ? (
-                          <span className="text-sm text-amber-500">Checking...</span>
-                        ) : geometryValid === true ? (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-sm text-green-600">Compliant</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
-                              onClick={() => setShowValidationDetails('geometry')}
-                            >
-                              <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                width="16" 
-                                height="16" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                className="ml-1"
-                              >
-                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                <circle cx="12" cy="12" r="3" />
+              <h3 className="text-lg font-medium mb-4">GeoJSON Data Upload</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Upload GeoJSON files containing geographic information about cultivation areas. This data will be used to validate compliance with deforestation regulations.
+              </p>
+              
+              <div className="border-2 border-dashed rounded-md p-8 text-center">
+                {hasUploadedGeoJSON ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center">
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                        geojson-data.json
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-4 mt-6">
+                      <div className="border rounded-md p-4 relative">
+                        <h4 className="font-medium mb-2">Geometry Validation</h4>
+                        <div className="flex items-center">
+                          {isValidating ? (
+                            <div className="flex items-center text-amber-600">
+                              <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                              <span>Validating...</span>
+                            </div>
+                          ) : geometryValid === null ? (
+                            <span className="text-gray-500">Pending</span>
+                          ) : geometryValid ? (
+                            <div className="flex items-center text-green-600">
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                               </svg>
-                            </Button>
-                          </div>
-                        ) : geometryValid === false ? (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-sm text-red-600">Non-Compliant</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
-                              onClick={() => setShowValidationDetails('geometry')}
-                            >
-                              <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                width="16" 
-                                height="16" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                className="ml-1"
-                              >
-                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                <circle cx="12" cy="12" r="3" />
+                              <span>Compliant</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-red-600">
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                               </svg>
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500">Pending</span>
+                              <span>Non-Compliant</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Validates the structure and integrity of GeoJSON polygons.
+                        </p>
+                        
+                        {geometryValid !== null && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="absolute top-2 right-2"
+                            onClick={() => setShowValidationDetails('geometry')}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         )}
                       </div>
                       
-                      {/* Only show satellite check if geometry check passed */}
-                      {geometryValid === true && (
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className="text-sm font-medium">Satellite Check:</span>
-                          {isValidating ? (
-                            <span className="text-sm text-amber-500">Checking...</span>
-                          ) : satelliteValid === true ? (
-                            <div className="flex items-center space-x-1">
-                              <span className="text-sm text-green-600">Compliant</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
-                                onClick={() => setShowValidationDetails('satellite')}
-                              >
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  width="16" 
-                                  height="16" 
-                                  viewBox="0 0 24 24" 
-                                  fill="none" 
-                                  stroke="currentColor" 
-                                  strokeWidth="2" 
-                                  strokeLinecap="round" 
-                                  strokeLinejoin="round" 
-                                  className="ml-1"
-                                >
-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                              </Button>
+                      <div className="border rounded-md p-4 relative">
+                        <h4 className="font-medium mb-2">Satellite Check</h4>
+                        <div className="flex items-center">
+                          {!geometryValid ? (
+                            <span className="text-gray-500">Skipped</span>
+                          ) : isValidating ? (
+                            <div className="flex items-center text-amber-600">
+                              <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                              <span>Validating...</span>
                             </div>
-                          ) : satelliteValid === false ? (
-                            <div className="flex items-center space-x-1">
-                              <span className="text-sm text-red-600">Non-Compliant</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
-                                onClick={() => setShowValidationDetails('satellite')}
-                              >
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  width="16" 
-                                  height="16" 
-                                  viewBox="0 0 24 24" 
-                                  fill="none" 
-                                  stroke="currentColor" 
-                                  strokeWidth="2" 
-                                  strokeLinecap="round" 
-                                  strokeLinejoin="round" 
-                                  className="ml-1"
-                                >
-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                              </Button>
+                          ) : satelliteValid === null ? (
+                            <span className="text-gray-500">Pending</span>
+                          ) : satelliteValid ? (
+                            <div className="flex items-center text-green-600">
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              <span>Compliant</span>
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-500">Pending</span>
+                            <div className="flex items-center text-red-600">
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <span>Non-Compliant</span>
+                            </div>
                           )}
                         </div>
-                      )}
-                      
-                      {/* Warning message for failed validations */}
-                      {geometryValid === false && (
-                        <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
-                          <p className="text-sm text-red-600">
-                            Geometry validation failed. Please notify the supplier.
-                          </p>
-                          <p className="text-sm text-red-600 mt-1">
-                            The declaration can only be saved as draft and cannot be submitted.
-                          </p>
-                        </div>
-                      )}
-                      
-                      {geometryValid === true && satelliteValid === false && (
-                        <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
-                          <p className="text-sm text-red-600">
-                            Satellite check detected potential deforestation. Please notify the supplier.
-                          </p>
-                          <p className="text-sm text-red-600 mt-1">
-                            The declaration can only be saved as draft and cannot be submitted.
-                          </p>
-                        </div>
-                      )}
+                        <p className="text-xs text-gray-500 mt-2">
+                          Checks cultivation areas against satellite imagery for deforestation.
+                        </p>
+                        
+                        {satelliteValid !== null && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="absolute top-2 right-2"
+                            onClick={() => setShowValidationDetails('satellite')}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 mb-4">
+                      Drag and drop your GeoJSON file here, or click to browse
+                    </p>
+                    <Button variant="outline" onClick={handleGeoJSONUpload}>
+                      Upload GeoJSON
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Step 3: Upload Evidence Documents */}
-          {currentStep === 3 && (
+        {/* Step 3: Upload Evidence */}
+        {currentStep === 3 && (
+          <div className="space-y-8">
             <div>
-              <div className="mb-6">
-                <Label className="text-base font-medium">Upload Evidence Documents</Label>
+              <h3 className="text-lg font-medium mb-4">Upload Evidence Documents</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Upload supporting documents like certificates, permits, and supply chain records to validate compliance.
+              </p>
+              
+              <div className="border-2 border-dashed rounded-md p-8 text-center">
+                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm text-gray-500 mb-4">
-                  Please upload all relevant documentation to support your declaration, including:
-                  GeoJSON data, certificates, shipping documents, and any other evidence.
+                  Drag and drop files here, or click to browse
                 </p>
-
-                <div 
-                  className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50"
-                  onClick={handleDocumentUpload}
-                >
-                  <div className="mx-auto flex justify-center">
-                    <Upload className="h-12 w-12 text-gray-400" />
-                  </div>
-                  <p className="mt-4 text-sm text-gray-600">
-                    Drag and drop your files here, or click to browse
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Accepted formats: PDF, JPG, PNG, GeoJSON (max 10MB)
-                  </p>
-                  <Button 
-                    variant="secondary" 
-                    className="mt-4"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDocumentUpload(e);
-                    }}
-                  >
-                    Browse Files
-                  </Button>
-                </div>
+                <Button variant="outline" onClick={handleDocumentUpload}>
+                  Upload Documents
+                </Button>
               </div>
-
+              
               {uploadedFiles.length > 0 && (
-                <div>
-                  <h3 className="text-base font-medium mb-2">Uploaded Files</h3>
+                <div className="mt-6">
+                  <h4 className="font-medium mb-3">Uploaded Files</h4>
                   <div className="space-y-2">
                     {uploadedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
                         <div className="flex items-center">
-                          <div className="h-8 w-8 bg-primary/10 rounded-md flex items-center justify-center">
-                            <svg 
-                              className="h-4 w-4 text-primary" 
-                              xmlns="http://www.w3.org/2000/svg" 
-                              viewBox="0 0 20 20" 
-                              fill="currentColor"
-                            >
-                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <span className="ml-2 text-sm font-medium">{file}</span>
+                          <svg className="h-5 w-5 text-red-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5 4v.92l4.08 4.08L5 13.08V14h10v-.92l-4.08-4.08L15 5.08V4H5zm1 2.08l3.075 3.075L5.92 13.08h8.16l-3.155-3.925L14 6.08H6z" clipRule="evenodd" />
+                          </svg>
+                          <span>{file}</span>
                         </div>
                         <Button 
                           variant="ghost" 
-                          size="sm" 
-                          className="h-8 w-8 p-0 text-gray-500"
+                          size="icon" 
                           onClick={() => removeFile(file)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <X className="h-4 w-4 text-gray-500" />
                         </Button>
                       </div>
                     ))}
@@ -1287,374 +1021,269 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Step 4: Customer Selection (for outbound only) */}
-          {currentStep === 4 && declarationType === "outbound" && (
+        {/* Step 4: Customer Selection (for outbound only) */}
+        {currentStep === 4 && declarationType === "outbound" && (
+          <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-4">Customer Selection</h3>
-              <div className="relative mb-4">
-                <Input 
-                  type="text" 
-                  placeholder="Search customers..." 
-                  className="pl-9"
-                />
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-              </div>
-
-              <div className="space-y-3">
-                {customers.map((customer) => (
-                  <div 
-                    key={customer.id}
-                    className={cn(
-                      "p-4 border rounded-lg cursor-pointer",
-                      selectedCustomer?.id === customer.id ? "border-primary bg-primary/5" : "hover:bg-gray-50"
-                    )}
-                    onClick={() => setSelectedCustomer(customer)}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-start">
-                        <User className="h-5 w-5 text-gray-500 mr-3 mt-1" />
-                        <div>
-                          <div className="font-medium">{customer.name}</div>
-                          <div className="text-sm text-gray-500">{customer.company} - {customer.type}</div>
+              <Label>Customer</Label>
+              <div className="relative">
+                <div 
+                  className={cn(
+                    "flex items-center justify-between p-2 border rounded-md cursor-pointer",
+                    selectedCustomer ? "border-primary/30 bg-primary/5" : ""
+                  )}
+                  onClick={() => setShowCustomerResults(!showCustomerResults)}
+                >
+                  {selectedCustomer ? (
+                    <div className="flex items-center">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <User className="h-4 w-4" />
+                      </div>
+                      <div className="ml-2">
+                        <div className="font-medium">{selectedCustomer.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {selectedCustomer.type}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {customer.complianceScore !== undefined && (
-                          <div className={cn(
-                            "text-xs font-medium rounded-full px-2 py-1",
-                            customer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
-                            customer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
-                            "bg-red-100 text-red-800"
-                          )}>
-                            {customer.complianceScore}% Compliant
-                          </div>
-                        )}
-                        {selectedCustomer?.id === customer.id && (
-                          <Badge className="bg-primary ml-2">Selected</Badge>
-                        )}
-                      </div>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500 mt-2 pl-8">
-                      <div><span className="text-gray-400">Country:</span> {customer.country}</div>
-                      <div><span className="text-gray-400">Registration:</span> {customer.registrationNumber}</div>
-                      <div><span className="text-gray-400">Contact:</span> {customer.contactPerson}</div>
-                      <div><span className="text-gray-400">Email:</span> {customer.contactEmail}</div>
+                  ) : (
+                    <span className="text-gray-500">Select a customer</span>
+                  )}
+                  <Search className="h-4 w-4 text-gray-500" />
+                </div>
+
+                {/* Dropdown for customers */}
+                {showCustomerResults && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-64 overflow-y-auto">
+                    <div className="p-2 border-b">
+                      <Input 
+                        placeholder="Search customers..." 
+                        value={customerSearchTerm}
+                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      {customers
+                        .filter(customer => 
+                          customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                          customer.company?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                          customerSearchTerm === ""
+                        )
+                        .map(customer => (
+                          <div
+                            key={customer.id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setSelectedCustomer(customer);
+                              setShowCustomerResults(false);
+                            }}
+                          >
+                            <div className="font-medium">{customer.name}</div>
+                            <div className="text-xs text-gray-500 mt-1 flex items-center">
+                              <span className="mr-2">{customer.type}</span>
+                              <Badge variant="outline" className="text-[10px] h-5">
+                                {customer.complianceScore}% Compliant
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          )}
 
-          {/* Step 4/5: Review (Final Step) */}
-          {((currentStep === 4 && declarationType === "inbound") || 
-            (currentStep === 5 && declarationType === "outbound")) && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="customerPONumber">Customer PO Number</Label>
+                <Input 
+                  id="customerPONumber" 
+                  placeholder="Enter customer PO number" 
+                  value={customerPONumber}
+                  onChange={(e) => setCustomerPONumber(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="soNumber">SO Number</Label>
+                <Input 
+                  id="soNumber" 
+                  placeholder="Enter SO number" 
+                  value={soNumber}
+                  onChange={(e) => setSONumber(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div>
-              <h3 className="text-lg font-medium mb-6">Review Declaration</h3>
+              <Label htmlFor="shipmentNumber">Shipment Number</Label>
+              <Input 
+                id="shipmentNumber" 
+                placeholder="Enter shipment number" 
+                value={shipmentNumber}
+                onChange={(e) => setShipmentNumber(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
-              {declarationType === "inbound" && (
-                <div className="mb-6">
-                  <Label htmlFor="comments" className="text-base font-medium">Add Comments</Label>
-                  <Textarea
-                    id="comments"
-                    placeholder="Add any notes or comments about this declaration"
-                    className="min-h-[100px] mt-2"
-                    value={comments}
-                    onChange={(e) => setComments(e.target.value)}
-                  />
-                </div>
-              )}
+        {/* Step 5 (or 4 for inbound): Review */}
+        {((currentStep === 4 && declarationType === "inbound") || (currentStep === 5 && declarationType === "outbound")) && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Review Declaration</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Review the information before submitting the declaration.
+              </p>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Declaration Type</h4>
-                    <p className="mt-1">{declarationType === "inbound" ? "Inbound" : "Outbound"}</p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Validity Period</h4>
-                    <p className="mt-1">
-                      {startDate && endDate ? 
-                        `${format(startDate, "PP")} to ${format(endDate, "PP")}` : 
-                        "Not specified"}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Supplier</h4>
-                    <p className="mt-1">
-                      {selectedSupplierId ? 
-                        suppliers.find(s => s.id === selectedSupplierId)?.name || "Unknown supplier" : 
-                        "Not selected"}
-                    </p>
-                  </div>
-
-                  {declarationType === "outbound" && (
-                    <div className="col-span-2">
-                      <h4 className="text-sm font-medium text-gray-500">Customer</h4>
-                      {selectedCustomer ? (
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="font-medium">{selectedCustomer.name}</div>
-                            {selectedCustomer.complianceScore !== undefined && (
-                              <div className={cn(
-                                "text-xs font-medium rounded-full px-2 py-1",
-                                selectedCustomer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
-                                selectedCustomer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
-                                "bg-red-100 text-red-800"
-                              )}>
-                                {selectedCustomer.complianceScore}% Compliant
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-sm grid grid-cols-2 gap-2">
-                            <div><span className="text-gray-500">Company:</span> {selectedCustomer.company}</div>
-                            <div><span className="text-gray-500">Type:</span> {selectedCustomer.type}</div>
-                            <div><span className="text-gray-500">Country:</span> {selectedCustomer.country}</div>
-                            <div><span className="text-gray-500">Registration:</span> {selectedCustomer.registrationNumber}</div>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="mt-1 text-red-500">Not selected</p>
-                      )}
+                <div className="p-4 border rounded-md">
+                  <h4 className="font-medium mb-3">General Information</h4>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">Declaration Type:</span>
+                      <span className="font-medium">
+                        {declarationType === "inbound" ? "Inbound (from Supplier)" : "Outbound (to Customer)"}
+                      </span>
                     </div>
-                  )}
-
-                  <div className="col-span-2">
-                    <h4 className="text-sm font-medium text-gray-500">Items</h4>
-                    <div className="mt-1 space-y-2">
-                      {items.filter(item => item.productName).map((item, index) => (
-                        <div key={item.id} className="text-sm">
-                          {index + 1}. {item.productName} ({item.quantity} {item.unit}) - HSN: {item.hsnCode}
-                          {item.scientificName && ` - ${item.scientificName}`}
-                        </div>
-                      ))}
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">PO Number:</span>
+                      <span className="font-medium">{poNumber}</span>
                     </div>
-                  </div>
-
-                  <div className="col-span-2">
-                    <h4 className="text-sm font-medium text-gray-500">Evidence Documents</h4>
-                    <div className="mt-1">
-                      {uploadedFiles.length === 0 ? (
-                        <span className="text-red-500">No documents uploaded</span>
-                      ) : (
-                        <ul className="list-disc list-inside text-sm space-y-1">
-                          {uploadedFiles.map((file, index) => (
-                            <li key={index}>{file}</li>
-                          ))}
-                        </ul>
-                      )}
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">Supplier:</span>
+                      <span className="font-medium">{selectedSupplier?.name || "Not selected"}</span>
                     </div>
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <h4 className="text-sm font-medium text-gray-500">GeoJSON Validation Status</h4>
-                    {!hasUploadedGeoJSON ? (
-                      <p className="mt-1 text-red-500">Not uploaded</p>
-                    ) : (
-                      <div className="mt-1 space-y-1">
-                        <div className="flex items-center">
-                          <span className="text-sm mr-2">Geometry Check:</span>
-                          {geometryValid === true ? (
-                            <Badge className="bg-green-500">Compliant</Badge>
-                          ) : geometryValid === false ? (
-                            <Badge className="bg-red-500">Non-Compliant</Badge>
-                          ) : (
-                            <Badge className="bg-yellow-500">Pending</Badge>
-                          )}
-                        </div>
-                        
-                        {geometryValid === true && (
-                          <div className="flex items-center">
-                            <span className="text-sm mr-2">Satellite Check:</span>
-                            {satelliteValid === true ? (
-                              <Badge className="bg-green-500">Compliant</Badge>
-                            ) : satelliteValid === false ? (
-                              <Badge className="bg-red-500">Non-Compliant</Badge>
-                            ) : (
-                              <Badge className="bg-yellow-500">Pending</Badge>
-                            )}
-                          </div>
-                        )}
-                        
-                        {(geometryValid === false || (geometryValid === true && satelliteValid === false)) && (
-                          <div className="mt-2 text-sm text-red-600">
-                            This declaration will be saved with non-compliant status.
-                          </div>
-                        )}
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">Validity Period:</span>
+                      <span className="font-medium">
+                        {startDate && endDate 
+                          ? `${format(startDate, "PP")} to ${format(endDate, "PP")}` 
+                          : "Not specified"}
+                      </span>
+                    </div>
+                    {declarationType === "outbound" && (
+                      <div className="flex">
+                        <span className="text-gray-500 w-32">Customer:</span>
+                        <span className="font-medium">{selectedCustomer?.name || "Not selected"}</span>
                       </div>
                     )}
                   </div>
                 </div>
-
-                <Separator className="my-6" />
-
-                <div className="flex items-start space-x-2">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5 text-amber-500" 
-                      viewBox="0 0 20 20" 
-                      fill="currentColor"
-                    >
-                      <path 
-                        fillRule="evenodd" 
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
-                        clipRule="evenodd" 
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Declaration Submission Notice</h4>
-                    <p className="text-sm text-gray-500 mt-1">
-                      By submitting this declaration, I confirm that all the information provided is 
-                      accurate and complete to the best of my knowledge. I understand that false 
-                      information may lead to penalties under the EUDR regulations.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Validation Details Dialog */}
-        <Dialog open={showValidationDetails !== null} onOpenChange={(open) => !open && setShowValidationDetails(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
-                {showValidationDetails === 'geometry' ? 'Geometry Validation Details' : 'Satellite Check Details'}
-              </DialogTitle>
-              <DialogDescription>
-                {showValidationDetails === 'geometry' 
-                  ? 'Detailed geometry validation results for each polygon in the GeoJSON file.'
-                  : 'Detailed satellite imagery validation results for each polygon in the GeoJSON file.'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="max-h-[60vh] overflow-auto my-4">
-              <div className="space-y-4">
-                {/* Map visualization placeholder */}
-                <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                  <div className="text-center p-4">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="mx-auto mb-2 text-gray-400"
-                    >
-                      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                      <line x1="8" y1="2" x2="8" y2="18"></line>
-                      <line x1="16" y1="6" x2="16" y2="22"></line>
-                    </svg>
-                    <p className="text-sm text-gray-500">Interactive map visualization would be shown here</p>
+                
+                <div className="p-4 border rounded-md">
+                  <h4 className="font-medium mb-3">Declaration Items</h4>
+                  <div className="space-y-3">
+                    {items.filter(item => 
+                      item.hsnCode.trim() !== "" || 
+                      item.productName.trim() !== "" || 
+                      item.quantity.trim() !== ""
+                    ).map((item, index) => (
+                      <div key={item.id} className="p-3 bg-gray-50 rounded-md">
+                        <div className="grid grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <span className="text-gray-500 block">HSN Code</span>
+                            <span className="font-medium">{item.hsnCode || "—"}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Product Name</span>
+                            <span className="font-medium">{item.productName || "—"}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Scientific Name</span>
+                            <span className="font-medium">{item.scientificName || "—"}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Quantity</span>
+                            <span className="font-medium">
+                              {item.quantity ? `${item.quantity} ${item.unit}` : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 
-                {/* List of polygons */}
+                <div className="p-4 border rounded-md">
+                  <h4 className="font-medium mb-3">GeoJSON Validation</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500 block">Geometry Validation</span>
+                      <div className="mt-1">
+                        {geometryValid === null ? (
+                          <Badge variant="outline">Not Validated</Badge>
+                        ) : geometryValid ? (
+                          <Badge className="bg-green-100 text-green-800">Compliant</Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-800">Non-Compliant</Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block">Satellite Check</span>
+                      <div className="mt-1">
+                        {satelliteValid === null ? (
+                          <Badge variant="outline">Not Validated</Badge>
+                        ) : satelliteValid ? (
+                          <Badge className="bg-green-100 text-green-800">Compliant</Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-800">Non-Compliant</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 border rounded-md">
+                  <h4 className="font-medium mb-3">Supporting Documents</h4>
+                  <div className="space-y-2 text-sm">
+                    {uploadedFiles.length > 0 ? (
+                      uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center">
+                          <svg className="h-5 w-5 text-red-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5 4v.92l4.08 4.08L5 13.08V14h10v-.92l-4.08-4.08L15 5.08V4H5zm1 2.08l3.075 3.075L5.92 13.08h8.16l-3.155-3.925L14 6.08H6z" clipRule="evenodd" />
+                          </svg>
+                          <span>{file}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-gray-500">No documents uploaded</span>
+                    )}
+                  </div>
+                </div>
+                
                 <div>
-                  <h3 className="text-sm font-medium mb-2">Polygon Validation Results</h3>
-                  <div className="border rounded-md overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Polygon ID</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area (ha)</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issues</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {/* Generate 5 sample polygons with different statuses */}
-                        {Array.from({ length: 5 }).map((_, i) => {
-                          const isValid = Math.random() > 0.2;
-                          return (
-                            <tr key={i}>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm">Polygon {i + 1}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm">{(Math.random() * 10 + 1).toFixed(2)}</td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  isValid 
-                                    ? "bg-green-100 text-green-800" 
-                                    : "bg-red-100 text-red-800"
-                                }`}>
-                                  {isValid ? "Valid" : "Invalid"}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                {!isValid && (
-                                  <span className="text-gray-500">
-                                    {showValidationDetails === 'geometry'
-                                      ? ['Self-intersection', 'Invalid ring', 'Topology error'][Math.floor(Math.random() * 3)]
-                                      : ['Deforestation detected', 'Land use change', 'Protected area overlap'][Math.floor(Math.random() * 3)]}
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                {/* Summary statistics */}
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <div className="text-sm text-gray-500">Total Polygons</div>
-                    <div className="text-xl font-semibold mt-1">5</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-md">
-                    <div className="text-sm text-green-700">Valid Polygons</div>
-                    <div className="text-xl font-semibold text-green-700 mt-1">
-                      {showValidationDetails === 'geometry' ? '4' : '3'}
-                    </div>
-                  </div>
-                  <div className="bg-red-50 p-4 rounded-md">
-                    <div className="text-sm text-red-700">Invalid Polygons</div>
-                    <div className="text-xl font-semibold text-red-700 mt-1">
-                      {showValidationDetails === 'geometry' ? '1' : '2'}
-                    </div>
-                  </div>
+                  <Label htmlFor="comments">Additional Comments</Label>
+                  <Textarea 
+                    id="comments" 
+                    placeholder="Add any additional information or notes" 
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                    className="h-24"
+                  />
                 </div>
               </div>
             </div>
-            
-            <DialogFooter>
-              <Button onClick={() => setShowValidationDetails(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
 
         <DialogFooter>
           {currentStep > 1 && (
-            <Button 
-              variant="outline" 
-              onClick={goToPreviousStep}
-              className="mr-auto"
-            >
+            <Button variant="outline" onClick={goToPreviousStep}>
               Back
             </Button>
           )}
-
-          {((currentStep < 4 && declarationType === "inbound") || 
-            (currentStep < 5 && declarationType === "outbound")) ? (
+          
+          {currentStep < (declarationType === "inbound" ? 4 : 5) ? (
             <Button onClick={goToNextStep}>
-              Continue
+              Next
             </Button>
           ) : (
             <Button 
-              onClick={submitDeclaration}
+              onClick={submitDeclaration} 
               disabled={createDeclaration.isPending}
             >
               {createDeclaration.isPending ? "Submitting..." : "Submit Declaration"}
@@ -1663,255 +1292,11 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
         </DialogFooter>
 
         {/* Validation Details Dialog */}
-        <Dialog open={showValidationDetails !== null} onOpenChange={(open) => !open && setShowValidationDetails(null)}>
-          <DialogContent className="max-w-7xl max-h-[90vh] p-0 overflow-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-3 h-[80vh]">
-              {/* Left sidebar with plot list */}
-              <div className="col-span-1 overflow-y-auto border-r">
-                <div className="p-6">
-                  <DialogTitle>
-                    {showValidationDetails === 'geometry' ? 'Geometry Validation Details' : 'Satellite Check Details'}
-                  </DialogTitle>
-                  <DialogDescription className="mt-2 mb-4">
-                    {showValidationDetails === 'geometry' 
-                      ? 'Detailed geometry validation results for each polygon in the GeoJSON file.'
-                      : 'Detailed satellite imagery validation results for each polygon in the GeoJSON file.'}
-                  </DialogDescription>
-                  
-                  <h3 className="text-sm font-medium mb-3">Plot List</h3>
-                  <div className="space-y-2">
-                    {/* Generate 5 sample plots */}
-                    {Array.from({ length: 5 }).map((_, i) => {
-                      // Make all plots compliant
-                      const isCompliant = true;
-                      const plotId = `POL-${String(i + 1).padStart(3, '0')}`;
-                      return (
-                        <div 
-                          key={i}
-                          className={cn(
-                            "p-3 border rounded-md cursor-pointer hover:border-primary transition-colors",
-                            selectedPlot === plotId ? "border-primary bg-primary/5" : "border-gray-200"
-                          )}
-                          onClick={() => setSelectedPlot(plotId)}
-                        >
-                          <div className="flex justify-between">
-                            <div className="font-medium">{plotId}</div>
-                            <div className={cn(
-                              "text-xs font-medium px-2 py-0.5 rounded-full",
-                              isCompliant ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            )}>
-                              {isCompliant ? "Compliant" : "Non-Compliant"}
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-500 mt-1">{(Math.random() * 50 + 100).toFixed(2)} hectares</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Center section with map */}
-              <div className="col-span-2 flex flex-col h-full">
-                <div className="p-4 border-b flex justify-between items-center">
-                  <h3 className="font-medium">Map View</h3>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18" 
-                        height="18" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="4 8 4 4 8 4"></polyline>
-                        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                        <line x1="4" y1="16" x2="16" y2="16"></line>
-                        <line x1="4" y1="12" x2="16" y2="12"></line>
-                        <line x1="12" y1="4" x2="12" y2="16"></line>
-                        <line x1="8" y1="4" x2="8" y2="16"></line>
-                      </svg>
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18" 
-                        height="18" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="15 24 21 18 15 12 15 24"></polygon>
-                        <polygon points="9 24 3 18 9 12 9 24"></polygon>
-                        <polygon points="15 0 21 6 15 12 15 0"></polygon>
-                        <polygon points="9 0 3 6 9 12 9 0"></polygon>
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Map Display */}
-                <div className="flex-1 bg-slate-50 overflow-auto relative">
-                  <div className="min-w-[800px] min-h-[600px] relative">
-                    {/* Satellite imagery */}
-                    <img 
-                      src={satelliteMapImage} 
-                      alt="Satellite view of agricultural land"
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Overlay polygon */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-2/5 h-2/5 border-2 border-white bg-white/10 pointer-events-none"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Map controls */}
-                  <div className="absolute right-4 bottom-4 flex flex-col space-y-2">
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="15" 
-                        height="15" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="text-primary"
-                      >
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="15" 
-                        height="15" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="text-primary"
-                      >
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Detail panel - shows when a plot is selected */}
-                {selectedPlot && (
-                  <div className="border-t p-6 bg-white">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Plot Information</h3>
-                        <dl className="grid grid-cols-2 gap-4">
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Polygon ID</dt>
-                            <dd className="font-medium mt-1">{selectedPlot}</dd>
-                          </div>
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Area</dt>
-                            <dd className="font-medium mt-1">245 hectares</dd>
-                          </div>
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Perimeter</dt>
-                            <dd className="font-medium mt-1">2.5 km</dd>
-                          </div>
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Coordinates</dt>
-                            <dd className="font-medium mt-1">12.3456, -78.9012</dd>
-                          </div>
-                        </dl>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Validation Results</h3>
-                        
-                        <div className="space-y-4">
-                          <div className="p-3 bg-green-50 border border-green-100 rounded-md">
-                            <div className="flex items-center">
-                              <svg 
-                                className="h-5 w-5 text-green-600 mr-2" 
-                                viewBox="0 0 20 20" 
-                                fill="currentColor"
-                              >
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              <div className="font-medium text-green-800">Geometry Check</div>
-                            </div>
-                            <p className="text-sm text-green-700 mt-1 pl-7">All geometry validations passed successfully.</p>
-                          </div>
-                          
-                          <div className="p-3 bg-green-50 border border-green-100 rounded-md">
-                            <div className="flex items-center">
-                              <svg 
-                                className="h-5 w-5 text-green-600 mr-2" 
-                                viewBox="0 0 20 20" 
-                                fill="currentColor"
-                              >
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              <div className="font-medium text-green-800">Satellite Check</div>
-                            </div>
-                            <p className="text-sm text-green-700 mt-1 pl-7">No issues detected in satellite imagery.</p>
-                          </div>
-                        </div>
-                        
-                        <h4 className="font-medium mt-4 mb-2">Validation History</h4>
-                        <div className="text-sm space-y-3">
-                          <div className="flex items-start">
-                            <svg 
-                              className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" 
-                              viewBox="0 0 20 20" 
-                              fill="currentColor"
-                            >
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                              <div>Validation Completed</div>
-                              <div className="text-gray-500 mt-0.5">March 15, 2025</div>
-                            </div>
-                          </div>
-                          <div className="flex items-start">
-                            <svg 
-                              className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" 
-                              viewBox="0 0 20 20" 
-                              fill="currentColor"
-                            >
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                            </svg>
-                            <div>
-                              <div>Plot Uploaded</div>
-                              <div className="text-gray-500 mt-0.5">March 14, 2025</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <DialogFooter className="px-6 py-4 border-t">
-              <Button onClick={() => setShowValidationDetails(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
+        <ValidationDetailsDialog
+          open={showValidationDetails !== null}
+          onClose={() => setShowValidationDetails(null)}
+          validationType={showValidationDetails as "geometry" | "satellite" | null}
+        />
       </DialogContent>
     </Dialog>
   );
