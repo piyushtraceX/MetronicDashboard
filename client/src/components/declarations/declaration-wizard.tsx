@@ -1757,32 +1757,19 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 </div>
                 
                 {/* Map Display */}
-                <div className="flex-1 bg-slate-50 overflow-hidden relative">
-                  <div className="w-full h-full bg-[#203e19] relative">
-                    {/* Farm land patterns */}
-                    <div className="absolute inset-0 opacity-40">
-                      <div className="grid grid-cols-8 h-full">
-                        {Array.from({ length: 64 }).map((_, i) => (
-                          <div 
-                            key={i} 
-                            className={`border border-[#2c5823] ${i % 3 === 0 ? 'bg-[#2c5823]' : ''} ${i % 7 === 0 ? 'bg-[#152c0f]' : ''}`}
-                          ></div>
-                        ))}
-                      </div>
+                <div className="flex-1 bg-slate-50 overflow-auto relative">
+                  <div className="min-w-[800px] min-h-[600px] relative">
+                    {/* Satellite imagery */}
+                    <img 
+                      src={satelliteMapImage} 
+                      alt="Satellite view of agricultural land"
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Overlay polygon */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-2/5 h-2/5 border-2 border-white bg-white/10 pointer-events-none"></div>
                     </div>
-                    
-                    {/* Roads */}
-                    <div className="absolute left-1/4 top-0 bottom-0 w-4 bg-[#3b3b3b]"></div>
-                    <div className="absolute right-1/3 top-0 bottom-0 w-3 bg-[#3b3b3b]"></div>
-                    <div className="absolute top-1/3 left-0 right-0 h-3 bg-[#3b3b3b]"></div>
-                    
-                    {/* River */}
-                    <div className="absolute top-2/3 left-0 right-0 h-8 bg-[#1a3f5e] transform -rotate-3"></div>
-                  </div>
-                  
-                  {/* Overlay polygon */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-2/5 h-2/5 border-4 border-white bg-white/10"></div>
                   </div>
                   
                   {/* Map controls */}
