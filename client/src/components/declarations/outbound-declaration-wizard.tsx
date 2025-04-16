@@ -98,6 +98,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   const [geometryValid, setGeometryValid] = useState<boolean | null>(null);
   const [satelliteValid, setSatelliteValid] = useState<boolean | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [showValidationDetails, setShowValidationDetails] = useState<string | null>(null); // 'geometry' or 'satellite' or null
   
   // Documents state
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);

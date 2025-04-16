@@ -1519,6 +1519,120 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           )}
         </div>
 
+        {/* Validation Details Dialog */}
+        <Dialog open={showValidationDetails !== null} onOpenChange={(open) => !open && setShowValidationDetails(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                {showValidationDetails === 'geometry' ? 'Geometry Validation Details' : 'Satellite Check Details'}
+              </DialogTitle>
+              <DialogDescription>
+                {showValidationDetails === 'geometry' 
+                  ? 'Detailed geometry validation results for each polygon in the GeoJSON file.'
+                  : 'Detailed satellite imagery validation results for each polygon in the GeoJSON file.'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="max-h-[60vh] overflow-auto my-4">
+              <div className="space-y-4">
+                {/* Map visualization placeholder */}
+                <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                  <div className="text-center p-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mx-auto mb-2 text-gray-400"
+                    >
+                      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                      <line x1="8" y1="2" x2="8" y2="18"></line>
+                      <line x1="16" y1="6" x2="16" y2="22"></line>
+                    </svg>
+                    <p className="text-sm text-gray-500">Interactive map visualization would be shown here</p>
+                  </div>
+                </div>
+                
+                {/* List of polygons */}
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Polygon Validation Results</h3>
+                  <div className="border rounded-md overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Polygon ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area (ha)</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issues</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {/* Generate 5 sample polygons with different statuses */}
+                        {Array.from({ length: 5 }).map((_, i) => {
+                          const isValid = Math.random() > 0.2;
+                          return (
+                            <tr key={i}>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm">Polygon {i + 1}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm">{(Math.random() * 10 + 1).toFixed(2)}</td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                  isValid 
+                                    ? "bg-green-100 text-green-800" 
+                                    : "bg-red-100 text-red-800"
+                                }`}>
+                                  {isValid ? "Valid" : "Invalid"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                {!isValid && (
+                                  <span className="text-gray-500">
+                                    {showValidationDetails === 'geometry'
+                                      ? ['Self-intersection', 'Invalid ring', 'Topology error'][Math.floor(Math.random() * 3)]
+                                      : ['Deforestation detected', 'Land use change', 'Protected area overlap'][Math.floor(Math.random() * 3)]}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                {/* Summary statistics */}
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <div className="text-sm text-gray-500">Total Polygons</div>
+                    <div className="text-xl font-semibold mt-1">5</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-md">
+                    <div className="text-sm text-green-700">Valid Polygons</div>
+                    <div className="text-xl font-semibold text-green-700 mt-1">
+                      {showValidationDetails === 'geometry' ? '4' : '3'}
+                    </div>
+                  </div>
+                  <div className="bg-red-50 p-4 rounded-md">
+                    <div className="text-sm text-red-700">Invalid Polygons</div>
+                    <div className="text-xl font-semibold text-red-700 mt-1">
+                      {showValidationDetails === 'geometry' ? '1' : '2'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={() => setShowValidationDetails(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <DialogFooter>
           {currentStep > 1 && (
             <Button 
