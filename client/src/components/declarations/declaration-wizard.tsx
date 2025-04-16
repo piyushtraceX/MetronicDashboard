@@ -1069,57 +1069,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         {isValidating ? (
                           <span className="text-sm text-amber-500">Checking...</span>
                         ) : geometryValid === true ? (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-sm text-green-600">Compliant</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
-                              onClick={() => setShowValidationDetails('geometry')}
-                            >
-                              <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                width="16" 
-                                height="16" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                className="ml-1"
-                              >
-                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
-                            </Button>
-                          </div>
+                          <span className="text-sm text-green-600">Compliant</span>
                         ) : geometryValid === false ? (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-sm text-red-600">Non-Compliant</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
-                              onClick={() => setShowValidationDetails('geometry')}
-                            >
-                              <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                width="16" 
-                                height="16" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                className="ml-1"
-                              >
-                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
-                            </Button>
-                          </div>
+                          <span className="text-sm text-red-600">Non-Compliant</span>
                         ) : (
                           <span className="text-sm text-gray-500">Pending</span>
                         )}
@@ -1132,60 +1084,41 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           {isValidating ? (
                             <span className="text-sm text-amber-500">Checking...</span>
                           ) : satelliteValid === true ? (
-                            <div className="flex items-center space-x-1">
-                              <span className="text-sm text-green-600">Compliant</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
-                                onClick={() => setShowValidationDetails('satellite')}
-                              >
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  width="16" 
-                                  height="16" 
-                                  viewBox="0 0 24 24" 
-                                  fill="none" 
-                                  stroke="currentColor" 
-                                  strokeWidth="2" 
-                                  strokeLinecap="round" 
-                                  strokeLinejoin="round" 
-                                  className="ml-1"
-                                >
-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                              </Button>
-                            </div>
+                            <span className="text-sm text-green-600">Compliant</span>
                           ) : satelliteValid === false ? (
-                            <div className="flex items-center space-x-1">
-                              <span className="text-sm text-red-600">Non-Compliant</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
-                                onClick={() => setShowValidationDetails('satellite')}
-                              >
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  width="16" 
-                                  height="16" 
-                                  viewBox="0 0 24 24" 
-                                  fill="none" 
-                                  stroke="currentColor" 
-                                  strokeWidth="2" 
-                                  strokeLinecap="round" 
-                                  strokeLinejoin="round" 
-                                  className="ml-1"
-                                >
-                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                              </Button>
-                            </div>
+                            <span className="text-sm text-red-600">Non-Compliant</span>
                           ) : (
                             <span className="text-sm text-gray-500">Pending</span>
                           )}
+                        </div>
+                      )}
+                      
+                      {/* Single View Validation Details button */}
+                      {!isValidating && (geometryValid !== null || satelliteValid !== null) && (
+                        <div className="mt-4 flex justify-center">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex items-center"
+                            onClick={() => setShowValidationDetails('validation')}
+                          >
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              width="16" 
+                              height="16" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              className="mr-2"
+                            >
+                              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            View Validation Details
+                          </Button>
                         </div>
                       )}
                       
