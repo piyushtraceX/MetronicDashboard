@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import ValidationDetailsDialog from "./validation-details-dialog";
 import { Button } from "@/components/ui/button";
 import Stepper from "@/components/ui/stepper";
 import { Checkbox } from "@/components/ui/checkbox";
