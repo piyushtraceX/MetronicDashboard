@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import ValidationDetailsDialog from "./validation-details-dialog";
 import { Button } from "@/components/ui/button";
 import Stepper from "@/components/ui/stepper";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, Plus, Search, Trash2, Upload, User, UserPlus, X, Eye } from "lucide-react";
+import { CalendarIcon, Plus, Search, Trash2, Upload, User, X, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Label } from "@/components/ui/label";
@@ -311,7 +310,22 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
             return false;
           }
           
-          return true;
+          // Check if items have required fields
+          const validItems = items.some(item => 
+            item.hsnCode.trim() !== "" && 
+            item.productName.trim() !== "" && 
+            item.quantity.trim() !== "" && 
+            parseFloat(item.quantity) > 0
+          );
+          
+          if (!validItems) {
+            toast({
+              title: "Required fields missing",
+              description: "Please fill in HSN Code, Product Name and Quantity for at least one item",
+              variant: "destructive",
+            });
+            return false;
+          }
         } else {
           // For fresh declarations, check if items have required fields
           const validItems = items.some(item => 
@@ -440,130 +454,83 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         customerPONumber: customerPONumber.trim() || null,
         soNumber: soNumber.trim() || null,
         shipmentNumber: shipmentNumber.trim() || null,
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
-        status: status,
-        comments: comments.trim() || null
+        documents: uploadedFiles,
+        comments: comments.trim() || null,
+        status: "pending"
       };
     } else {
       // Prepare payload for fresh declaration
-      const firstItem = items.find(item => 
+      const formattedItems = items.filter(item => 
         item.hsnCode.trim() !== "" && 
         item.productName.trim() !== "" && 
         item.quantity.trim() !== ""
-      );
+      ).map(item => ({
+        hsnCode: item.hsnCode,
+        productName: item.productName,
+        scientificName: item.scientificName,
+        quantity: parseFloat(item.quantity),
+        unit: item.unit,
+        rmId: item.rmId || null
+      }));
       
-      if (!firstItem) {
-        toast({
-          title: "Error",
-          description: "Unable to find a valid item to create the declaration",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Get the first product name as the primary name for the declaration
+      const firstProduct = formattedItems[0]?.productName || "Unnamed Product";
       
+      // Create a simplified payload with only required fields to match server expectations
       payload = {
         type: "outbound",
-        productName: firstItem.productName,
-        hsnCode: firstItem.hsnCode,
-        scientificName: firstItem.scientificName || null,
-        quantity: parseFloat(firstItem.quantity),
-        unit: firstItem.unit,
-        customerId: selectedCustomer?.id || null,
-        customerPONumber: customerPONumber.trim() || null,
-        soNumber: soNumber.trim() || null,
-        shipmentNumber: shipmentNumber.trim() || null,
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
+        supplierId: 1, // Always use default supplier ID for outbound declarations
+        customerId: selectedCustomer?.id || null, // Include customerId for outbound declarations
+        productName: firstProduct,
+        productDescription: formattedItems[0]?.scientificName || "",
+        hsnCode: formattedItems[0]?.hsnCode || "",
+        quantity: Number(formattedItems[0]?.quantity) || 0,
+        unit: formattedItems[0]?.unit || "kg",
         status: status,
-        comments: comments.trim() || null,
-        items: items.filter(item => 
-          item.hsnCode.trim() !== "" && 
-          item.productName.trim() !== "" && 
-          item.quantity.trim() !== ""
-        ).map(item => ({
-          hsnCode: item.hsnCode,
-          productName: item.productName,
-          scientificName: item.scientificName || null,
-          quantity: parseFloat(item.quantity),
-          unit: item.unit,
-          rmId: item.rmId || null
-        }))
+        riskLevel: "medium",
+        industry: "Food & Beverage"
       };
     }
     
     createDeclaration.mutate(payload);
   };
 
-  // Handle validity period selection
-  const handleValidityPeriodChange = (value: string) => {
-    setValidityPeriod(value);
-    
-    // Set appropriate dates based on selection
-    const now = new Date();
-    setStartDate(now);
-    
-    let end = new Date();
-    if (value === "30days") {
-      end.setDate(now.getDate() + 30);
-      setShowCustomDates(false);
-    } else if (value === "6months") {
-      end.setMonth(now.getMonth() + 6);
-      setShowCustomDates(false);
-    } else if (value === "9months") {
-      end.setMonth(now.getMonth() + 9);
-      setShowCustomDates(false);
-    } else if (value === "1year") {
-      end.setFullYear(now.getFullYear() + 1);
-      setShowCustomDates(false);
-    } else {
-      // Custom selection
-      setShowCustomDates(true);
-      // Don't set end date for custom
-      end = new Date(now);
-    }
-    
-    if (value !== "custom") {
-      setEndDate(end);
-    }
-  };
-
-  // Reset all form state
+  // Reset form state when wizard is closed
   const resetForm = () => {
-    // Reset all state variables to initial values
     setCurrentStep(1);
     setCompletedSteps([]);
     setDeclarationSource("existing");
+    setItems([
+      {
+        id: "item-1",
+        hsnCode: "",
+        productName: "",
+        scientificName: "",
+        quantity: "",
+        unit: "kg",
+        rmId: ""
+      }
+    ]);
     setSelectedDeclarationIds([]);
     setDeclarationSearchTerm("");
     setShowDeclarationsList(false);
-    setItems([{
-      id: "item-1",
-      hsnCode: "",
-      productName: "",
-      scientificName: "",
-      quantity: "",
-      unit: "kg",
-      rmId: ""
-    }]);
+    setUploadedFiles([]);
     setStartDate(undefined);
     setEndDate(undefined);
     setValidityPeriod("custom");
     setShowCustomDates(true);
-    setHasUploadedGeoJSON(false);
-    setGeometryValid(null);
-    setSatelliteValid(null);
-    setIsValidating(false);
-    setUploadedFiles([]);
     setSelectedCustomer(null);
     setCustomerSearchTerm("");
     setShowCustomerResults(false);
     setCustomerPONumber("");
     setSONumber("");
     setShipmentNumber("");
-    setComments("");
+    setHasUploadedGeoJSON(false);
+    setGeometryValid(null);
+    setSatelliteValid(null);
+    setIsValidating(false);
     setShowValidationDetails(null);
-    setSelectedPlot(null);
+    setComments("");
   };
 
   // Handle dialog close
@@ -574,481 +541,1082 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     onOpenChange(open);
   };
 
-  // Filter declarations based on search term
-  const filteredDeclarations = declarationSearchTerm.length > 0
-    ? declarations.filter((declaration: any) => 
-        declaration.productName?.toLowerCase().includes(declarationSearchTerm.toLowerCase()) ||
-        declaration.code?.toLowerCase().includes(declarationSearchTerm.toLowerCase())
-      )
-    : declarations;
+  // Filter existing declarations based on search term
+  const filteredDeclarations = existingDeclarations.filter(declaration => 
+    declaration.name.toLowerCase().includes(declarationSearchTerm.toLowerCase()) ||
+    declaration.code.toLowerCase().includes(declarationSearchTerm.toLowerCase()) ||
+    declaration.product.toLowerCase().includes(declarationSearchTerm.toLowerCase())
+  );
+
+  // Filter customers based on search term
+  const filteredCustomers = customers.filter(customer => 
+    customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase())
+  );
+
+  // Get step labels
+  const stepLabels = [
+    "Declaration Type", 
+    declarationSource === "existing" ? "Select Declaration" : "Declaration Details", 
+    "Upload Data", 
+    "Additional Data",
+    "Review"
+  ];
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Outbound Declaration</DialogTitle>
           <DialogDescription>
-            Create a new outbound declaration for your customers
+            Create an outbound declaration to your customers with compliance documentation.
           </DialogDescription>
         </DialogHeader>
-
-        <div className="py-4">
+        
+        <div className="mb-8">
           <Stepper 
-            steps={["Declaration Source", "Details", "Upload & Validate", "Customer", "Review"]} 
-            currentStep={currentStep} 
-            completedSteps={completedSteps} 
+            steps={stepLabels}
+            currentStep={currentStep}
+            completedSteps={completedSteps}
           />
         </div>
-
-        {/* Step 1: Declaration Source */}
-        {currentStep === 1 && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div 
-                onClick={() => setDeclarationSource("existing")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-colors",
-                  declarationSource === "existing" 
-                    ? "border-primary bg-primary/5" 
-                    : "hover:border-primary/50"
-                )}
-              >
-                <div className="flex items-center mb-4">
-                  <Checkbox 
-                    checked={declarationSource === "existing"}
-                    onCheckedChange={() => setDeclarationSource("existing")}
-                    className="mr-2 h-5 w-5"
-                  />
-                  <h3 className="text-lg font-medium">Based on Existing Declaration</h3>
-                </div>
-                <p className="text-sm text-gray-500">
-                  Create an outbound declaration based on an approved inbound declaration.
-                  This simplifies the process by reusing validated data.
-                </p>
-              </div>
-
-              <div 
-                onClick={() => setDeclarationSource("fresh")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-colors",
-                  declarationSource === "fresh" 
-                    ? "border-primary bg-primary/5" 
-                    : "hover:border-primary/50"
-                )}
-              >
-                <div className="flex items-center mb-4">
-                  <Checkbox 
-                    checked={declarationSource === "fresh"}
-                    onCheckedChange={() => setDeclarationSource("fresh")}
-                    className="mr-2 h-5 w-5"
-                  />
-                  <h3 className="text-lg font-medium">New Declaration</h3>
-                </div>
-                <p className="text-sm text-gray-500">
-                  Create a completely new outbound declaration. You'll need to provide
-                  product details and upload supporting documentation.
-                </p>
-              </div>
-            </div>
-
-            {declarationSource === "existing" && (
-              <div className="mt-8">
-                <Label>Select Inbound Declaration(s)</Label>
-                <div className="relative">
-                  <div 
-                    className="p-2 border rounded-md cursor-pointer flex items-center justify-between"
-                    onClick={() => setShowDeclarationsList(!showDeclarationsList)}
-                  >
-                    {selectedDeclarationIds.length > 0 ? (
-                      <div>
-                        <span className="font-medium">{selectedDeclarationIds.length} declaration(s) selected</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">Select inbound declarations</span>
-                    )}
-                    <Search className="h-4 w-4 text-gray-500" />
-                  </div>
-
-                  {showDeclarationsList && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-64 overflow-y-auto">
-                      <div className="p-2 border-b">
-                        <Input 
-                          placeholder="Search declarations..." 
-                          value={declarationSearchTerm}
-                          onChange={(e) => setDeclarationSearchTerm(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        {filteredDeclarations.length > 0 ? (
-                          filteredDeclarations.map((declaration: any) => (
-                            <div
-                              key={declaration.id}
-                              className={cn(
-                                "p-3 hover:bg-gray-100 cursor-pointer",
-                                selectedDeclarationIds.includes(declaration.id) && "bg-primary/5"
-                              )}
-                              onClick={() => {
-                                if (selectedDeclarationIds.includes(declaration.id)) {
-                                  setSelectedDeclarationIds(selectedDeclarationIds.filter(id => id !== declaration.id));
-                                } else {
-                                  setSelectedDeclarationIds([...selectedDeclarationIds, declaration.id]);
-                                }
-                              }}
-                            >
-                              <div className="flex items-center">
-                                <Checkbox 
-                                  checked={selectedDeclarationIds.includes(declaration.id)}
-                                  className="mr-2"
-                                />
-                                <div>
-                                  <div className="font-medium">{declaration.productName}</div>
-                                  <div className="text-xs text-gray-500 flex mt-1">
-                                    <span className="mr-2">#{declaration.id}</span>
-                                    <Badge variant="outline" className="mr-2">
-                                      {declaration.status}
-                                    </Badge>
-                                    <span>{declaration.quantity} {declaration.unit}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-3 text-center text-gray-500">
-                            No approved inbound declarations found
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 2: Declaration Details */}
-        {currentStep === 2 && (
-          <div className="space-y-6">
-            {declarationSource === "fresh" && (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <Label>Declaration Items</Label>
-                  <Button variant="outline" size="sm" onClick={addItem}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Item
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  {items.map((item, index) => (
-                    <div key={item.id} className="p-4 border rounded-md bg-slate-50">
-                      <div className="grid grid-cols-6 gap-4">
-                        <div className="col-span-1">
-                          <Label htmlFor={`hsn-${item.id}`}>HSN Code</Label>
-                          <Input 
-                            id={`hsn-${item.id}`} 
-                            placeholder="HSN code" 
-                            value={item.hsnCode}
-                            onChange={(e) => updateItem(item.id, "hsnCode", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label htmlFor={`product-${item.id}`}>Product Name</Label>
-                          <Input 
-                            id={`product-${item.id}`} 
-                            placeholder="Product name" 
-                            value={item.productName}
-                            onChange={(e) => updateItem(item.id, "productName", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <Label htmlFor={`scientific-${item.id}`}>Scientific Name</Label>
-                          <Input 
-                            id={`scientific-${item.id}`} 
-                            placeholder="Scientific name" 
-                            value={item.scientificName}
-                            onChange={(e) => updateItem(item.id, "scientificName", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <Label htmlFor={`quantity-${item.id}`}>Quantity</Label>
-                          <div className="flex items-center space-x-2">
-                            <Input 
-                              id={`quantity-${item.id}`} 
-                              type="number" 
-                              placeholder="Quantity" 
-                              value={item.quantity}
-                              onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
-                            />
-                            <Select 
-                              value={item.unit} 
-                              onValueChange={(value) => updateItem(item.id, "unit", value)}
-                            >
-                              <SelectTrigger className="w-20">
-                                <SelectValue placeholder="Unit" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="kg">kg</SelectItem>
-                                <SelectItem value="tons">tons</SelectItem>
-                                <SelectItem value="lbs">lbs</SelectItem>
-                                <SelectItem value="l">liters</SelectItem>
-                                <SelectItem value="pcs">pieces</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="flex items-end">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => removeItem(item.id)}
-                            disabled={items.length <= 1}
-                          >
-                            <Trash2 className="h-4 w-4 text-gray-500" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
+        
+        <div className="py-4">
+          {/* Step 1: Declaration Type (Based on Existing or Create Fresh) */}
+          {currentStep === 1 && (
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <Label>Declaration Validity Period</Label>
-                <Select 
-                  value={validityPeriod} 
-                  onValueChange={handleValidityPeriodChange}
+              <h3 className="text-lg font-medium mb-6">Select Declaration Type</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div 
+                  className={cn(
+                    "p-6 border rounded-lg cursor-pointer transition-all",
+                    declarationSource === "existing" 
+                      ? "border-primary bg-primary/5" 
+                      : "hover:border-gray-400"
+                  )}
+                  onClick={() => setDeclarationSource("existing")}
                 >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30days">30 Days</SelectItem>
-                    <SelectItem value="6months">6 Months</SelectItem>
-                    <SelectItem value="9months">9 Months</SelectItem>
-                    <SelectItem value="1year">1 Year</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !startDate && "text-muted-foreground"
-                        )}
-                        disabled={!showCustomDates}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "PPP") : "Select date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className="flex items-center mb-4">
+                    <div className="h-10 w-10 bg-primary/10 rounded-md flex items-center justify-center text-primary">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <div className="ml-4">
+                      <h4 className="font-medium">Based on Existing Declaration</h4>
+                      <p className="text-sm text-gray-500">Use approved inbound declarations as reference</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !endDate && "text-muted-foreground"
-                        )}
-                        disabled={!showCustomDates}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, "PPP") : "Select date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                
+                <div 
+                  className={cn(
+                    "p-6 border rounded-lg cursor-pointer transition-all",
+                    declarationSource === "fresh" 
+                      ? "border-primary bg-primary/5" 
+                      : "hover:border-gray-400"
+                  )}
+                  onClick={() => setDeclarationSource("fresh")}
+                >
+                  <div className="flex items-center mb-4">
+                    <div className="h-10 w-10 bg-primary/10 rounded-md flex items-center justify-center text-primary">
+                      <Plus className="h-5 w-5" />
+                    </div>
+                    <div className="ml-4">
+                      <h4 className="font-medium">Create Fresh Declaration</h4>
+                      <p className="text-sm text-gray-500">Start a new declaration from scratch</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Step 3: Upload & Validate */}
-        {currentStep === 3 && (
-          <div className="space-y-8">
-            {declarationSource === "fresh" && (
-              <div>
-                <h3 className="text-lg font-medium mb-4">GeoJSON Data Upload</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Upload GeoJSON files containing geographic information about cultivation areas. This data will be used to validate compliance with deforestation regulations.
-                </p>
-                
-                <div className="border-2 border-dashed rounded-md p-8 text-center">
-                  {hasUploadedGeoJSON ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-center">
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                          geojson-data.json
-                        </Badge>
+          )}
+          
+          {/* Step 2: Select Declaration (for Based on Existing) or Declaration Details (for Fresh) */}
+          {currentStep === 2 && (
+            <div>
+              {declarationSource === "existing" ? (
+                /* Create outbound declaration from existing inbound declarations */
+                <div>
+                  {/* Declaration Validity Period - FIRST */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
+                    
+                    {/* Period options */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <Button 
+                        variant={validityPeriod === "30days" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("30days");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const thirtyDaysLater = new Date(today);
+                          thirtyDaysLater.setDate(today.getDate() + 30);
+                          setEndDate(thirtyDaysLater);
+                        }}
+                      >
+                        30 days
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "6months" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("6months");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const sixMonthsLater = new Date(today);
+                          sixMonthsLater.setMonth(today.getMonth() + 6);
+                          setEndDate(sixMonthsLater);
+                        }}
+                      >
+                        6 months
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "9months" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("9months");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const nineMonthsLater = new Date(today);
+                          nineMonthsLater.setMonth(today.getMonth() + 9);
+                          setEndDate(nineMonthsLater);
+                        }}
+                      >
+                        9 months
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "1year" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("1year");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const oneYearLater = new Date(today);
+                          oneYearLater.setFullYear(today.getFullYear() + 1);
+                          setEndDate(oneYearLater);
+                        }}
+                      >
+                        1 year
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "custom" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("custom");
+                          setShowCustomDates(true);
+                        }}
+                      >
+                        Custom
+                      </Button>
+                    </div>
+                    
+                    {/* Display selected date range */}
+                    {!showCustomDates && startDate && endDate && (
+                      <div className="p-3 bg-muted rounded-md mb-4">
+                        <p className="text-sm font-medium">Selected period:</p>
+                        <p className="text-sm">
+                          {format(startDate, "PP")} to {format(endDate, "PP")}
+                        </p>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-x-8 gap-y-4 mt-6">
-                        <div className="border rounded-md p-4 relative">
-                          <h4 className="font-medium mb-2">Geometry Validation</h4>
-                          <div className="flex items-center">
-                            {isValidating ? (
-                              <div className="flex items-center text-amber-600">
-                                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
-                                <span>Validating...</span>
-                              </div>
-                            ) : geometryValid === null ? (
-                              <span className="text-gray-500">Pending</span>
-                            ) : geometryValid ? (
-                              <div className="flex items-center text-green-600">
-                                <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                <span>Compliant</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center text-red-600">
-                                <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
-                                <span>Non-Compliant</span>
-                              </div>
+                    )}
+                    
+                    {/* Custom date selector */}
+                    {showCustomDates && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="start-date">Start Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="start-date"
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal mt-1",
+                                  !startDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate ? format(startDate, "PPP") : "Select start date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={startDate}
+                                onSelect={(date) => {
+                                  setStartDate(date);
+                                  // If end date is before start date, clear end date
+                                  if (endDate && date && endDate < date) {
+                                    setEndDate(undefined);
+                                  }
+                                }}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div>
+                          <Label htmlFor="end-date">End Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="end-date"
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal mt-1",
+                                  !endDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate ? format(endDate, "PPP") : "Select end date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={endDate}
+                                onSelect={setEndDate}
+                                initialFocus
+                                disabled={(date) => startDate ? date < startDate : false}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Declaration Items - SECOND */}
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-medium">Declaration Items</h3>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Import items functionality
+                            document.getElementById('importItemsFile')?.click();
+                          }}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import Items
+                        </Button>
+                        <input 
+                          type="file" 
+                          id="importItemsFile" 
+                          className="hidden" 
+                          accept=".csv,.xlsx,.xls"
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              toast({
+                                title: "File selected",
+                                description: `${e.target.files[0].name} will be processed`,
+                              });
+                              // Actual import logic would go here
+                            }
+                          }}
+                        />
+                        
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => addItem()}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Item
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {items.map((item, index) => (
+                        <div key={item.id} className="p-4 border rounded-md">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-medium">Item {index + 1}</h4>
+                            {items.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(item.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            Validates the structure and integrity of GeoJSON polygons.
-                          </p>
                           
-                          {geometryValid !== null && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="absolute top-2 right-2"
-                              onClick={() => setShowValidationDetails('geometry')}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                          <div className="grid grid-cols-6 gap-4">
+                            <div>
+                              <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center mb-2">
+                                HSN Code <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`hsn-code-${item.id}`}
+                                placeholder="e.g. 1511.10.00"
+                                value={item.hsnCode}
+                                onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`rm-id-${item.id}`} className="flex items-center mb-2">
+                                RM ID 
+                                <span className="ml-1 text-gray-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                  </svg>
+                                </span>
+                              </Label>
+                              <Input
+                                id={`rm-id-${item.id}`}
+                                placeholder="e.g. RM12345"
+                                value={item.rmId || ''}
+                                onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`product-name-${item.id}`} className="flex items-center mb-2">
+                                Product Name <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`product-name-${item.id}`}
+                                placeholder="e.g. Palm Oil"
+                                value={item.productName}
+                                onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`scientific-name-${item.id}`} className="mb-2">
+                                Scientific Name
+                              </Label>
+                              <Input
+                                id={`scientific-name-${item.id}`}
+                                placeholder="e.g. Elaeis guineensis"
+                                value={item.scientificName}
+                                onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`quantity-${item.id}`} className="flex items-center mb-2">
+                                Quantity <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`quantity-${item.id}`}
+                                type="text"
+                                placeholder="e.g. 5000"
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  // Only allow numeric input with decimal point
+                                  const value = e.target.value.replace(/[^0-9.]/g, '');
+                                  updateItem(item.id, 'quantity', value);
+                                }}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`unit-${item.id}`} className="mb-2">
+                                Unit
+                              </Label>
+                              <Select
+                                value={item.unit}
+                                onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                              >
+                                <SelectTrigger id={`unit-${item.id}`}>
+                                  <SelectValue placeholder="Select unit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="kg">kg</SelectItem>
+                                  <SelectItem value="ton">ton</SelectItem>
+                                  <SelectItem value="liters">liters</SelectItem>
+                                  <SelectItem value="m³">m³</SelectItem>
+                                  <SelectItem value="pieces">pieces</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Select Declaration - THIRD */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Select Declaration</h3>
+                    <div className="relative mb-4">
+                      <Input 
+                        type="text" 
+                        placeholder="Search declarations..." 
+                        className="pl-9"
+                        value={declarationSearchTerm}
+                        onChange={(e) => setDeclarationSearchTerm(e.target.value)}
+                      />
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    </div>
+                    
+                    <div className="overflow-hidden rounded-md border">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-gray-50 border-b">
+                            <th className="py-3 px-4 text-left font-medium">Declaration Name</th>
+                            <th className="py-3 px-4 text-left font-medium">Code</th>
+                            <th className="py-3 px-4 text-left font-medium">Product</th>
+                            <th className="py-3 px-4 text-left font-medium">Quantity</th>
+                            <th className="py-3 px-4 text-left font-medium">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredDeclarations.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
+                                No declarations found matching your search
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredDeclarations.map((declaration) => (
+                              <tr 
+                                key={declaration.id}
+                                className={cn(
+                                  "border-b cursor-pointer hover:bg-gray-50",
+                                  selectedDeclarationIds.includes(declaration.id) ? "bg-primary/5" : ""
+                                )}
+                                onClick={() => {
+                                  if (selectedDeclarationIds.includes(declaration.id)) {
+                                    // Remove if already selected
+                                    setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
+                                  } else {
+                                    // Add to selection if not already selected
+                                    setSelectedDeclarationIds(prev => [...prev, declaration.id]);
+                                  }
+                                }}
+                              >
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center">
+                                    <Checkbox 
+                                      className="mr-2" 
+                                      checked={selectedDeclarationIds.includes(declaration.id)} 
+                                      onCheckedChange={(checked: boolean) => {
+                                        if (checked) {
+                                          setSelectedDeclarationIds(prev => [...prev, declaration.id]);
+                                        } else {
+                                          setSelectedDeclarationIds(prev => prev.filter(id => id !== declaration.id));
+                                        }
+                                      }}
+                                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                    />
+                                    {declaration.name}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">{declaration.code}</td>
+                                <td className="py-3 px-4">{declaration.product}</td>
+                                <td className="py-3 px-4">{declaration.quantity}</td>
+                                <td className="py-3 px-4">
+                                  <Badge className="bg-green-500">{declaration.status}</Badge>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Fresh declaration details */
+                <div>
+                  {/* Declaration Validity Period */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
+                    
+                    {/* Period options */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <Button 
+                        variant={validityPeriod === "30days" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("30days");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const thirtyDaysLater = new Date(today);
+                          thirtyDaysLater.setDate(today.getDate() + 30);
+                          setEndDate(thirtyDaysLater);
+                        }}
+                      >
+                        30 days
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "6months" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("6months");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const sixMonthsLater = new Date(today);
+                          sixMonthsLater.setMonth(today.getMonth() + 6);
+                          setEndDate(sixMonthsLater);
+                        }}
+                      >
+                        6 months
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "9months" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("9months");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const nineMonthsLater = new Date(today);
+                          nineMonthsLater.setMonth(today.getMonth() + 9);
+                          setEndDate(nineMonthsLater);
+                        }}
+                      >
+                        9 months
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "1year" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("1year");
+                          setShowCustomDates(false);
+                          const today = new Date();
+                          setStartDate(today);
+                          const oneYearLater = new Date(today);
+                          oneYearLater.setFullYear(today.getFullYear() + 1);
+                          setEndDate(oneYearLater);
+                        }}
+                      >
+                        1 year
+                      </Button>
+                      <Button 
+                        variant={validityPeriod === "custom" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("custom");
+                          setShowCustomDates(true);
+                        }}
+                      >
+                        Custom
+                      </Button>
+                    </div>
+                    
+                    {/* Display selected date range */}
+                    {!showCustomDates && startDate && endDate && (
+                      <div className="p-3 bg-muted rounded-md mb-4">
+                        <p className="text-sm font-medium">Selected period:</p>
+                        <p className="text-sm">
+                          {format(startDate, "PP")} to {format(endDate, "PP")}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Custom date selector */}
+                    {showCustomDates && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="start-date">Start Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="start-date"
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal mt-1",
+                                  !startDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate ? format(startDate, "PPP") : "Select start date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={startDate}
+                                onSelect={(date) => {
+                                  setStartDate(date);
+                                  // If end date is before start date, clear end date
+                                  if (endDate && date && endDate < date) {
+                                    setEndDate(undefined);
+                                  }
+                                }}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="end-date">End Date</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="end-date"
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal mt-1",
+                                  !endDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate ? format(endDate, "PPP") : "Select end date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={endDate}
+                                onSelect={setEndDate}
+                                fromDate={startDate}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Declaration Items */}
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-medium">Declaration Items</h3>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Import items functionality
+                            document.getElementById('importOutboundItemsFile')?.click();
+                          }}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import Items
+                        </Button>
+                        <input 
+                          type="file" 
+                          id="importOutboundItemsFile" 
+                          accept=".csv,.xlsx,.xls" 
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              toast({
+                                title: "File selected",
+                                description: `${e.target.files[0].name} will be processed`,
+                              });
+                              // Actual import logic would go here
+                            }
+                          }}
+                        />
+                        
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => addItem()}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Item
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {items.map((item, index) => (
+                        <div key={item.id} className="p-4 border rounded-md">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-medium">Item {index + 1}</h4>
+                            {items.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(item.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-6 gap-4">
+                            <div>
+                              <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center mb-2">
+                                HSN Code <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`hsn-code-${item.id}`}
+                                placeholder="e.g. 1511.10.00"
+                                value={item.hsnCode}
+                                onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`rm-id-${item.id}`} className="flex items-center mb-2">
+                                RM ID 
+                                <span className="ml-1 text-gray-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                  </svg>
+                                </span>
+                              </Label>
+                              <Input
+                                id={`rm-id-${item.id}`}
+                                placeholder="e.g. RM12345"
+                                value={item.rmId || ''}
+                                onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`product-name-${item.id}`} className="flex items-center mb-2">
+                                Product Name <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`product-name-${item.id}`}
+                                placeholder="e.g. Palm Oil"
+                                value={item.productName}
+                                onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`scientific-name-${item.id}`} className="mb-2">
+                                Scientific Name
+                              </Label>
+                              <Input
+                                id={`scientific-name-${item.id}`}
+                                placeholder="e.g. Elaeis guineensis"
+                                value={item.scientificName}
+                                onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`quantity-${item.id}`} className="flex items-center mb-2">
+                                Quantity <span className="text-red-500 ml-1">*</span>
+                              </Label>
+                              <Input
+                                id={`quantity-${item.id}`}
+                                type="text"
+                                placeholder="e.g. 5000"
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  // Only allow numeric input with decimal point
+                                  const value = e.target.value.replace(/[^0-9.]/g, '');
+                                  updateItem(item.id, 'quantity', value);
+                                }}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`unit-${item.id}`} className="mb-2">
+                                Unit
+                              </Label>
+                              <Select
+                                value={item.unit}
+                                onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                              >
+                                <SelectTrigger id={`unit-${item.id}`}>
+                                  <SelectValue placeholder="Select unit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="kg">kg</SelectItem>
+                                  <SelectItem value="ton">ton</SelectItem>
+                                  <SelectItem value="liters">liters</SelectItem>
+                                  <SelectItem value="m³">m³</SelectItem>
+                                  <SelectItem value="pieces">pieces</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Step 3: Upload Data (GeoJSON for fresh declarations, documents for both) */}
+          {currentStep === 3 && (
+            <div>
+              {/* For fresh declarations, show GeoJSON upload */}
+              {declarationSource === "fresh" && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-4">GeoJSON Upload</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Please upload a GeoJSON file containing the geographical data associated with this declaration.
+                  </p>
+                  
+                  <div 
+                    className={cn(
+                      "border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50",
+                      hasUploadedGeoJSON ? 
+                        (geometryValid === false || satelliteValid === false) 
+                          ? "border-red-300 bg-red-50" 
+                          : "border-green-300 bg-green-50" 
+                        : "border-gray-300"
+                    )}
+                    onClick={!hasUploadedGeoJSON ? handleGeoJSONUpload : undefined}
+                    style={{ cursor: hasUploadedGeoJSON ? 'default' : 'pointer' }}
+                  >
+                    <div className="mx-auto flex justify-center">
+                      <Upload className={cn(
+                        "h-12 w-12",
+                        hasUploadedGeoJSON ? 
+                          (geometryValid === false || satelliteValid === false) 
+                            ? "text-red-500" 
+                            : "text-green-500" 
+                          : "text-gray-400"
+                      )} />
+                    </div>
+                    <p className="mt-4 text-sm text-gray-600">
+                      {hasUploadedGeoJSON ? 
+                        (isValidating ? "Validating GeoJSON file..." : "GeoJSON file uploaded successfully") : 
+                        "Drag and drop your GeoJSON file here, or click to browse"}
+                    </p>
+                    {!hasUploadedGeoJSON && (
+                      <Button 
+                        variant="secondary" 
+                        className="mt-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGeoJSONUpload(e);
+                        }}
+                      >
+                        Browse Files
+                      </Button>
+                    )}
+                    
+                    {/* Validation status indicators */}
+                    {hasUploadedGeoJSON && (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-sm font-medium">Geometry Check:</span>
+                          {isValidating ? (
+                            <span className="text-sm text-amber-500">Checking...</span>
+                          ) : geometryValid === true ? (
+                            <div className="flex items-center space-x-1">
+                              <span className="text-sm text-green-600">Compliant</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
+                                onClick={() => setShowValidationDetails('geometry')}
+                              >
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  width="16" 
+                                  height="16" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  className="ml-1"
+                                >
+                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              </Button>
+                            </div>
+                          ) : geometryValid === false ? (
+                            <div className="flex items-center space-x-1">
+                              <span className="text-sm text-red-600">Non-Compliant</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
+                                onClick={() => setShowValidationDetails('geometry')}
+                              >
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  width="16" 
+                                  height="16" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  className="ml-1"
+                                >
+                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-500">Pending</span>
                           )}
                         </div>
                         
-                        <div className="border rounded-md p-4 relative">
-                          <h4 className="font-medium mb-2">Satellite Check</h4>
-                          <div className="flex items-center">
-                            {!geometryValid ? (
-                              <span className="text-gray-500">Skipped</span>
-                            ) : isValidating ? (
-                              <div className="flex items-center text-amber-600">
-                                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
-                                <span>Validating...</span>
+                        {/* Only show satellite check if geometry check passed */}
+                        {geometryValid === true && (
+                          <div className="flex items-center justify-center space-x-2">
+                            <span className="text-sm font-medium">Satellite Check:</span>
+                            {isValidating ? (
+                              <span className="text-sm text-amber-500">Checking...</span>
+                            ) : satelliteValid === true ? (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-sm text-green-600">Compliant</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
+                                  onClick={() => setShowValidationDetails('satellite')}
+                                >
+                                  <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    width="16" 
+                                    height="16" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    className="ml-1"
+                                  >
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                  </svg>
+                                </Button>
                               </div>
-                            ) : satelliteValid === null ? (
-                              <span className="text-gray-500">Pending</span>
-                            ) : satelliteValid ? (
-                              <div className="flex items-center text-green-600">
-                                <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                <span>Compliant</span>
+                            ) : satelliteValid === false ? (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-sm text-red-600">Non-Compliant</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
+                                  onClick={() => setShowValidationDetails('satellite')}
+                                >
+                                  <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    width="16" 
+                                    height="16" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    className="ml-1"
+                                  >
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                  </svg>
+                                </Button>
                               </div>
                             ) : (
-                              <div className="flex items-center text-red-600">
-                                <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 mr-2">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
-                                <span>Non-Compliant</span>
-                              </div>
+                              <span className="text-sm text-gray-500">Pending</span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            Checks cultivation areas against satellite imagery for deforestation.
-                          </p>
-                          
-                          {satelliteValid !== null && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="absolute top-2 right-2"
-                              onClick={() => setShowValidationDetails('satellite')}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
+                        )}
+                        
+                        {/* Warning message for failed validations */}
+                        {geometryValid === false && (
+                          <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-sm text-red-600">
+                              Geometry validation failed. Please notify the supplier.
+                            </p>
+                            <p className="text-sm text-red-600 mt-1">
+                              The declaration can only be saved as draft and cannot be submitted.
+                            </p>
+                          </div>
+                        )}
+                        
+                        {geometryValid === true && satelliteValid === false && (
+                          <div className="mt-2 px-4 py-2 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-sm text-red-600">
+                              Satellite check detected potential deforestation. Please notify the supplier.
+                            </p>
+                            <p className="text-sm text-red-600 mt-1">
+                              The declaration can only be saved as draft and cannot be submitted.
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500 mb-4">
-                        Drag and drop your GeoJSON file here, or click to browse
-                      </p>
-                      <Button variant="outline" onClick={handleGeoJSONUpload}>
-                        Upload GeoJSON
-                      </Button>
-                    </>
-                  )}
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Document upload section for both declaration types */}
+              <div className="mb-6">
+                <Label className="text-base font-medium">Upload Evidence Documents</Label>
+                <p className="text-sm text-gray-500 mb-4">
+                  Please upload all relevant documentation to support your declaration, including
+                  {declarationSource === "fresh" ? " certificates, shipping documents, and any other evidence." : " shipping documents, customer information, and any other evidence."}
+                </p>
+                
+                <div 
+                  className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-gray-50"
+                  onClick={handleDocumentUpload}
+                >
+                  <div className="mx-auto flex justify-center">
+                    <Upload className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <p className="mt-4 text-sm text-gray-600">
+                    Drag and drop your files here, or click to browse
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Accepted formats: PDF, JPG, PNG {declarationSource === "fresh" && ", GeoJSON"} (max 10MB)
+                  </p>
+                  <Button 
+                    variant="secondary" 
+                    className="mt-4"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDocumentUpload(e);
+                    }}
+                  >
+                    Browse Files
+                  </Button>
                 </div>
               </div>
-            )}
-
-            <div>
-              <h3 className="text-lg font-medium mb-4">Upload Supporting Documents</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Upload supporting documents like purchase orders, quality certificates, and other relevant documentation.
-              </p>
               
-              <div className="border-2 border-dashed rounded-md p-8 text-center">
-                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500 mb-4">
-                  Drag and drop files here, or click to browse
-                </p>
-                <Button variant="outline" onClick={handleDocumentUpload}>
-                  Upload Documents
-                </Button>
-              </div>
-              
+              {/* Uploaded files list */}
               {uploadedFiles.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-medium mb-3">Uploaded Files</h4>
+                <div>
+                  <h3 className="text-base font-medium mb-2">Uploaded Files</h3>
                   <div className="space-y-2">
                     {uploadedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                         <div className="flex items-center">
-                          <svg className="h-5 w-5 text-red-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5 4v.92l4.08 4.08L5 13.08V14h10v-.92l-4.08-4.08L15 5.08V4H5zm1 2.08l3.075 3.075L5.92 13.08h8.16l-3.155-3.925L14 6.08H6z" clipRule="evenodd" />
-                          </svg>
-                          <span>{file}</span>
+                          <div className="h-8 w-8 bg-primary/10 rounded-md flex items-center justify-center">
+                            <svg 
+                              className="h-4 w-4 text-primary" 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              viewBox="0 0 20 20" 
+                              fill="currentColor"
+                            >
+                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="ml-2 text-sm font-medium">{file}</span>
                         </div>
                         <Button 
                           variant="ghost" 
-                          size="icon" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-gray-500"
                           onClick={() => removeFile(file)}
                         >
-                          <X className="h-4 w-4 text-gray-500" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
@@ -1056,290 +1624,356 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Step 4: Customer Selection */}
-        {currentStep === 4 && (
-          <div className="space-y-6">
+          )}
+          
+          {/* Step 4: Additional Data */}
+          {currentStep === 4 && (
             <div>
-              <Label>Customer</Label>
-              <div className="relative">
-                <div 
-                  className={cn(
-                    "flex items-center justify-between p-2 border rounded-md cursor-pointer",
-                    selectedCustomer ? "border-primary/30 bg-primary/5" : ""
-                  )}
-                  onClick={() => setShowCustomerResults(!showCustomerResults)}
-                >
-                  {selectedCustomer ? (
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <User className="h-4 w-4" />
-                      </div>
-                      <div className="ml-2">
-                        <div className="font-medium">{selectedCustomer.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {selectedCustomer.type}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-gray-500">Select a customer</span>
-                  )}
-                  <Search className="h-4 w-4 text-gray-500" />
+              <h3 className="text-lg font-medium mb-4">Additional Data</h3>
+              
+              {/* Customer Selection */}
+              <div className="mb-6">
+                <h4 className="text-base font-medium mb-3">Customer Selection</h4>
+                <div className="relative mb-4">
+                  <Input 
+                    type="text" 
+                    placeholder="Search for a customer..." 
+                    className="pl-9"
+                    value={customerSearchTerm}
+                    onChange={(e) => {
+                      setCustomerSearchTerm(e.target.value);
+                      if (e.target.value) {
+                        setShowCustomerResults(true);
+                      }
+                    }}
+                    onFocus={() => setShowCustomerResults(true)}
+                  />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                 </div>
-
-                {/* Dropdown for customers */}
-                {showCustomerResults && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-64 overflow-y-auto">
-                    <div className="p-2 border-b">
-                      <Input 
-                        placeholder="Search customers..." 
-                        value={customerSearchTerm}
-                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      {customers
-                        .filter(customer => 
-                          customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                          customer.company?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                          customerSearchTerm === ""
-                        )
-                        .map(customer => (
-                          <div
+                
+                {showCustomerResults && customerSearchTerm && (
+                  <div className="border rounded-md overflow-hidden mb-4 shadow-sm">
+                    {filteredCustomers.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">
+                        No customers found. Try a different search term.
+                      </div>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        {filteredCustomers.map((customer) => (
+                          <div 
                             key={customer.id}
-                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                            className="p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
                             onClick={() => {
                               setSelectedCustomer(customer);
                               setShowCustomerResults(false);
+                              setCustomerSearchTerm('');
                             }}
                           >
-                            <div className="font-medium">{customer.name}</div>
-                            <div className="text-xs text-gray-500 mt-1 flex items-center">
-                              <span className="mr-2">{customer.type}</span>
-                              <Badge variant="outline" className="text-[10px] h-5">
-                                {customer.complianceScore}% Compliant
-                              </Badge>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-medium">{customer.name}</div>
+                                <div className="text-sm text-gray-500">{customer.company} - {customer.type}</div>
+                                <div className="text-xs text-gray-400 mt-1">{customer.country} • Reg: {customer.registrationNumber}</div>
+                              </div>
+                              {customer.complianceScore !== undefined && (
+                                <div className={cn(
+                                  "text-xs font-medium rounded-full px-2 py-1",
+                                  customer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                                  customer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                                  "bg-red-100 text-red-800"
+                                )}>
+                                  {customer.complianceScore}% Compliant
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
-                    </div>
-                    <div className="p-2 border-t flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Can't find a customer?</span>
-                      <Button variant="outline" size="sm" className="h-7 text-xs">
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        Add New
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="customerPONumber">Customer PO Number</Label>
-                <Input 
-                  id="customerPONumber" 
-                  placeholder="Enter customer PO number" 
-                  value={customerPONumber}
-                  onChange={(e) => setCustomerPONumber(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="soNumber">SO Number</Label>
-                <Input 
-                  id="soNumber" 
-                  placeholder="Enter SO number" 
-                  value={soNumber}
-                  onChange={(e) => setSONumber(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="shipmentNumber">Shipment Number</Label>
-              <Input 
-                id="shipmentNumber" 
-                placeholder="Enter shipment number" 
-                value={shipmentNumber}
-                onChange={(e) => setShipmentNumber(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Step 5: Review */}
-        {currentStep === 5 && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Review Declaration</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Review the information before submitting the outbound declaration.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="p-4 border rounded-md">
-                  <h4 className="font-medium mb-3">General Information</h4>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Declaration Type:</span>
-                      <span className="font-medium">
-                        Outbound
-                      </span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Source:</span>
-                      <span className="font-medium">
-                        {declarationSource === "existing" 
-                          ? `Based on ${selectedDeclarationIds.length} inbound declaration(s)` 
-                          : "New declaration"}
-                      </span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Customer:</span>
-                      <span className="font-medium">{selectedCustomer?.name || "Not selected"}</span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Customer PO:</span>
-                      <span className="font-medium">{customerPONumber || "—"}</span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">SO Number:</span>
-                      <span className="font-medium">{soNumber || "—"}</span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Shipment #:</span>
-                      <span className="font-medium">{shipmentNumber || "—"}</span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-gray-500 w-32">Validity Period:</span>
-                      <span className="font-medium">
-                        {startDate && endDate 
-                          ? `${format(startDate, "PP")} to ${format(endDate, "PP")}` 
-                          : "Not specified"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {declarationSource === "fresh" && (
-                  <div className="p-4 border rounded-md">
-                    <h4 className="font-medium mb-3">Declaration Items</h4>
-                    <div className="space-y-3">
-                      {items.filter(item => 
-                        item.hsnCode.trim() !== "" || 
-                        item.productName.trim() !== "" || 
-                        item.quantity.trim() !== ""
-                      ).map((item, index) => (
-                        <div key={item.id} className="p-3 bg-gray-50 rounded-md">
-                          <div className="grid grid-cols-4 gap-2 text-sm">
-                            <div>
-                              <span className="text-gray-500 block">HSN Code</span>
-                              <span className="font-medium">{item.hsnCode || "—"}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block">Product Name</span>
-                              <span className="font-medium">{item.productName || "—"}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block">Scientific Name</span>
-                              <span className="font-medium">{item.scientificName || "—"}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 block">Quantity</span>
-                              <span className="font-medium">
-                                {item.quantity ? `${item.quantity} ${item.unit}` : "—"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {declarationSource === "fresh" && (
-                  <div className="p-4 border rounded-md">
-                    <h4 className="font-medium mb-3">GeoJSON Validation</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500 block">Geometry Validation</span>
-                        <div className="mt-1">
-                          {geometryValid === null ? (
-                            <Badge variant="outline">Not Validated</Badge>
-                          ) : geometryValid ? (
-                            <Badge className="bg-green-100 text-green-800">Compliant</Badge>
-                          ) : (
-                            <Badge className="bg-red-100 text-red-800">Non-Compliant</Badge>
-                          )}
-                        </div>
                       </div>
-                      <div>
-                        <span className="text-gray-500 block">Satellite Check</span>
-                        <div className="mt-1">
-                          {satelliteValid === null ? (
-                            <Badge variant="outline">Not Validated</Badge>
-                          ) : satelliteValid ? (
-                            <Badge className="bg-green-100 text-green-800">Compliant</Badge>
-                          ) : (
-                            <Badge className="bg-red-100 text-red-800">Non-Compliant</Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="p-4 border rounded-md">
-                  <h4 className="font-medium mb-3">Supporting Documents</h4>
-                  <div className="space-y-2 text-sm">
-                    {uploadedFiles.length > 0 ? (
-                      uploadedFiles.map((file, index) => (
-                        <div key={index} className="flex items-center">
-                          <svg className="h-5 w-5 text-red-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5 4v.92l4.08 4.08L5 13.08V14h10v-.92l-4.08-4.08L15 5.08V4H5zm1 2.08l3.075 3.075L5.92 13.08h8.16l-3.155-3.925L14 6.08H6z" clipRule="evenodd" />
-                          </svg>
-                          <span>{file}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-gray-500">No documents uploaded</span>
                     )}
                   </div>
-                </div>
+                )}
                 
-                <div>
-                  <Label htmlFor="comments">Additional Comments</Label>
-                  <Textarea 
-                    id="comments" 
-                    placeholder="Add any additional information or notes" 
-                    value={comments}
-                    onChange={(e) => setComments(e.target.value)}
-                    className="h-24"
-                  />
+                {selectedCustomer && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium mb-2">Selected Customer</h4>
+                    <div className="p-4 border rounded-lg bg-primary/5 border-primary">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="font-medium text-lg">{selectedCustomer.name}</div>
+                          <div className="text-sm text-gray-500">{selectedCustomer.company} - {selectedCustomer.type}</div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {selectedCustomer.complianceScore !== undefined && (
+                            <div className={cn(
+                              "text-xs font-medium rounded-full px-2 py-1",
+                              selectedCustomer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                              selectedCustomer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                              "bg-red-100 text-red-800"
+                            )}>
+                              {selectedCustomer.complianceScore}% Compliant
+                            </div>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => setSelectedCustomer(null)}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Country:</span> {selectedCustomer.country}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Registration:</span> {selectedCustomer.registrationNumber}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Contact:</span> {selectedCustomer.contactPerson}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Email:</span> {selectedCustomer.contactEmail}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {!selectedCustomer && (
+                  <div className="flex items-center justify-center p-6 border border-dashed rounded-lg mb-6">
+                    <div className="text-center text-gray-500">
+                      <UserPlus className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p>Please select a customer to continue</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Reference Numbers */}
+              <div className="mb-6">
+                <h4 className="text-base font-medium mb-3">Reference Numbers</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="customer-po-number">Customer PO Number</Label>
+                    <Input 
+                      id="customer-po-number" 
+                      placeholder="Enter PO number"
+                      value={customerPONumber}
+                      onChange={(e) => setCustomerPONumber(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="so-number">SO Number</Label>
+                    <Input 
+                      id="so-number" 
+                      placeholder="Enter SO number"
+                      value={soNumber}
+                      onChange={(e) => setSONumber(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="shipment-number">Shipment Number</Label>
+                    <Input 
+                      id="shipment-number" 
+                      placeholder="Enter shipment number"
+                      value={shipmentNumber}
+                      onChange={(e) => setShipmentNumber(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+          
+          {/* Step 5: Review */}
+          {currentStep === 5 && (
+            <div>
+              <h3 className="text-lg font-medium mb-6">Review Declaration</h3>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Declaration Type</h4>
+                    <p className="mt-1">Outbound</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Declaration Source</h4>
+                    <p className="mt-1">{declarationSource === "existing" ? "Based on Existing Declaration" : "Fresh Declaration"}</p>
+                  </div>
+                  
+                  {declarationSource === "existing" ? (
+                    <div className="col-span-2">
+                      <h4 className="text-sm font-medium text-gray-500">Based On ({selectedDeclarationIds.length})</h4>
+                      <div className="mt-1 space-y-2">
+                        {selectedDeclarationIds.length > 0 ? (
+                          selectedDeclarationIds.map(id => (
+                            <div key={id} className="p-2 bg-gray-50 rounded-md">
+                              {existingDeclarations.find(d => d.id === id)?.name || "Unknown declaration"}
+                            </div>
+                          ))
+                        ) : (
+                          <p>No declarations selected</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Validity Period</h4>
+                        <p className="mt-1">
+                          {startDate && endDate ? 
+                            `${format(startDate, "PP")} to ${format(endDate, "PP")}` : 
+                            "Not specified"}
+                        </p>
+                      </div>
+                      
+                      <div className="col-span-2">
+                        <h4 className="text-sm font-medium text-gray-500">Items</h4>
+                        <div className="mt-1 space-y-2">
+                          {items.filter(item => item.productName).map((item, index) => (
+                            <div key={item.id} className="text-sm">
+                              {index + 1}. {item.productName} ({item.quantity} {item.unit}) - HSN: {item.hsnCode}
+                              {item.scientificName && ` - ${item.scientificName}`}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">GeoJSON</h4>
+                        <p className="mt-1">{hasUploadedGeoJSON ? "Uploaded" : "Not uploaded"}</p>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="col-span-2">
+                    <h4 className="text-sm font-medium text-gray-500">Customer</h4>
+                    <div className="mt-1 space-y-2">
+                      {selectedCustomer ? (
+                        <div className="p-3 bg-gray-50 rounded-md">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="font-medium">{selectedCustomer.name}</div>
+                            {selectedCustomer.complianceScore !== undefined && (
+                              <div className={cn(
+                                "text-xs font-medium rounded-full px-2 py-1",
+                                selectedCustomer.complianceScore >= 90 ? "bg-green-100 text-green-800" :
+                                selectedCustomer.complianceScore >= 80 ? "bg-yellow-100 text-yellow-800" :
+                                "bg-red-100 text-red-800"
+                              )}>
+                                {selectedCustomer.complianceScore}% Compliant
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm grid grid-cols-2 gap-2">
+                            <div><span className="text-gray-500">Company:</span> {selectedCustomer.company}</div>
+                            <div><span className="text-gray-500">Type:</span> {selectedCustomer.type}</div>
+                            <div><span className="text-gray-500">Country:</span> {selectedCustomer.country}</div>
+                            <div><span className="text-gray-500">Registration:</span> {selectedCustomer.registrationNumber}</div>
+                            <div><span className="text-gray-500">Contact:</span> {selectedCustomer.contactPerson}</div>
+                            <div><span className="text-gray-500">Email:</span> {selectedCustomer.contactEmail}</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p>No customer selected</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Reference Numbers</h4>
+                    <div className="mt-1 space-y-1">
+                      <p>PO Number: {customerPONumber || 'Not specified'}</p>
+                      <p>SO Number: {soNumber || 'Not specified'}</p>
+                      <p>Shipment Number: {shipmentNumber || 'Not specified'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <h4 className="text-sm font-medium text-gray-500">Evidence Documents</h4>
+                    <div className="mt-1">
+                      {uploadedFiles.length === 0 ? (
+                        <span className="text-red-500">No documents uploaded</span>
+                      ) : (
+                        <ul className="list-disc list-inside text-sm space-y-1">
+                          {uploadedFiles.map((file, index) => (
+                            <li key={index}>{file}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator className="my-6" />
 
+                {/* Comments Section */}
+                <div className="mb-6">
+                  <h4 className="font-medium mb-2">Comments</h4>
+                  <Textarea 
+                    placeholder="Add any additional comments, notes, or special instructions related to this declaration..."
+                    value={comments}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComments(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="h-5 w-5 text-amber-500" 
+                      viewBox="0 0 20 20" 
+                      fill="currentColor"
+                    >
+                      <path 
+                        fillRule="evenodd" 
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
+                        clipRule="evenodd" 
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Declaration Submission Notice</h4>
+                    <p className="text-sm text-gray-500 mt-1">
+                      By submitting this declaration, I confirm that all the information provided is 
+                      accurate and complete to the best of my knowledge. I understand that false 
+                      information may lead to penalties under the EUDR regulations.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        
         <DialogFooter>
           {currentStep > 1 && (
-            <Button variant="outline" onClick={goToPreviousStep}>
+            <Button 
+              variant="outline" 
+              onClick={goToPreviousStep}
+              className="mr-auto"
+            >
               Back
             </Button>
           )}
           
           {currentStep < 5 ? (
             <Button onClick={goToNextStep}>
-              Next
+              Continue
             </Button>
           ) : (
             <Button 
-              onClick={submitDeclaration} 
+              onClick={submitDeclaration}
               disabled={createDeclaration.isPending}
             >
               {createDeclaration.isPending ? "Submitting..." : "Submit Declaration"}
@@ -1348,11 +1982,255 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         </DialogFooter>
 
         {/* Validation Details Dialog */}
-        <ValidationDetailsDialog
-          open={showValidationDetails !== null}
-          onClose={() => setShowValidationDetails(null)}
-          validationType={showValidationDetails as "geometry" | "satellite" | null}
-        />
+        <Dialog open={showValidationDetails !== null} onOpenChange={(open) => !open && setShowValidationDetails(null)}>
+          <DialogContent className="max-w-7xl max-h-[90vh] p-0 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-3 h-[80vh]">
+              {/* Left sidebar with plot list */}
+              <div className="col-span-1 overflow-y-auto border-r">
+                <div className="p-6">
+                  <DialogTitle>
+                    {showValidationDetails === 'geometry' ? 'Geometry Validation Details' : 'Satellite Check Details'}
+                  </DialogTitle>
+                  <DialogDescription className="mt-2 mb-4">
+                    {showValidationDetails === 'geometry' 
+                      ? 'Detailed geometry validation results for each polygon in the GeoJSON file.'
+                      : 'Detailed satellite imagery validation results for each polygon in the GeoJSON file.'}
+                  </DialogDescription>
+                  
+                  <h3 className="text-sm font-medium mb-3">Plot List</h3>
+                  <div className="space-y-2">
+                    {/* Generate 5 sample plots */}
+                    {Array.from({ length: 5 }).map((_, i) => {
+                      // Make all plots compliant
+                      const isValid = true;
+                      const plotId = `POL-${String(i + 1).padStart(3, '0')}`;
+                      return (
+                        <div 
+                          key={i}
+                          className={cn(
+                            "p-3 border rounded-md cursor-pointer hover:border-primary transition-colors",
+                            selectedPlot === plotId ? "border-primary bg-primary/5" : "border-gray-200"
+                          )}
+                          onClick={() => setSelectedPlot(plotId)}
+                        >
+                          <div className="flex justify-between">
+                            <div className="font-medium">{plotId}</div>
+                            <div className={cn(
+                              "text-xs font-medium px-2 py-0.5 rounded-full",
+                              isValid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                            )}>
+                              {isValid ? "Compliant" : "Non-Compliant"}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">{(Math.random() * 50 + 100).toFixed(2)} hectares</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Center section with map */}
+              <div className="col-span-2 flex flex-col h-full">
+                <div className="p-4 border-b flex justify-between items-center">
+                  <h3 className="font-medium">Map View</h3>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="sm">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="4 8 4 4 8 4"></polyline>
+                        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                        <line x1="4" y1="16" x2="16" y2="16"></line>
+                        <line x1="4" y1="12" x2="16" y2="12"></line>
+                        <line x1="12" y1="4" x2="12" y2="16"></line>
+                        <line x1="8" y1="4" x2="8" y2="16"></line>
+                      </svg>
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      >
+                        <polygon points="15 24 21 18 15 12 15 24"></polygon>
+                        <polygon points="9 24 3 18 9 12 9 24"></polygon>
+                        <polygon points="15 0 21 6 15 12 15 0"></polygon>
+                        <polygon points="9 0 3 6 9 12 9 0"></polygon>
+                      </svg>
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Map Display */}
+                <div className="flex-1 bg-slate-50 overflow-auto relative">
+                  <div className="min-w-[800px] min-h-[600px] relative">
+                    {/* Satellite imagery */}
+                    <img 
+                      src={satelliteMapImage} 
+                      alt="Satellite view of agricultural land"
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Overlay polygon */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-2/5 h-2/5 border-2 border-white bg-white/10 pointer-events-none"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Map controls */}
+                  <div className="absolute right-4 bottom-4 flex flex-col space-y-2">
+                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="15" 
+                        height="15" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="text-primary"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="15" 
+                        height="15" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="text-primary"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Detail panel - shows when a plot is selected */}
+                {selectedPlot && (
+                  <div className="border-t p-6 bg-white">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Plot Information</h3>
+                        <dl className="grid grid-cols-2 gap-4">
+                          <div className="text-sm">
+                            <dt className="text-gray-500">Polygon ID</dt>
+                            <dd className="font-medium mt-1">{selectedPlot}</dd>
+                          </div>
+                          <div className="text-sm">
+                            <dt className="text-gray-500">Area</dt>
+                            <dd className="font-medium mt-1">245 hectares</dd>
+                          </div>
+                          <div className="text-sm">
+                            <dt className="text-gray-500">Perimeter</dt>
+                            <dd className="font-medium mt-1">2.5 km</dd>
+                          </div>
+                          <div className="text-sm">
+                            <dt className="text-gray-500">Coordinates</dt>
+                            <dd className="font-medium mt-1">12.3456, -78.9012</dd>
+                          </div>
+                        </dl>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Validation Results</h3>
+                        
+                        <div className="space-y-4">
+                          <div className="p-3 bg-green-50 border border-green-100 rounded-md">
+                            <div className="flex items-center">
+                              <svg 
+                                className="h-5 w-5 text-green-600 mr-2" 
+                                viewBox="0 0 20 20" 
+                                fill="currentColor"
+                              >
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              <div className="font-medium text-green-800">Geometry Check</div>
+                            </div>
+                            <p className="text-sm text-green-700 mt-1 pl-7">All geometry validations passed successfully.</p>
+                          </div>
+                          
+                          <div className="p-3 bg-green-50 border border-green-100 rounded-md">
+                            <div className="flex items-center">
+                              <svg 
+                                className="h-5 w-5 text-green-600 mr-2" 
+                                viewBox="0 0 20 20" 
+                                fill="currentColor"
+                              >
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              <div className="font-medium text-green-800">Satellite Check</div>
+                            </div>
+                            <p className="text-sm text-green-700 mt-1 pl-7">No issues detected in satellite imagery.</p>
+                          </div>
+                        </div>
+                        
+                        <h4 className="font-medium mt-4 mb-2">Validation History</h4>
+                        <div className="text-sm space-y-3">
+                          <div className="flex items-start">
+                            <svg 
+                              className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" 
+                              viewBox="0 0 20 20" 
+                              fill="currentColor"
+                            >
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <div>
+                              <div>Validation Completed</div>
+                              <div className="text-gray-500 mt-0.5">March 15, 2025</div>
+                            </div>
+                          </div>
+                          <div className="flex items-start">
+                            <svg 
+                              className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" 
+                              viewBox="0 0 20 20" 
+                              fill="currentColor"
+                            >
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                            </svg>
+                            <div>
+                              <div>Plot Uploaded</div>
+                              <div className="text-gray-500 mt-0.5">March 14, 2025</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <DialogFooter className="px-6 py-4 border-t">
+              <Button onClick={() => setShowValidationDetails(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
       </DialogContent>
     </Dialog>
   );
