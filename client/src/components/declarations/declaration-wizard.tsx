@@ -504,6 +504,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setGeometryValid(null);
     setSatelliteValid(null);
     setIsValidating(false);
+    setShowValidationDetails(null);
   };
 
   // Handle dialog close
