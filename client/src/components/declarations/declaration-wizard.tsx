@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import satelliteMapImage from "../../assets/satellite-map.png";
 
 // Declaration types
 type DeclarationType = "inbound" | "outbound";
