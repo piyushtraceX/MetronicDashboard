@@ -99,6 +99,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   const [satelliteValid, setSatelliteValid] = useState<boolean | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [showValidationDetails, setShowValidationDetails] = useState<string | null>(null); // 'geometry' or 'satellite' or null
+  const [selectedPlot, setSelectedPlot] = useState<string | null>(null); // To store which plot is selected in the details view
   
   // Documents state
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
