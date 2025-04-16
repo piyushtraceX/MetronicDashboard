@@ -105,7 +105,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const [geometryValid, setGeometryValid] = useState<boolean | null>(null);
   const [satelliteValid, setSatelliteValid] = useState<boolean | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [showValidationDetails, setShowValidationDetails] = useState<string | null>(null); // 'geometry' or 'satellite' or null
+  const [showValidationDetails, setShowValidationDetails] = useState<string | null>(null); // 'validation' or null
   const [selectedPlot, setSelectedPlot] = useState<string | null>(null); // To store which plot is selected in the details view
 
   // Create declaration mutation
@@ -507,205 +507,195 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setSatelliteValid(null);
     setIsValidating(false);
     setShowValidationDetails(null);
+    setSelectedPlot(null);
   };
 
-  // Handle dialog close
-  const handleDialogClose = (open: boolean) => {
-    if (!open) {
-      resetForm();
-    }
-    onOpenChange(open);
-  };
-
-  // Filter suppliers based on search term
-  // Show all suppliers by default, filter when there's a search term
-  const filteredSuppliers = supplierSearchTerm.length > 0
-    ? suppliers.filter(supplier => 
-        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
-      )
-    : suppliers;
-
-  // Get step labels based on declaration type
-  const getStepLabels = () => {
-    if (declarationType === "inbound") {
-      return [
-        "Items & Supplier", 
-        "GeoJSON Upload", 
-        "Evidence Documents", 
-        "Review"
-      ];
-    } else {
-      return [
-        "Items & Supplier", 
-        "GeoJSON Upload", 
-        "Evidence Documents", 
-        "Customer Selection",
-        "Review"
-      ];
+  // Set validity period presets
+  const handleValidityPeriodChange = (value: string) => {
+    setValidityPeriod(value);
+    const today = new Date();
+    
+    switch (value) {
+      case "30days":
+        setStartDate(today);
+        setEndDate(new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000));
+        setShowCustomDates(false);
+        break;
+      case "6months":
+        setStartDate(today);
+        setEndDate(new Date(today.getFullYear(), today.getMonth() + 6, today.getDate()));
+        setShowCustomDates(false);
+        break;
+      case "9months":
+        setStartDate(today);
+        setEndDate(new Date(today.getFullYear(), today.getMonth() + 9, today.getDate()));
+        setShowCustomDates(false);
+        break;
+      case "1year":
+        setStartDate(today);
+        setEndDate(new Date(today.getFullYear() + 1, today.getMonth(), today.getDate()));
+        setShowCustomDates(false);
+        break;
+      case "custom":
+        setShowCustomDates(true);
+        break;
     }
   };
+
+  // Steps configuration
+  const stepsConfig = [
+    { label: "Declaration Type" },
+    { label: "GeoJSON Upload" },
+    { label: "Upload Evidence" },
+    ...(declarationType === "outbound" ? [{ label: "Customer Selection" }] : []),
+    { label: "Review" },
+  ];
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Declaration</DialogTitle>
+          <DialogTitle>New Declaration</DialogTitle>
           <DialogDescription>
-            Create an inbound declaration with proper compliance documentation.
+            Create a new declaration to document and track compliance for your products.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mb-8">
+        <div className="mt-2 mb-6">
           <Stepper 
-            steps={getStepLabels()}
-            currentStep={currentStep}
+            steps={stepsConfig} 
+            currentStep={currentStep} 
             completedSteps={completedSteps}
           />
         </div>
 
-        <div className="py-4">
-          {/* Step removed - Declaration Type is now set by the main buttons */}
-
-          {/* Step 1: Declaration Details - Items */}
+        <div className="space-y-6">
+          {/* Step 1: Declaration Type and Basic Info */}
           {currentStep === 1 && (
             <div>
               <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
+                <Label className="text-base font-medium">Declaration Type</Label>
+                <p className="text-sm text-gray-500 mb-2">Select whether this is an inbound or outbound declaration.</p>
                 
-                {/* Period options */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Button 
-                    variant={validityPeriod === "30days" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("30days");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const thirtyDaysLater = new Date(today);
-                      thirtyDaysLater.setDate(today.getDate() + 30);
-                      setEndDate(thirtyDaysLater);
-                    }}
+                <Tabs 
+                  defaultValue={declarationType} 
+                  onValueChange={(value) => setDeclarationType(value as DeclarationType)}
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="inbound">Inbound</TabsTrigger>
+                    <TabsTrigger value="outbound">Outbound</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div>
+                  <Label htmlFor="poNumber" className="text-base font-medium">PO Number</Label>
+                  <Input
+                    id="poNumber"
+                    placeholder="Enter PO number"
+                    className="mt-2"
+                    value={poNumber}
+                    onChange={(e) => setPoNumber(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="supplierSoNumber" className="text-base font-medium">
+                    Supplier SO Number
+                    <span className="text-xs text-gray-500 ml-1">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="supplierSoNumber"
+                    placeholder="Enter supplier SO number"
+                    className="mt-2"
+                    value={supplierSoNumber}
+                    onChange={(e) => setSupplierSoNumber(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <Label className="text-base font-medium">Declaration Validity Period</Label>
+                <p className="text-sm text-gray-500 mb-2">Select the period for which this declaration is valid.</p>
+                
+                <div className="flex space-x-2 mb-3">
+                  <Badge 
+                    variant={validityPeriod === "30days" ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => handleValidityPeriodChange("30days")}
                   >
-                    30 days
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "6months" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("6months");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const sixMonthsLater = new Date(today);
-                      sixMonthsLater.setMonth(today.getMonth() + 6);
-                      setEndDate(sixMonthsLater);
-                    }}
+                    30 Days
+                  </Badge>
+                  <Badge 
+                    variant={validityPeriod === "6months" ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => handleValidityPeriodChange("6months")}
                   >
-                    6 months
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "9months" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("9months");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const nineMonthsLater = new Date(today);
-                      nineMonthsLater.setMonth(today.getMonth() + 9);
-                      setEndDate(nineMonthsLater);
-                    }}
+                    6 Months
+                  </Badge>
+                  <Badge 
+                    variant={validityPeriod === "9months" ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => handleValidityPeriodChange("9months")}
                   >
-                    9 months
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "1year" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("1year");
-                      setShowCustomDates(false);
-                      const today = new Date();
-                      setStartDate(today);
-                      const oneYearLater = new Date(today);
-                      oneYearLater.setFullYear(today.getFullYear() + 1);
-                      setEndDate(oneYearLater);
-                    }}
+                    9 Months
+                  </Badge>
+                  <Badge 
+                    variant={validityPeriod === "1year" ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => handleValidityPeriodChange("1year")}
                   >
-                    1 year
-                  </Button>
-                  <Button 
-                    variant={validityPeriod === "custom" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => {
-                      setValidityPeriod("custom");
-                      setShowCustomDates(true);
-                    }}
+                    1 Year
+                  </Badge>
+                  <Badge 
+                    variant={validityPeriod === "custom" ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => handleValidityPeriodChange("custom")}
                   >
                     Custom
-                  </Button>
+                  </Badge>
                 </div>
                 
-                {/* Display selected date range */}
-                {!showCustomDates && startDate && endDate && (
-                  <div className="p-3 bg-muted rounded-md mb-4">
-                    <p className="text-sm font-medium">Selected period:</p>
-                    <p className="text-sm">
-                      {format(startDate, "PP")} to {format(endDate, "PP")}
-                    </p>
-                  </div>
-                )}
-                
-                {/* Custom date selector */}
                 {showCustomDates && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="start-date">Start Date</Label>
+                      <Label htmlFor="startDate" className="text-sm">Start Date</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
-                            id="start-date"
                             variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !startDate && "text-muted-foreground"
-                            )}
+                            className="w-full justify-start text-left font-normal mt-1"
+                            id="startDate"
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startDate ? format(startDate, "PPP") : "Select start date"}
+                            {startDate ? format(startDate, "PPP") : "Select date"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
                             selected={startDate}
-                            onSelect={(date) => {
-                              setStartDate(date);
-                              // If end date is before start date, clear end date
-                              if (endDate && date && endDate < date) {
-                                setEndDate(undefined);
-                              }
-                            }}
+                            onSelect={setStartDate}
                             initialFocus
                           />
                         </PopoverContent>
                       </Popover>
                     </div>
-
+                    
                     <div>
-                      <Label htmlFor="end-date">End Date</Label>
+                      <Label htmlFor="endDate" className="text-sm">End Date</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
-                            id="end-date"
                             variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !endDate && "text-muted-foreground"
-                            )}
+                            className="w-full justify-start text-left font-normal mt-1"
+                            id="endDate"
+                            disabled={!startDate}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endDate ? format(endDate, "PPP") : "Select end date"}
+                            {endDate ? format(endDate, "PPP") : "Select date"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -713,7 +703,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             mode="single"
                             selected={endDate}
                             onSelect={setEndDate}
-                            fromDate={startDate}
+                            disabled={(date) => startDate ? date < startDate : false}
                             initialFocus
                           />
                         </PopoverContent>
@@ -724,191 +714,100 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               </div>
 
               <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">Supplier Selection</h3>
+                <Label className="text-base font-medium">Supplier Selection</Label>
+                <p className="text-sm text-gray-500 mb-2">Select the supplier associated with this declaration.</p>
                 
-                <div className="relative mb-4">
-                  <Input 
-                    type="text" 
-                    placeholder="Search suppliers..." 
+                <div className="relative">
+                  <Input
+                    placeholder="Search suppliers..."
                     className="pl-9"
                     value={supplierSearchTerm}
+                    onClick={() => setShowSupplierDropdown(true)}
                     onChange={(e) => {
                       setSupplierSearchTerm(e.target.value);
-                      if (e.target.value.length >= 1) {
-                        // Show dropdown when typing
-                        setShowSupplierDropdown(true);
-                      } else {
-                        setShowSupplierDropdown(false);
-                      }
-                    }}
-                    onFocus={() => {
-                      if (supplierSearchTerm.length >= 1) {
-                        setShowSupplierDropdown(true);
-                      }
-                    }}
-                    onBlur={() => {
-                      // Small delay to allow for click to register
-                      setTimeout(() => {
-                        setShowSupplierDropdown(false);
-                      }, 200);
+                      setShowSupplierDropdown(true);
                     }}
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                   
-                  {/* Dropdown with filtered suppliers */}
-                  {showSupplierDropdown && filteredSuppliers.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-md border overflow-hidden">
-                      <div className="max-h-60 overflow-y-auto">
-                        {filteredSuppliers.map((supplier) => (
-                          <div 
-                            key={supplier.id}
-                            className="px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50"
-                            onClick={() => {
-                              setSelectedSupplierId(supplier.id);
-                              setSelectedSupplier(supplier);
-                              setSupplierSearchTerm('');
-                              setShowSupplierDropdown(false);
-                            }}
-                          >
-                            <div className="flex items-center">
-                              <User className="h-4 w-4 text-gray-500 mr-2" />
-                              <div>
-                                <div className="font-medium">{supplier.name}</div>
-                                <div className="text-xs text-gray-500">{supplier.products || 'No products specified'}</div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Show "No suppliers found" in dropdown */}
-                  {showSupplierDropdown && supplierSearchTerm && filteredSuppliers.length === 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-md border">
-                      <div className="px-4 py-3 text-center text-sm text-gray-500">
-                        No suppliers found
-                      </div>
+                  {showSupplierDropdown && (
+                    <div className="absolute z-10 mt-1 w-full max-h-64 overflow-auto bg-white border rounded-md shadow-lg">
+                      {suppliers.filter(supplier => 
+                        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+                      ).map((supplier) => (
+                        <div
+                          key={supplier.id}
+                          className={cn(
+                            "p-3 cursor-pointer",
+                            selectedSupplierId === supplier.id ? "bg-primary/10" : "hover:bg-gray-50"
+                          )}
+                          onClick={() => {
+                            setSelectedSupplierId(supplier.id);
+                            setSelectedSupplier(supplier);
+                            setSupplierSearchTerm(supplier.name);
+                            setShowSupplierDropdown(false);
+                          }}
+                        >
+                          <div className="font-medium">{supplier.name}</div>
+                          {supplier.products && (
+                            <div className="text-sm text-gray-500">Products: {supplier.products}</div>
+                          )}
+                        </div>
+                      ))}
+                      {suppliers.filter(supplier => 
+                        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+                      ).length === 0 && (
+                        <div className="p-3 text-center text-gray-500">No suppliers found</div>
+                      )}
                     </div>
                   )}
                 </div>
-
-                {/* Show selected supplier as a tile */}
-                {selectedSupplierId && (
-                  <div className="p-4 border rounded-md">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <User className="h-5 w-5 text-gray-500" />
-                      </div>
-                      <div className="ml-3 flex-grow">
-                        <div className="font-medium">{selectedSupplier?.name}</div>
-                        <div className="text-sm text-gray-500">{selectedSupplier?.products || 'No products specified'}</div>
-                      </div>
+                
+                {selectedSupplier && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex justify-between">
+                      <div className="font-medium">{selectedSupplier.name}</div>
+                      <Badge className="bg-primary">Selected</Badge>
                     </div>
+                    {selectedSupplier.products && (
+                      <div className="mt-1 text-sm text-gray-500">Products: {selectedSupplier.products}</div>
+                    )}
+                    {selectedSupplier.countries && selectedSupplier.countries.length > 0 && (
+                      <div className="mt-1 text-sm text-gray-500">
+                        Countries: {selectedSupplier.countries.join(', ')}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
-              <div className="space-y-6 mb-6">
-                <div>
-                  <Label htmlFor="po-number" className="text-sm font-medium">
-                    PO Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="po-number"
-                    type="text"
-                    placeholder="Enter PO number"
-                    className="mt-1"
-                    value={poNumber}
-                    onChange={(e) => setPoNumber(e.target.value)}
-                    required
-                  />
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-base font-medium">Declaration Items</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={addItem}
+                    className="h-8"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Item
+                  </Button>
                 </div>
 
-                <div>
-                  <Label htmlFor="supplier-so" className="text-sm font-medium">
-                    Supplier SO Number
-                  </Label>
-                  <Input
-                    id="supplier-so"
-                    type="text"
-                    placeholder="Enter supplier SO number"
-                    className="mt-1"
-                    value={supplierSoNumber}
-                    onChange={(e) => setSupplierSoNumber(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="shipment-number" className="text-sm font-medium">
-                    Shipment Number (BL, LR etc.)
-                  </Label>
-                  <Input
-                    id="shipment-number"
-                    type="text"
-                    placeholder="Enter shipment number"
-                    className="mt-1"
-                    value={shipmentNumber}
-                    onChange={(e) => setShipmentNumber(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">Declaration Items</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        // This will trigger a click on the hidden file input
-                        document.getElementById('importItemsFile')?.click();
-                      }}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Import Items
-                    </Button>
-                    <input 
-                      type="file" 
-                      id="importItemsFile" 
-                      accept=".csv,.xlsx,.xls" 
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files?.length) {
-                          console.log('Selected file:', e.target.files[0].name);
-                          // Here you would handle the file import
-                          // For example, parsing the CSV/Excel and adding items
-                          toast({
-                            title: "Items imported",
-                            description: `${e.target.files[0].name} has been processed.`,
-                            variant: "default",
-                          });
-                        }
-                      }} 
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-primary border-primary"
-                      onClick={addItem}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Item
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {items.map((item, index) => (
-                    <div key={item.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-center mb-3">
+                    <div 
+                      key={item.id} 
+                      className="p-4 border rounded-md"
+                    >
+                      <div className="flex justify-between items-start mb-4">
                         <h4 className="font-medium">Item {index + 1}</h4>
                         {items.length > 1 && (
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-red-500 hover:text-red-700 h-8 px-2"
+                            className="h-8 w-8 p-0 text-gray-500"
                             onClick={() => removeItem(item.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -916,93 +815,83 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-3 items-end">
-                        <div className="w-28">
-                          <Label htmlFor={`hsn-code-${item.id}`} className="text-sm">HSN Code *</Label>
-                          <Input 
-                            id={`hsn-code-${item.id}`} 
-                            placeholder="e.g. 1511.10.00"
-                            value={item.hsnCode}
-                            onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-                        
-                        <div className="w-28">
-                          <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
-                            RM Id
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-3.5 w-3.5 ml-1 text-gray-400 hover:text-gray-600 cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs max-w-xs">RM Id refers to the raw material id of this product in your ERP</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </Label>
-                          <Input 
-                            id={`rm-id-${item.id}`} 
-                            placeholder="e.g. RM13579"
-                            value={item.rmId}
-                            onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="w-44">
-                          <Label htmlFor={`product-name-${item.id}`} className="text-sm">Product Name *</Label>
-                          <Input 
-                            id={`product-name-${item.id}`} 
-                            placeholder="e.g. Palm Oil"
-                            value={item.productName}
-                            onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="w-44">
-                          <Label htmlFor={`scientific-name-${item.id}`} className="text-sm">Scientific Name</Label>
-                          <Input 
-                            id={`scientific-name-${item.id}`} 
-                            placeholder="e.g. Elaeis guineensis"
-                            value={item.scientificName}
-                            onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
-                            className="mt-1"
-                          />
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="flex flex-nowrap items-center space-x-4 w-full">
+                          <div className="w-1/3">
+                            <Label htmlFor={`hsn-${item.id}`} className="text-sm">HSN Code</Label>
+                            <div className="flex">
+                              <Input
+                                id={`hsn-${item.id}`}
+                                placeholder="e.g. 4407"
+                                value={item.hsnCode}
+                                onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                                className="mt-1"
+                              />
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="px-2 mt-1">
+                                      <Info className="h-4 w-4 text-gray-400" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Harmonized System of Nomenclature code for this product</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          </div>
+                          <div className="w-1/3">
+                            <Label htmlFor={`product-${item.id}`} className="text-sm">Product Name</Label>
+                            <Input
+                              id={`product-${item.id}`}
+                              placeholder="e.g. Natural Rubber"
+                              value={item.productName}
+                              onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="w-1/3">
+                            <Label htmlFor={`scientific-${item.id}`} className="text-sm">Scientific Name</Label>
+                            <Input
+                              id={`scientific-${item.id}`}
+                              placeholder="e.g. Hevea brasiliensis"
+                              value={item.scientificName}
+                              onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
                         </div>
 
-                        <div className="w-28">
-                          <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity *</Label>
-                          <Input 
-                            id={`quantity-${item.id}`} 
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="e.g. 5000"
-                            value={item.quantity}
-                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="w-28">
-                          <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
-                          <Select 
-                            value={item.unit} 
-                            onValueChange={(value) => updateItem(item.id, 'unit', value)}
-                          >
-                            <SelectTrigger id={`unit-${item.id}`} className="mt-1">
-                              <SelectValue placeholder="Select unit" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="kg">kg</SelectItem>
-                              <SelectItem value="tons">tons</SelectItem>
-                              <SelectItem value="liters">liters</SelectItem>
-                              <SelectItem value="m³">m³</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <div className="flex flex-nowrap items-center space-x-4 w-full">
+                          <div className="w-1/3">
+                            <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity</Label>
+                            <Input
+                              id={`quantity-${item.id}`}
+                              type="number"
+                              placeholder="e.g. 1000"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="w-1/3">
+                            <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
+                            <Select
+                              value={item.unit}
+                              onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                            >
+                              <SelectTrigger id={`unit-${item.id}`} className="mt-1">
+                                <SelectValue placeholder="Select unit" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="kg">kg</SelectItem>
+                                <SelectItem value="tons">tons</SelectItem>
+                                <SelectItem value="liters">liters</SelectItem>
+                                <SelectItem value="m³">m³</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1375,79 +1264,54 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       {uploadedFiles.length === 0 ? (
                         <span className="text-red-500">No documents uploaded</span>
                       ) : (
-                        <ul className="list-disc list-inside text-sm space-y-1">
+                        <ul className="list-disc list-inside">
                           {uploadedFiles.map((file, index) => (
-                            <li key={index}>{file}</li>
+                            <li key={index} className="text-sm">{file}</li>
                           ))}
                         </ul>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="col-span-2">
-                    <h4 className="text-sm font-medium text-gray-500">GeoJSON Validation Status</h4>
-                    {!hasUploadedGeoJSON ? (
-                      <p className="mt-1 text-red-500">Not uploaded</p>
-                    ) : (
-                      <div className="mt-1 space-y-1">
-                        <div className="flex items-center">
-                          <span className="text-sm mr-2">Geometry Check:</span>
-                          {geometryValid === true ? (
-                            <Badge className="bg-green-500">Compliant</Badge>
-                          ) : geometryValid === false ? (
-                            <Badge className="bg-red-500">Non-Compliant</Badge>
-                          ) : (
-                            <Badge className="bg-yellow-500">Pending</Badge>
+                    <h4 className="text-sm font-medium text-gray-500">GeoJSON Validation</h4>
+                    <div className="mt-1">
+                      {!hasUploadedGeoJSON ? (
+                        <span className="text-red-500">No GeoJSON file uploaded</span>
+                      ) : (
+                        <div className="flex flex-col space-y-1">
+                          <div className="text-sm">
+                            Geometry Check: 
+                            <span className={cn(
+                              "ml-2 px-2 py-0.5 rounded-full text-xs font-medium",
+                              geometryValid === true ? "bg-green-100 text-green-800" :
+                              geometryValid === false ? "bg-red-100 text-red-800" :
+                              "bg-gray-100 text-gray-800"
+                            )}>
+                              {geometryValid === true ? "Compliant" : 
+                               geometryValid === false ? "Non-Compliant" : 
+                               "Pending"}
+                            </span>
+                          </div>
+
+                          {geometryValid === true && (
+                            <div className="text-sm">
+                              Satellite Check: 
+                              <span className={cn(
+                                "ml-2 px-2 py-0.5 rounded-full text-xs font-medium",
+                                satelliteValid === true ? "bg-green-100 text-green-800" :
+                                satelliteValid === false ? "bg-red-100 text-red-800" :
+                                "bg-gray-100 text-gray-800"
+                              )}>
+                                {satelliteValid === true ? "Compliant" : 
+                                 satelliteValid === false ? "Non-Compliant" : 
+                                 "Pending"}
+                              </span>
+                            </div>
                           )}
                         </div>
-                        
-                        {geometryValid === true && (
-                          <div className="flex items-center">
-                            <span className="text-sm mr-2">Satellite Check:</span>
-                            {satelliteValid === true ? (
-                              <Badge className="bg-green-500">Compliant</Badge>
-                            ) : satelliteValid === false ? (
-                              <Badge className="bg-red-500">Non-Compliant</Badge>
-                            ) : (
-                              <Badge className="bg-yellow-500">Pending</Badge>
-                            )}
-                          </div>
-                        )}
-                        
-                        {(geometryValid === false || (geometryValid === true && satelliteValid === false)) && (
-                          <div className="mt-2 text-sm text-red-600">
-                            This declaration will be saved with non-compliant status.
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                <div className="flex items-start space-x-2">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5 text-amber-500" 
-                      viewBox="0 0 20 20" 
-                      fill="currentColor"
-                    >
-                      <path 
-                        fillRule="evenodd" 
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" 
-                        clipRule="evenodd" 
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Declaration Submission Notice</h4>
-                    <p className="text-sm text-gray-500 mt-1">
-                      By submitting this declaration, I confirm that all the information provided is 
-                      accurate and complete to the best of my knowledge. I understand that false 
-                      information may lead to penalties under the EUDR regulations.
-                    </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1455,160 +1319,16 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           )}
         </div>
 
-        {/* Validation Details Dialog */}
-        <Dialog open={showValidationDetails !== null} onOpenChange={(open) => !open && setShowValidationDetails(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
-                {showValidationDetails === 'geometry' ? 'Geometry Validation Details' : 'Satellite Check Details'}
-              </DialogTitle>
-              <DialogDescription>
-                {showValidationDetails === 'geometry' 
-                  ? 'Detailed geometry validation results for each polygon in the GeoJSON file.'
-                  : 'Detailed satellite imagery validation results for each polygon in the GeoJSON file.'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="max-h-[60vh] overflow-auto my-4">
-              <div className="space-y-4">
-                {/* Map visualization placeholder */}
-                <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                  <div className="text-center p-4">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="mx-auto mb-2 text-gray-400"
-                    >
-                      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                      <line x1="8" y1="2" x2="8" y2="18"></line>
-                      <line x1="16" y1="6" x2="16" y2="22"></line>
-                    </svg>
-                    <p className="text-sm text-gray-500">Interactive map visualization would be shown here</p>
-                  </div>
-                </div>
-                
-                {/* List of polygons */}
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Polygon Validation Results</h3>
-                  <div className="border rounded-md overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Polygon ID</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area (ha)</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issues</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {/* Generate 5 sample polygons with different statuses */}
-                        {Array.from({ length: 5 }).map((_, i) => {
-                          const isValid = Math.random() > 0.2;
-                          return (
-                            <tr key={i}>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm">Polygon {i + 1}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm">{(Math.random() * 10 + 1).toFixed(2)}</td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  isValid 
-                                    ? "bg-green-100 text-green-800" 
-                                    : "bg-red-100 text-red-800"
-                                }`}>
-                                  {isValid ? "Valid" : "Invalid"}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                {!isValid && (
-                                  <span className="text-gray-500">
-                                    {showValidationDetails === 'geometry'
-                                      ? ['Self-intersection', 'Invalid ring', 'Topology error'][Math.floor(Math.random() * 3)]
-                                      : ['Deforestation detected', 'Land use change', 'Protected area overlap'][Math.floor(Math.random() * 3)]}
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                {/* Summary statistics */}
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <div className="text-sm text-gray-500">Total Polygons</div>
-                    <div className="text-xl font-semibold mt-1">5</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-md">
-                    <div className="text-sm text-green-700">Valid Polygons</div>
-                    <div className="text-xl font-semibold text-green-700 mt-1">
-                      {showValidationDetails === 'geometry' ? '4' : '3'}
-                    </div>
-                  </div>
-                  <div className="bg-red-50 p-4 rounded-md">
-                    <div className="text-sm text-red-700">Invalid Polygons</div>
-                    <div className="text-xl font-semibold text-red-700 mt-1">
-                      {showValidationDetails === 'geometry' ? '1' : '2'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button onClick={() => setShowValidationDetails(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <DialogFooter>
-          {currentStep > 1 && (
-            <Button 
-              variant="outline" 
-              onClick={goToPreviousStep}
-              className="mr-auto"
-            >
-              Back
-            </Button>
-          )}
-
-          {((currentStep < 4 && declarationType === "inbound") || 
-            (currentStep < 5 && declarationType === "outbound")) ? (
-            <Button onClick={goToNextStep}>
-              Continue
-            </Button>
-          ) : (
-            <Button 
-              onClick={submitDeclaration}
-              disabled={createDeclaration.isPending}
-            >
-              {createDeclaration.isPending ? "Submitting..." : "Submit Declaration"}
-            </Button>
-          )}
-        </DialogFooter>
-
-        {/* Validation Details Dialog */}
+        {/* Validation Details Dialog - Combined for both geometry and satellite */}
         <Dialog open={showValidationDetails !== null} onOpenChange={(open) => !open && setShowValidationDetails(null)}>
           <DialogContent className="max-w-7xl max-h-[90vh] p-0 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 h-[80vh]">
               {/* Left sidebar with plot list */}
               <div className="col-span-1 overflow-y-auto border-r">
                 <div className="p-6">
-                  <DialogTitle>
-                    {showValidationDetails === 'geometry' ? 'Geometry Validation Details' : 'Satellite Check Details'}
-                  </DialogTitle>
+                  <DialogTitle>GeoJSON Validation Details</DialogTitle>
                   <DialogDescription className="mt-2 mb-4">
-                    {showValidationDetails === 'geometry' 
-                      ? 'Detailed geometry validation results for each polygon in the GeoJSON file.'
-                      : 'Detailed satellite imagery validation results for each polygon in the GeoJSON file.'}
+                    Detailed validation results for each polygon in the GeoJSON file, including both geometry and satellite checks.
                   </DialogDescription>
                   
                   <h3 className="text-sm font-medium mb-3">Plot List</h3>
@@ -1757,23 +1477,22 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           </div>
                           <div className="text-sm">
                             <dt className="text-gray-500">Area</dt>
-                            <dd className="font-medium mt-1">245 hectares</dd>
-                          </div>
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Perimeter</dt>
-                            <dd className="font-medium mt-1">2.5 km</dd>
+                            <dd className="font-medium mt-1">135.62 hectares</dd>
                           </div>
                           <div className="text-sm">
                             <dt className="text-gray-500">Coordinates</dt>
-                            <dd className="font-medium mt-1">12.3456, -78.9012</dd>
+                            <dd className="font-medium mt-1">9.1234° N, 8.5678° E</dd>
+                          </div>
+                          <div className="text-sm">
+                            <dt className="text-gray-500">No. of Vertices</dt>
+                            <dd className="font-medium mt-1">28</dd>
                           </div>
                         </dl>
                       </div>
                       
                       <div>
-                        <h3 className="text-lg font-medium mb-4">Validation Results</h3>
-                        
-                        <div className="space-y-4">
+                        <h3 className="text-lg font-medium mb-4">Validation Status</h3>
+                        <div className="space-y-3">
                           <div className="p-3 bg-green-50 border border-green-100 rounded-md">
                             <div className="flex items-center">
                               <svg 
@@ -1820,14 +1539,14 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           </div>
                           <div className="flex items-start">
                             <svg 
-                              className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" 
+                              className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" 
                               viewBox="0 0 20 20" 
                               fill="currentColor"
                             >
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
                             <div>
-                              <div>Plot Uploaded</div>
+                              <div>Last Satellite Verification</div>
                               <div className="text-gray-500 mt-0.5">March 14, 2025</div>
                             </div>
                           </div>
@@ -1845,6 +1564,31 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           </DialogContent>
         </Dialog>
         
+        <DialogFooter>
+          {currentStep > 1 && (
+            <Button 
+              variant="outline" 
+              onClick={goToPreviousStep}
+              className="mr-auto"
+            >
+              Back
+            </Button>
+          )}
+
+          {((currentStep < 4 && declarationType === "inbound") || 
+            (currentStep < 5 && declarationType === "outbound")) ? (
+            <Button onClick={goToNextStep}>
+              Continue
+            </Button>
+          ) : (
+            <Button 
+              onClick={submitDeclaration}
+              disabled={createDeclaration.isPending}
+            >
+              {createDeclaration.isPending ? "Submitting..." : "Submit Declaration"}
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
