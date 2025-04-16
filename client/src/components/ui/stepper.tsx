@@ -35,8 +35,12 @@ function Step({ index, title, isActive, isCompleted }: StepProps) {
   );
 }
 
+interface StepConfig {
+  label: string;
+}
+
 interface StepperProps {
-  steps: string[];
+  steps: (string | StepConfig)[];
   currentStep: number;
   completedSteps: number[];
 }
@@ -48,12 +52,13 @@ export default function Stepper({ steps, currentStep, completedSteps }: StepperP
         const stepNumber = index + 1;
         const isActive = currentStep === stepNumber;
         const isCompleted = completedSteps.includes(stepNumber);
+        const stepTitle = typeof step === 'string' ? step : step.label;
         
         return (
-          <div key={step} className="flex items-center flex-1">
+          <div key={index} className="flex items-center flex-1">
             <Step 
               index={stepNumber}
-              title={step}
+              title={stepTitle}
               isActive={isActive}
               isCompleted={isCompleted}
             />
