@@ -481,6 +481,7 @@ export default function Declarations() {
   const { user } = useAuth();
   const isSupplier = user?.role === 'supplier';
   const isCustomer = user?.role === 'customer';
+  const isEuOperator = user?.role === 'eu_operator';
   
   // For suppliers, default to outbound tab, for customers default to inbound tab
   const [activeTab, setActiveTab] = useState<string>(
@@ -636,9 +637,15 @@ export default function Declarations() {
   
   // Since we're already filtering by type on the server, we don't need to filter by type again
   // First filter by declaration type (inbound/outbound) based on active tab
-  let filteredDeclarations = [...declarations].filter(
-    (d) => d.type === activeTab
-  );
+  // For the EU Filed tab, include all types of declarations
+  let filteredDeclarations = [...declarations];
+  
+  if (activeTab !== "eu_filed") {
+    // Filter by declaration type only for inbound/outbound tabs
+    filteredDeclarations = filteredDeclarations.filter(
+      (d) => d.type === activeTab
+    );
+  }
           
   // Apply status filter
   if (statusFilter !== "all") {
@@ -1098,6 +1105,12 @@ export default function Declarations() {
           <TabsList className="grid w-full grid-cols-1 mb-4">
             <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
           </TabsList>
+        ) : isEuOperator ? (
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
+            <TabsTrigger value="outbound">Outbound Declaration</TabsTrigger>
+            <TabsTrigger value="eu_filed">EU Filed Declarations</TabsTrigger>
+          </TabsList>
         ) : (
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="inbound">Inbound Declaration</TabsTrigger>
@@ -1193,73 +1206,252 @@ export default function Declarations() {
           </div>
         )}
         
-        <div className="rounded-md border">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
-                    <Checkbox 
-                      checked={allSelected}
-                      onCheckedChange={handleSelectAll}
-                      aria-label="Select all"
-                    />
-                  </th>
-                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
-                    {activeTab === "inbound" ? "Supplier Name" : "Customer Name"}
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Industry/Product
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Status
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Risk Level
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Compliance Status
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Last Update
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {isLoadingDeclarations ? (
+        {activeTab === "eu_filed" ? (
+          // EU Filed Declarations Table with different columns
+          <div className="rounded-md border">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td colSpan={9} className="py-10 text-center text-gray-500">
-                      Loading declarations...
-                    </td>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
+                      <Checkbox 
+                        checked={allSelected}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all"
+                      />
+                    </th>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
+                      Declaration ID
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Filing Date
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Supplier Name / ID
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Material Type
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Product / Commodity
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Origin Country
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Destination Country
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      GeoJSON Attached
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      EUDR Reference No
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      EUDR Verification No
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Previous Ref No
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Documentation Link
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Filed By
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Audit Trail Available?
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Next Review Date
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      Action
+                    </th>
                   </tr>
-                ) : filteredDeclarations.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="py-10 text-center text-gray-500">
-                      No {activeTab === "inbound" ? "inbound" : "outbound"} declarations found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDeclarations.map((declaration: Declaration) => (
-                    <DeclarationRow 
-                      key={declaration.id} 
-                      declaration={declaration} 
-                      selected={selectedRows.includes(declaration.id)}
-                      onSelectChange={handleRowSelect}
-                      onViewClick={(id) => {
-                        setSelectedDeclarationId(id);
-                        setDetailViewOpen(true);
-                      }}
-                      suppliersList={suppliers}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {isLoadingDeclarations ? (
+                    <tr>
+                      <td colSpan={17} className="py-10 text-center text-gray-500">
+                        Loading EU Filed declarations...
+                      </td>
+                    </tr>
+                  ) : filteredDeclarations.length === 0 ? (
+                    <tr>
+                      <td colSpan={17} className="py-10 text-center text-gray-500">
+                        No EU Filed declarations found
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDeclarations.map((declaration: Declaration) => (
+                      <tr key={declaration.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
+                          <Checkbox 
+                            checked={selectedRows.includes(declaration.id)}
+                            onCheckedChange={(checked) => handleRowSelect(declaration.id, checked === true)}
+                            aria-label={`Select declaration ${declaration.id}`}
+                          />
+                        </td>
+                        <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
+                          <div className="font-medium text-gray-900">
+                            {declaration.id}
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {formatDate(declaration.createdAt)}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {declaration.supplier || `Supplier ${declaration.supplierId}`}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {declaration.industry || "Not specified"}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {declaration.productName}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {/* Simulated origin country */}
+                          {["Indonesia", "Brazil", "Malaysia", "Ghana", "Nigeria"][declaration.id % 5]}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {/* Simulated destination country */}
+                          European Union
+                        </td>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap">
+                          {declaration.geojsonData ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <span className="mr-1 h-2 w-2 rounded-full bg-green-500"></span>
+                              Yes
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className="mr-1 h-2 w-2 rounded-full bg-gray-500"></span>
+                              No
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {/* Simulated EUDR Reference */}
+                          EUDR-{String(declaration.id).padStart(6, '0')}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {/* Simulated EUDR Verification */}
+                          VER-{String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {/* Simulated Previous Reference */}
+                          {declaration.id % 3 === 0 ? `REF-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}` : '-'}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          <a href="#" className="text-blue-500 hover:underline">View Docs</a>
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          System Admin
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {declaration.id % 2 === 0 ? 'Yes' : 'No'}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {/* Simulated next review date - 90 days from creation */}
+                          {formatDate(new Date(new Date(declaration.createdAt).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString())}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-right whitespace-nowrap">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedDeclarationId(declaration.id);
+                                setDetailViewOpen(true);
+                              }}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                <span>View Details</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        ) : (
+          // Regular Inbound/Outbound Declarations Table
+          <div className="rounded-md border">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
+                      <Checkbox 
+                        checked={allSelected}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all"
+                      />
+                    </th>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">
+                      {activeTab === "inbound" ? "Supplier Name" : "Customer Name"}
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Industry/Product
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Status
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Risk Level
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Compliance Status
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Last Update
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {isLoadingDeclarations ? (
+                    <tr>
+                      <td colSpan={9} className="py-10 text-center text-gray-500">
+                        Loading declarations...
+                      </td>
+                    </tr>
+                  ) : filteredDeclarations.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-10 text-center text-gray-500">
+                        No {activeTab === "inbound" ? "inbound" : "outbound"} declarations found
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDeclarations.map((declaration: Declaration) => (
+                      <DeclarationRow 
+                        key={declaration.id} 
+                        declaration={declaration} 
+                        selected={selectedRows.includes(declaration.id)}
+                        onSelectChange={handleRowSelect}
+                        onViewClick={(id) => {
+                          setSelectedDeclarationId(id);
+                          setDetailViewOpen(true);
+                        }}
+                        suppliersList={suppliers}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </Tabs>
       
       {/* Declaration Detail View Modal */}
