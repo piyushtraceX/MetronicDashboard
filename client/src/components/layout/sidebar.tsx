@@ -103,15 +103,7 @@ export default function Sidebar() {
             />
           )}
           
-          {/* Due Diligence - Only available to EU Operators */}
-          {isEuOperator && (
-            <SidebarSection
-              icon="fa-check-double"
-              label="Due Diligence"
-              href="/due-diligence"
-              active={location === "/due-diligence"}
-            />
-          )}
+          {/* Due Diligence section removed as requested */}
           
           {/* Risk Assessment and Documents tabs removed as requested */}
           
@@ -123,9 +115,7 @@ export default function Sidebar() {
                 ? "Outbound Declarations" 
                 : isCustomer 
                   ? "Inbound Declarations" 
-                  : isEuOperator 
-                    ? "Import Declarations" 
-                    : "Declarations"
+                  : "Declarations"
             }
             href="/declarations"
             active={location === "/declarations"}
@@ -153,15 +143,7 @@ export default function Sidebar() {
             />
           )}
           
-          {/* Regulatory Updates - Only available to EU Operators */}
-          {isEuOperator && (
-            <SidebarSection
-              icon="fa-scroll"
-              label="Regulatory Updates"
-              href="/regulatory-updates"
-              active={location === "/regulatory-updates"}
-            />
-          )}
+          {/* Regulatory Updates section removed as requested */}
           
           {/* Compliance and Reports tabs removed as requested */}
           
