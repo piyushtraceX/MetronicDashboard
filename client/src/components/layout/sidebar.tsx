@@ -125,7 +125,7 @@ export default function Sidebar() {
           {!isSupplier && !isCustomer && (
             <SidebarSection
               icon="fa-users"
-              label={isEuOperator ? "Importers & Traders" : "Customers"}
+              label="Customers"
               href="/customers"
               active={location === "/customers"}
             />
