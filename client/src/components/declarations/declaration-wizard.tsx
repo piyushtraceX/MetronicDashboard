@@ -544,10 +544,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
   // Steps configuration
   const stepsConfig = [
-    { label: "Declaration Type" },
+    { label: "Declaration Details" },
     { label: "GeoJSON Upload" },
     { label: "Upload Evidence" },
-    ...(declarationType === "outbound" ? [{ label: "Customer Selection" }] : []),
     { label: "Review" },
   ];
 
@@ -570,25 +569,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
         </div>
 
         <div className="space-y-6">
-          {/* Step 1: Declaration Type and Basic Info */}
+          {/* Step 1: Declaration Basic Info */}
           {currentStep === 1 && (
             <div>
-              <div className="mb-6">
-                <Label className="text-base font-medium">Declaration Type</Label>
-                <p className="text-sm text-gray-500 mb-2">Select whether this is an inbound or outbound declaration.</p>
-                
-                <Tabs 
-                  defaultValue={declarationType} 
-                  onValueChange={(value) => setDeclarationType(value as DeclarationType)}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="inbound">Inbound</TabsTrigger>
-                    <TabsTrigger value="outbound">Outbound</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div>
                   <Label htmlFor="poNumber" className="text-base font-medium">PO Number</Label>
@@ -782,24 +765,34 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
               </div>
 
               <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-4">
                   <Label className="text-base font-medium">Declaration Items</Label>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={addItem}
-                    className="h-8"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Item
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-8"
+                    >
+                      <Upload className="h-4 w-4 mr-1" />
+                      Import Items
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={addItem}
+                      className="h-8 bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Item
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {items.map((item, index) => (
                     <div 
                       key={item.id} 
-                      className="p-4 border rounded-md"
+                      className="p-5 border rounded-md"
                     >
                       <div className="flex justify-between items-start mb-4">
                         <h4 className="font-medium">Item {index + 1}</h4>
@@ -815,83 +808,106 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="flex flex-nowrap items-center space-x-4 w-full">
-                          <div className="w-1/3">
-                            <Label htmlFor={`hsn-${item.id}`} className="text-sm">HSN Code</Label>
-                            <div className="flex">
-                              <Input
-                                id={`hsn-${item.id}`}
-                                placeholder="e.g. 4407"
-                                value={item.hsnCode}
-                                onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
-                                className="mt-1"
-                              />
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="px-2 mt-1">
-                                      <Info className="h-4 w-4 text-gray-400" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Harmonized System of Nomenclature code for this product</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </div>
-                          <div className="w-1/3">
-                            <Label htmlFor={`product-${item.id}`} className="text-sm">Product Name</Label>
-                            <Input
-                              id={`product-${item.id}`}
-                              placeholder="e.g. Natural Rubber"
-                              value={item.productName}
-                              onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div className="w-1/3">
-                            <Label htmlFor={`scientific-${item.id}`} className="text-sm">Scientific Name</Label>
-                            <Input
-                              id={`scientific-${item.id}`}
-                              placeholder="e.g. Hevea brasiliensis"
-                              value={item.scientificName}
-                              onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
-                              className="mt-1"
-                            />
-                          </div>
+                      <div className="grid grid-cols-6 gap-4 items-end">
+                        <div>
+                          <Label htmlFor={`hsn-${item.id}`} className="text-sm flex items-center">
+                            HSN Code
+                            <span className="text-red-500 ml-0.5">*</span>
+                          </Label>
+                          <Input
+                            id={`hsn-${item.id}`}
+                            placeholder="e.g. 1511.10.00"
+                            value={item.hsnCode}
+                            onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
+                            className="mt-1"
+                          />
                         </div>
 
-                        <div className="flex flex-nowrap items-center space-x-4 w-full">
-                          <div className="w-1/3">
-                            <Label htmlFor={`quantity-${item.id}`} className="text-sm">Quantity</Label>
-                            <Input
-                              id={`quantity-${item.id}`}
-                              type="number"
-                              placeholder="e.g. 1000"
-                              value={item.quantity}
-                              onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div className="w-1/3">
-                            <Label htmlFor={`unit-${item.id}`} className="text-sm">Unit</Label>
-                            <Select
-                              value={item.unit}
-                              onValueChange={(value) => updateItem(item.id, 'unit', value)}
-                            >
-                              <SelectTrigger id={`unit-${item.id}`} className="mt-1">
-                                <SelectValue placeholder="Select unit" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="kg">kg</SelectItem>
-                                <SelectItem value="tons">tons</SelectItem>
-                                <SelectItem value="liters">liters</SelectItem>
-                                <SelectItem value="m³">m³</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                        <div>
+                          <Label htmlFor={`rm-id-${item.id}`} className="text-sm flex items-center">
+                            RM ID
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="px-1 h-6">
+                                    <Info className="h-3.5 w-3.5 text-gray-400" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Raw Material ID for internal tracking</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </Label>
+                          <Input
+                            id={`rm-id-${item.id}`}
+                            placeholder="e.g. RM12345"
+                            value={item.rmId || ''}
+                            onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`product-${item.id}`} className="text-sm flex items-center">
+                            Product Name
+                            <span className="text-red-500 ml-0.5">*</span>
+                          </Label>
+                          <Input
+                            id={`product-${item.id}`}
+                            placeholder="e.g. Palm Oil"
+                            value={item.productName}
+                            onChange={(e) => updateItem(item.id, 'productName', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`scientific-${item.id}`} className="text-sm">
+                            Scientific Name
+                          </Label>
+                          <Input
+                            id={`scientific-${item.id}`}
+                            placeholder="e.g. Elaeis guineen"
+                            value={item.scientificName}
+                            onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`quantity-${item.id}`} className="text-sm flex items-center">
+                            Quantity
+                            <span className="text-red-500 ml-0.5">*</span>
+                          </Label>
+                          <Input
+                            id={`quantity-${item.id}`}
+                            type="number"
+                            placeholder="e.g. 5000"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`unit-${item.id}`} className="text-sm">
+                            Unit
+                          </Label>
+                          <Select
+                            value={item.unit}
+                            onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                          >
+                            <SelectTrigger id={`unit-${item.id}`} className="mt-1">
+                              <SelectValue placeholder="Select unit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="kg">kg</SelectItem>
+                              <SelectItem value="tons">tons</SelectItem>
+                              <SelectItem value="liters">liters</SelectItem>
+                              <SelectItem value="m³">m³</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
