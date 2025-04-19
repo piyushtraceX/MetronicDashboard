@@ -599,47 +599,56 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <Label className="text-base font-medium">Declaration Validity Period</Label>
-                <p className="text-sm text-gray-500 mb-2">Select the period for which this declaration is valid.</p>
+              <div className="mb-8">
+                <h3 className="text-base font-medium mb-3">Declaration Validity Period</h3>
                 
-                <div className="flex space-x-2 mb-3">
-                  <Badge 
-                    variant={validityPeriod === "30days" ? "default" : "outline"}
-                    className="cursor-pointer"
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button 
+                    variant={validityPeriod === "30days" ? "default" : "outline"} 
+                    size="sm"
                     onClick={() => handleValidityPeriodChange("30days")}
                   >
-                    30 Days
-                  </Badge>
-                  <Badge 
-                    variant={validityPeriod === "6months" ? "default" : "outline"}
-                    className="cursor-pointer"
+                    30 days
+                  </Button>
+                  <Button 
+                    variant={validityPeriod === "6months" ? "default" : "outline"} 
+                    size="sm"
                     onClick={() => handleValidityPeriodChange("6months")}
                   >
-                    6 Months
-                  </Badge>
-                  <Badge 
-                    variant={validityPeriod === "9months" ? "default" : "outline"}
-                    className="cursor-pointer"
+                    6 months
+                  </Button>
+                  <Button 
+                    variant={validityPeriod === "9months" ? "default" : "outline"} 
+                    size="sm"
                     onClick={() => handleValidityPeriodChange("9months")}
                   >
-                    9 Months
-                  </Badge>
-                  <Badge 
-                    variant={validityPeriod === "1year" ? "default" : "outline"}
-                    className="cursor-pointer"
+                    9 months
+                  </Button>
+                  <Button 
+                    variant={validityPeriod === "1year" ? "default" : "outline"} 
+                    size="sm"
                     onClick={() => handleValidityPeriodChange("1year")}
                   >
-                    1 Year
-                  </Badge>
-                  <Badge 
-                    variant={validityPeriod === "custom" ? "default" : "outline"}
-                    className="cursor-pointer"
+                    1 year
+                  </Button>
+                  <Button 
+                    variant={validityPeriod === "custom" ? "default" : "outline"} 
+                    size="sm"
                     onClick={() => handleValidityPeriodChange("custom")}
                   >
                     Custom
-                  </Badge>
+                  </Button>
                 </div>
+                
+                {/* Selected period display */}
+                {(startDate && endDate) && (
+                  <div className="bg-gray-50 p-3 rounded-md mb-4">
+                    <p className="text-sm font-medium mb-1">Selected period:</p>
+                    <p className="text-sm text-gray-700">
+                      {format(startDate, "MMM d, yyyy")} to {format(endDate, "MMM d, yyyy")}
+                    </p>
+                  </div>
+                )}
                 
                 {showCustomDates && (
                   <div className="grid grid-cols-2 gap-4">
