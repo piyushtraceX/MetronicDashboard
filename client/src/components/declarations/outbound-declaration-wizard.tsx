@@ -638,8 +638,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                 /* Create outbound declaration from existing inbound declarations */
                 <div>
                   {/* Declaration Validity Period - FIRST */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
+                  <div className="mb-8">
+                    <h3 className="text-base font-medium mb-3">Declaration Validity Period</h3>
                     
                     {/* Period options */}
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -715,12 +715,12 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                       </Button>
                     </div>
                     
-                    {/* Display selected date range */}
-                    {!showCustomDates && startDate && endDate && (
-                      <div className="p-3 bg-muted rounded-md mb-4">
-                        <p className="text-sm font-medium">Selected period:</p>
-                        <p className="text-sm">
-                          {format(startDate, "PP")} to {format(endDate, "PP")}
+                    {/* Selected period display */}
+                    {(startDate && endDate) && (
+                      <div className="bg-gray-50 p-3 rounded-md mb-4">
+                        <p className="text-sm font-medium mb-1">Selected period:</p>
+                        <p className="text-sm text-gray-700">
+                          {format(startDate, "MMM d, yyyy")} to {format(endDate, "MMM d, yyyy")}
                         </p>
                       </div>
                     )}
@@ -1034,8 +1034,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                 /* Fresh declaration details */
                 <div>
                   {/* Declaration Validity Period */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-4">Declaration Validity Period</h3>
+                  <div className="mb-8">
+                    <h3 className="text-base font-medium mb-3">Declaration Validity Period</h3>
                     
                     {/* Period options */}
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -1111,12 +1111,12 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                       </Button>
                     </div>
                     
-                    {/* Display selected date range */}
-                    {!showCustomDates && startDate && endDate && (
-                      <div className="p-3 bg-muted rounded-md mb-4">
-                        <p className="text-sm font-medium">Selected period:</p>
-                        <p className="text-sm">
-                          {format(startDate, "PP")} to {format(endDate, "PP")}
+                    {/* Selected period display */}
+                    {(startDate && endDate) && (
+                      <div className="bg-gray-50 p-3 rounded-md mb-4">
+                        <p className="text-sm font-medium mb-1">Selected period:</p>
+                        <p className="text-sm text-gray-700">
+                          {format(startDate, "MMM d, yyyy")} to {format(endDate, "MMM d, yyyy")}
                         </p>
                       </div>
                     )}
