@@ -107,8 +107,8 @@ function DeclarationRow({
   selected?: boolean;
   onSelectChange?: (id: number, selected: boolean) => void;
   suppliersList?: any[];
-  setSelectedTracesDeclarationId: (id: number | null) => void;
-  setEuTracesFormOpen: (open: boolean) => void;
+  setSelectedTracesDeclarationId?: (id: number | null) => void;
+  setEuTracesFormOpen?: (open: boolean) => void;
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [notifySupplierOpen, setNotifySupplierOpen] = useState(false);
@@ -279,8 +279,10 @@ function DeclarationRow({
             </DropdownMenuItem>
             
             <DropdownMenuItem onClick={() => {
-              setSelectedTracesDeclarationId(declaration.id);
-              setEuTracesFormOpen(true);
+              if (setSelectedTracesDeclarationId && setEuTracesFormOpen) {
+                setSelectedTracesDeclarationId(declaration.id);
+                setEuTracesFormOpen(true);
+              }
             }}>
               <FileText className="h-4 w-4 mr-2" />
               <span>File DDS in EU Traces</span>
