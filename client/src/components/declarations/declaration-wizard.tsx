@@ -278,6 +278,147 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     }
   };
 
+  // Generate sample validation plots with various validation states
+  const generateValidationPlots = () => {
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Plot A - All compliant
+    const plotA: ValidationPlot = {
+      id: "plot-1",
+      name: "Plot A",
+      plotId: "POL-001",
+      area: 125.4,
+      areaUnit: "hectares",
+      perimeter: 2.4,
+      perimeterUnit: "km",
+      coordinates: "12.345°N, 76.901°E",
+      vertices: 28,
+      status: "compliant",
+      geometryStatus: "compliant",
+      satelliteStatus: "compliant",
+      lastValidated: currentDate,
+      createdAt: "2025-01-15",
+      issues: []
+    };
+
+    // Plot B - Geometry issues
+    const plotB: ValidationPlot = {
+      id: "plot-2",
+      name: "Plot B",
+      plotId: "POL-002",
+      area: 98.7,
+      areaUnit: "hectares",
+      perimeter: 1.8,
+      perimeterUnit: "km",
+      coordinates: "12.355°N, 76.912°E",
+      vertices: 24,
+      status: "non-compliant",
+      geometryStatus: "non-compliant",
+      satelliteStatus: "warning",
+      lastValidated: currentDate,
+      createdAt: "2025-01-18",
+      issues: [
+        {
+          type: "geometry",
+          message: "Self-intersection detected",
+          details: "Polygon has self-intersecting boundaries at coordinates (12.352°N, 76.908°E)",
+          severity: "error"
+        },
+        {
+          type: "geometry",
+          message: "Invalid vertex count",
+          details: "Polygons must have at least 4 vertices to form a valid closed shape",
+          severity: "error"
+        }
+      ]
+    };
+
+    // Plot C - Satellite issues
+    const plotC: ValidationPlot = {
+      id: "plot-3",
+      name: "Plot C",
+      plotId: "POL-003",
+      area: 142.1,
+      areaUnit: "hectares",
+      perimeter: 3.2,
+      perimeterUnit: "km",
+      coordinates: "12.365°N, 76.925°E",
+      vertices: 32,
+      status: "non-compliant",
+      geometryStatus: "compliant",
+      satelliteStatus: "non-compliant",
+      lastValidated: currentDate,
+      createdAt: "2025-01-20",
+      issues: [
+        {
+          type: "satellite",
+          message: "Deforestation detected",
+          details: "Satellite imagery shows evidence of recent deforestation in the northwest section",
+          severity: "error"
+        },
+        {
+          type: "satellite",
+          message: "Land use change detected",
+          details: "Comparison with historical imagery shows unauthorized land use change since 2020",
+          severity: "error"
+        }
+      ]
+    };
+
+    // Plot D - Both geometry and satellite warnings
+    const plotD: ValidationPlot = {
+      id: "plot-4",
+      name: "Plot D",
+      plotId: "POL-004",
+      area: 110.8,
+      areaUnit: "hectares",
+      perimeter: 2.7,
+      perimeterUnit: "km",
+      coordinates: "12.375°N, 76.938°E",
+      vertices: 26,
+      status: "warning",
+      geometryStatus: "warning",
+      satelliteStatus: "warning",
+      lastValidated: currentDate,
+      createdAt: "2025-01-25",
+      issues: [
+        {
+          type: "geometry",
+          message: "Boundary proximity warning",
+          details: "Polygon boundary is within 10m of a protected area border",
+          severity: "warning"
+        },
+        {
+          type: "satellite",
+          message: "Potential water body encroachment",
+          details: "Satellite imagery suggests possible encroachment into seasonal water body",
+          severity: "warning"
+        }
+      ]
+    };
+
+    // Plot E - All compliant
+    const plotE: ValidationPlot = {
+      id: "plot-5",
+      name: "Plot E",
+      plotId: "POL-005",
+      area: 135.6,
+      areaUnit: "hectares",
+      perimeter: 2.2,
+      perimeterUnit: "km",
+      coordinates: "12.385°N, 76.945°E",
+      vertices: 30,
+      status: "compliant",
+      geometryStatus: "compliant",
+      satelliteStatus: "compliant",
+      lastValidated: currentDate,
+      createdAt: "2025-01-28",
+      issues: []
+    };
+    
+    return [plotA, plotB, plotC, plotD, plotE];
+  };
+
   // Handle file upload simulation
   const handleGeoJSONUpload = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -285,6 +426,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setIsValidating(true);
     setGeometryValid(null);
     setSatelliteValid(null);
+    setSelectedPlot(null);
     
     toast({
       title: "GeoJSON uploaded",
@@ -292,18 +434,24 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       variant: "default",
     });
     
+    // Generate validation plot data
+    const plots = generateValidationPlots();
+    
     // Simulate geometry validation check
     setTimeout(() => {
-      // 80% probability of geometry validation passing, 20% failing
-      const geometryIsValid = Math.random() < 0.8;
+      // Check if any plots have geometry issues
+      const hasGeometryIssues = plots.some(plot => plot.geometryStatus === "non-compliant");
+      const geometryIsValid = !hasGeometryIssues;
+      
       setGeometryValid(geometryIsValid);
+      setValidationPlots(plots);
       
       // If geometry validation fails, don't proceed to satellite check
       if (!geometryIsValid) {
         setIsValidating(false);
         toast({
           title: "Geometry validation failed",
-          description: "The GeoJSON contains non-compliant geometry. Please notify the supplier. The declaration can be saved as draft but cannot be submitted.",
+          description: "The GeoJSON contains non-compliant geometry. Please view validation details for more information.",
           variant: "destructive",
         });
         return;
@@ -311,8 +459,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       
       // Only proceed to satellite check if geometry is valid
       setTimeout(() => {
-        // 75% probability of satellite validation passing, 25% failing
-        const satelliteIsValid = Math.random() < 0.75;
+        // Check if any plots have satellite issues
+        const hasSatelliteIssues = plots.some(plot => plot.satelliteStatus === "non-compliant");
+        const satelliteIsValid = !hasSatelliteIssues;
+        
         setSatelliteValid(satelliteIsValid);
         setIsValidating(false);
         
@@ -320,7 +470,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
         if (!satelliteIsValid) {
           toast({
             title: "Validation issues detected",
-            description: "Satellite check detected potential deforestation. The declaration can be saved as draft but cannot be submitted.",
+            description: "Satellite check detected potential deforestation. View validation details for more information.",
             variant: "destructive",
           });
         }
@@ -1375,240 +1525,394 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
           )}
         </div>
 
-        {/* Validation Details Dialog - Combined for both geometry and satellite */}
-        <Dialog open={showValidationDetails !== null} onOpenChange={(open) => !open && setShowValidationDetails(null)}>
+        {/* Enhanced Validation Details Dialog */}
+        <Dialog 
+          open={showValidationDetails !== null} 
+          onOpenChange={(open) => !open && setShowValidationDetails(null)}
+        >
           <DialogContent className="max-w-7xl max-h-[90vh] p-0 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 h-[80vh]">
-              {/* Left sidebar with plot list */}
-              <div className="col-span-1 overflow-y-auto border-r">
-                <div className="p-6">
-                  <DialogTitle>GeoJSON Validation Details</DialogTitle>
-                  <DialogDescription className="mt-2 mb-4">
-                    Detailed validation results for each polygon in the GeoJSON file, including both geometry and satellite checks.
-                  </DialogDescription>
-                  
-                  <h3 className="text-sm font-medium mb-3">Plot List</h3>
-                  <div className="space-y-2">
-                    {/* Generate 5 sample plots */}
-                    {Array.from({ length: 5 }).map((_, i) => {
-                      // Make all plots compliant
-                      const isCompliant = true;
-                      const plotId = `POL-${String(i + 1).padStart(3, '0')}`;
-                      return (
-                        <div 
-                          key={i}
-                          className={cn(
-                            "p-3 border rounded-md cursor-pointer hover:border-primary transition-colors",
-                            selectedPlot === plotId ? "border-primary bg-primary/5" : "border-gray-200"
-                          )}
-                          onClick={() => setSelectedPlot(plotId)}
-                        >
-                          <div className="flex justify-between">
-                            <div className="font-medium">{plotId}</div>
-                            <div className={cn(
-                              "text-xs font-medium px-2 py-0.5 rounded-full",
-                              isCompliant ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            )}>
-                              {isCompliant ? "Compliant" : "Non-Compliant"}
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-500 mt-1">{(Math.random() * 50 + 100).toFixed(2)} hectares</div>
-                        </div>
-                      );
-                    })}
+              {/* Left sidebar with plot list and search */}
+              <div className="col-span-1 overflow-y-auto border-r flex flex-col h-full">
+                <div className="p-6 border-b">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="search"
+                      placeholder="Search plots..."
+                      className="pl-8"
+                      value={plotSearchTerm}
+                      onChange={(e) => setPlotSearchTerm(e.target.value)}
+                    />
                   </div>
+                </div>
+                
+                {/* Plot list */}
+                <div className="flex-1 overflow-y-auto">
+                  {validationPlots
+                    .filter(plot => 
+                      plot.name.toLowerCase().includes(plotSearchTerm.toLowerCase()) || 
+                      plot.plotId.toLowerCase().includes(plotSearchTerm.toLowerCase())
+                    )
+                    .map((plot) => (
+                      <div 
+                        key={plot.id}
+                        className={cn(
+                          "p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors",
+                          selectedPlot === plot.plotId ? "bg-primary/5 border-l-4 border-l-primary" : ""
+                        )}
+                        onClick={() => setSelectedPlot(plot.plotId)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">{plot.name}</div>
+                            <div className="text-xs text-gray-500">{plot.plotId}</div>
+                          </div>
+                          <div className={cn(
+                            "text-xs font-medium px-2 py-1 rounded-full",
+                            plot.status === "compliant" 
+                              ? "bg-green-100 text-green-800" 
+                              : plot.status === "warning"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-red-100 text-red-800"
+                          )}>
+                            {plot.status === "compliant" 
+                              ? "Compliant" 
+                              : plot.status === "warning"
+                                ? "Warning"
+                                : "Non-Compliant"}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  }
                 </div>
               </div>
               
-              {/* Center section with map */}
+              {/* Right content section with map and details */}
               <div className="col-span-2 flex flex-col h-full">
-                <div className="p-4 border-b flex justify-between items-center">
-                  <h3 className="font-medium">Map View</h3>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18" 
-                        height="18" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="4 8 4 4 8 4"></polyline>
-                        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                        <line x1="4" y1="16" x2="16" y2="16"></line>
-                        <line x1="4" y1="12" x2="16" y2="12"></line>
-                        <line x1="12" y1="4" x2="12" y2="16"></line>
-                        <line x1="8" y1="4" x2="8" y2="16"></line>
-                      </svg>
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18" 
-                        height="18" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="15 24 21 18 15 12 15 24"></polygon>
-                        <polygon points="9 24 3 18 9 12 9 24"></polygon>
-                        <polygon points="15 0 21 6 15 12 15 0"></polygon>
-                        <polygon points="9 0 3 6 9 12 9 0"></polygon>
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Map Display */}
-                <div className="flex-1 bg-slate-50 overflow-auto relative">
-                  <div className="min-w-[800px] min-h-[600px] relative">
-                    {/* Satellite imagery */}
-                    <img 
-                      src={satelliteMapImage} 
-                      alt="Satellite view of agricultural land"
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Overlay polygon */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-2/5 h-2/5 border-2 border-white bg-white/10 pointer-events-none"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Map controls */}
-                  <div className="absolute right-4 bottom-4 flex flex-col space-y-2">
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="15" 
-                        height="15" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="text-primary"
-                      >
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="15" 
-                        height="15" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="text-primary"
-                      >
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Detail panel - shows when a plot is selected */}
-                {selectedPlot && (
-                  <div className="border-t p-6 bg-white">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Plot Information</h3>
-                        <dl className="grid grid-cols-2 gap-4">
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Polygon ID</dt>
-                            <dd className="font-medium mt-1">{selectedPlot}</dd>
-                          </div>
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Area</dt>
-                            <dd className="font-medium mt-1">135.62 hectares</dd>
-                          </div>
-                          <div className="text-sm">
-                            <dt className="text-gray-500">Coordinates</dt>
-                            <dd className="font-medium mt-1">9.1234° N, 8.5678° E</dd>
-                          </div>
-                          <div className="text-sm">
-                            <dt className="text-gray-500">No. of Vertices</dt>
-                            <dd className="font-medium mt-1">28</dd>
-                          </div>
-                        </dl>
-                      </div>
+                {selectedPlot ? (
+                  <>
+                    {/* Selected plot content */}
+                    {(() => {
+                      const plot = validationPlots.find(p => p.plotId === selectedPlot);
+                      if (!plot) return null;
                       
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Validation Status</h3>
-                        <div className="space-y-3">
-                          <div className="p-3 bg-green-50 border border-green-100 rounded-md">
-                            <div className="flex items-center">
-                              <svg 
-                                className="h-5 w-5 text-green-600 mr-2" 
-                                viewBox="0 0 20 20" 
-                                fill="currentColor"
-                              >
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              <div className="font-medium text-green-800">Geometry Check</div>
+                      return (
+                        <>
+                          {/* Map section */}
+                          <div className="p-4 border-b flex justify-between items-center">
+                            <h3 className="font-medium">Plot Location</h3>
+                            <div className="flex space-x-2">
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="18" 
+                                  height="18" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                  <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="18" 
+                                  height="18" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                </svg>
+                              </Button>
                             </div>
-                            <p className="text-sm text-green-700 mt-1 pl-7">All geometry validations passed successfully.</p>
                           </div>
                           
-                          <div className="p-3 bg-green-50 border border-green-100 rounded-md">
-                            <div className="flex items-center">
-                              <svg 
-                                className="h-5 w-5 text-green-600 mr-2" 
-                                viewBox="0 0 20 20" 
-                                fill="currentColor"
-                              >
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              <div className="font-medium text-green-800">Satellite Check</div>
+                          {/* Map Display */}
+                          <div className="flex-1 bg-slate-50 overflow-auto relative">
+                            <div className="min-w-[800px] min-h-[400px] relative">
+                              {/* Satellite imagery */}
+                              <img 
+                                src={satelliteMapImage} 
+                                alt="Satellite view of agricultural land"
+                                className="w-full h-full object-cover"
+                              />
+                              
+                              {/* Overlay polygon */}
+                              <div className={cn(
+                                "absolute inset-0 flex items-center justify-center",
+                                plot.status === "compliant" 
+                                  ? "border-4 border-green-500/50" 
+                                  : plot.status === "warning"
+                                    ? "border-4 border-amber-500/50"
+                                    : "border-4 border-red-500/50"
+                              )}>
+                                <div className={cn(
+                                  "w-2/3 h-2/3 border-2 pointer-events-none",
+                                  plot.status === "compliant" 
+                                    ? "border-green-500" 
+                                    : plot.status === "warning"
+                                      ? "border-amber-500"
+                                      : "border-red-500"
+                                )}></div>
+                              </div>
                             </div>
-                            <p className="text-sm text-green-700 mt-1 pl-7">No issues detected in satellite imagery.</p>
+                            
+                            {/* Map controls */}
+                            <div className="absolute right-4 bottom-4 flex flex-col space-y-2">
+                              <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="15" 
+                                  height="15" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round"
+                                  className="text-primary"
+                                >
+                                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                              </Button>
+                              <Button variant="outline" size="icon" className="h-8 w-8 bg-white shadow-md">
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="15" 
+                                  height="15" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round"
+                                  className="text-primary"
+                                >
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <h4 className="font-medium mt-4 mb-2">Validation History</h4>
-                        <div className="text-sm space-y-3">
-                          <div className="flex items-start">
-                            <svg 
-                              className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" 
-                              viewBox="0 0 20 20" 
-                              fill="currentColor"
-                            >
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
+                          
+                          {/* Details panel */}
+                          <div className="grid grid-cols-2 gap-6 p-6 border-t bg-white">
+                            {/* Left side: Validation Status */}
                             <div>
-                              <div>Validation Completed</div>
-                              <div className="text-gray-500 mt-0.5">March 15, 2025</div>
+                              <h3 className="font-medium text-base mb-4">Validation Status</h3>
+                              <div className="space-y-3">
+                                {/* Geometry Check */}
+                                <div className={cn(
+                                  "p-3 border rounded-md",
+                                  plot.geometryStatus === "compliant" 
+                                    ? "bg-green-50 border-green-100" 
+                                    : plot.geometryStatus === "warning"
+                                      ? "bg-amber-50 border-amber-100"
+                                      : "bg-red-50 border-red-100"
+                                )}>
+                                  <div className="flex items-center">
+                                    {plot.geometryStatus === "compliant" ? (
+                                      <Check className="h-5 w-5 text-green-600 mr-2" />
+                                    ) : plot.geometryStatus === "warning" ? (
+                                      <AlertCircle className="h-5 w-5 text-amber-600 mr-2" />
+                                    ) : (
+                                      <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                                    )}
+                                    <div className={cn(
+                                      "font-medium",
+                                      plot.geometryStatus === "compliant" 
+                                        ? "text-green-800" 
+                                        : plot.geometryStatus === "warning"
+                                          ? "text-amber-800"
+                                          : "text-red-800"
+                                    )}>Geometry Check</div>
+                                  </div>
+                                  
+                                  {/* Show status message or issues */}
+                                  {plot.geometryStatus === "compliant" ? (
+                                    <p className="text-sm text-green-700 mt-1 pl-7">All geometry validations passed successfully.</p>
+                                  ) : (
+                                    <div className="mt-2 pl-7 space-y-2">
+                                      {plot.issues
+                                        .filter(issue => issue.type === "geometry")
+                                        .map((issue, idx) => (
+                                          <div key={idx} className={cn(
+                                            "text-sm p-2 rounded",
+                                            issue.severity === "warning" ? "bg-amber-100" : "bg-red-100"
+                                          )}>
+                                            <div className={cn(
+                                              "font-medium",
+                                              issue.severity === "warning" ? "text-amber-800" : "text-red-800"
+                                            )}>{issue.message}</div>
+                                            <div className={cn(
+                                              "text-xs mt-0.5",
+                                              issue.severity === "warning" ? "text-amber-700" : "text-red-700"
+                                            )}>{issue.details}</div>
+                                          </div>
+                                        ))
+                                      }
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Satellite Check */}
+                                <div className={cn(
+                                  "p-3 border rounded-md",
+                                  plot.satelliteStatus === "compliant" 
+                                    ? "bg-green-50 border-green-100" 
+                                    : plot.satelliteStatus === "warning"
+                                      ? "bg-amber-50 border-amber-100"
+                                      : "bg-red-50 border-red-100"
+                                )}>
+                                  <div className="flex items-center">
+                                    {plot.satelliteStatus === "compliant" ? (
+                                      <Check className="h-5 w-5 text-green-600 mr-2" />
+                                    ) : plot.satelliteStatus === "warning" ? (
+                                      <AlertCircle className="h-5 w-5 text-amber-600 mr-2" />
+                                    ) : (
+                                      <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                                    )}
+                                    <div className={cn(
+                                      "font-medium",
+                                      plot.satelliteStatus === "compliant" 
+                                        ? "text-green-800" 
+                                        : plot.satelliteStatus === "warning"
+                                          ? "text-amber-800"
+                                          : "text-red-800"
+                                    )}>Satellite Check</div>
+                                  </div>
+                                  
+                                  {/* Show status message or issues */}
+                                  {plot.satelliteStatus === "compliant" ? (
+                                    <p className="text-sm text-green-700 mt-1 pl-7">No issues detected in satellite imagery.</p>
+                                  ) : (
+                                    <div className="mt-2 pl-7 space-y-2">
+                                      {plot.issues
+                                        .filter(issue => issue.type === "satellite")
+                                        .map((issue, idx) => (
+                                          <div key={idx} className={cn(
+                                            "text-sm p-2 rounded",
+                                            issue.severity === "warning" ? "bg-amber-100" : "bg-red-100"
+                                          )}>
+                                            <div className={cn(
+                                              "font-medium",
+                                              issue.severity === "warning" ? "text-amber-800" : "text-red-800"
+                                            )}>{issue.message}</div>
+                                            <div className={cn(
+                                              "text-xs mt-0.5",
+                                              issue.severity === "warning" ? "text-amber-700" : "text-red-700"
+                                            )}>{issue.details}</div>
+                                          </div>
+                                        ))
+                                      }
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Last Validated */}
+                                <div className="p-3 border rounded-md">
+                                  <div className="flex items-center">
+                                    <Clock className="h-5 w-5 text-gray-500 mr-2" />
+                                    <div className="font-medium">Last Validated</div>
+                                  </div>
+                                  <p className="text-sm text-gray-600 mt-1 pl-7">{plot.lastValidated}</p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-start">
-                            <svg 
-                              className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" 
-                              viewBox="0 0 20 20" 
-                              fill="currentColor"
-                            >
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
+                            
+                            {/* Right side: Plot Details */}
                             <div>
-                              <div>Last Satellite Verification</div>
-                              <div className="text-gray-500 mt-0.5">March 14, 2025</div>
+                              <h3 className="font-medium text-base mb-4">Plot Details</h3>
+                              <dl className="grid grid-cols-2 gap-3">
+                                <div className="col-span-1">
+                                  <dt className="text-sm text-gray-500">Area</dt>
+                                  <dd className="text-sm font-medium">{plot.area} {plot.areaUnit}</dd>
+                                </div>
+                                
+                                <div className="col-span-1">
+                                  <dt className="text-sm text-gray-500">Perimeter</dt>
+                                  <dd className="text-sm font-medium">{plot.perimeter} {plot.perimeterUnit}</dd>
+                                </div>
+                                
+                                <div className="col-span-2">
+                                  <dt className="text-sm text-gray-500">Coordinates</dt>
+                                  <dd className="text-sm font-medium">{plot.coordinates}</dd>
+                                </div>
+                                
+                                <div className="col-span-1">
+                                  <dt className="text-sm text-gray-500">Vertices</dt>
+                                  <dd className="text-sm font-medium">{plot.vertices}</dd>
+                                </div>
+                                
+                                <div className="col-span-2 mt-4">
+                                  <h4 className="font-medium text-sm mb-2">Validation History</h4>
+                                  <div className="text-sm space-y-3">
+                                    <div className="flex items-start">
+                                      <Check className="h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                                      <div>
+                                        <div className="text-sm">Validation Passed</div>
+                                        <div className="text-xs text-gray-500">{plot.lastValidated}</div>
+                                        <div className="text-xs text-gray-600 mt-0.5">
+                                          {plot.issues.length === 0 
+                                            ? "All checks passed successfully. No issues found."
+                                            : `${plot.issues.length} issues detected and reported.`
+                                          }
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-start">
+                                      <Clock className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                                      <div>
+                                        <div className="text-sm">Validation Started</div>
+                                        <div className="text-xs text-gray-500">{plot.lastValidated}</div>
+                                        <div className="text-xs text-gray-600 mt-0.5">Initial validation process started.</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </dl>
                             </div>
                           </div>
-                        </div>
-                      </div>
+                        </>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                    <div className="rounded-full bg-gray-100 p-4 mb-4">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="32" 
+                        height="32" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="text-gray-500"
+                      >
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
                     </div>
+                    <h3 className="text-lg font-medium mb-2">Select a plot to view details</h3>
+                    <p className="text-gray-500 max-w-md">
+                      Choose a plot from the list on the left to view its location, validation status, and detailed information.
+                    </p>
                   </div>
                 )}
               </div>
