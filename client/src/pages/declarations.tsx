@@ -98,13 +98,17 @@ function DeclarationRow({
   onViewClick,
   selected = false,
   onSelectChange,
-  suppliersList = []
+  suppliersList = [],
+  setSelectedTracesDeclarationId,
+  setEuTracesFormOpen
 }: { 
   declaration: Declaration; 
   onViewClick: (id: number) => void;
   selected?: boolean;
   onSelectChange?: (id: number, selected: boolean) => void;
   suppliersList?: any[];
+  setSelectedTracesDeclarationId: (id: number | null) => void;
+  setEuTracesFormOpen: (open: boolean) => void;
 }) {
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [notifySupplierOpen, setNotifySupplierOpen] = useState(false);
@@ -1740,6 +1744,8 @@ export default function Declarations() {
                           setDetailViewOpen(true);
                         }}
                         suppliersList={suppliers}
+                        setSelectedTracesDeclarationId={setSelectedTracesDeclarationId}
+                        setEuTracesFormOpen={setEuTracesFormOpen}
                       />
                     ))
                   )}
@@ -1870,6 +1876,13 @@ export default function Declarations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* EU Traces Form */}
+      <EUTracesForm 
+        open={euTracesFormOpen} 
+        onOpenChange={setEuTracesFormOpen}
+        declarationId={selectedTracesDeclarationId || undefined}
+      />
     </div>
   );
 }
