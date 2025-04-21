@@ -37,13 +37,66 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulate form submission
-    toast({
-      title: "Form submitted",
-      description: "EU-IS Filing: EUDR Declaration has been submitted successfully",
-    });
-    
-    onOpenChange(false);
+    try {
+      // Prepare the form data to submit
+      const formData = {
+        reference: document.getElementById('reference')?.value || '',
+        activityType,
+        traderName: document.getElementById('trader-name')?.value || '',
+        traderCountry: document.querySelector('[id^="radix-:"]')?.textContent || '',
+        vatCode: document.getElementById('vat-code')?.value || '',
+        countryOfActivity: document.querySelector('[id^="radix-:"]')?.textContent || '',
+        countryOfEntry: document.querySelector('[id^="radix-:"]')?.textContent || '',
+        additionalInfo: document.getElementById('additional-info')?.value || '',
+        products,
+        // Add declaration ID reference
+        declarationId,
+        // Add submission metadata
+        submittedBy: "Current User",
+        submittedAt: new Date().toISOString(),
+        eudrReference: `EUDR-${Math.floor(100000 + Math.random() * 900000)}`,
+        verificationReference: `VER-${Math.floor(800000 + Math.random() * 199999)}`,
+        inspectionReference: `REF-${Math.floor(600000 + Math.random() * 199999)}`,
+        status: "pending",
+        type: "eu_filed" // Mark this as an EU filed declaration
+      };
+      
+      // In a real implementation, this would make an API call
+      // For this demo, we're simulating the API call
+      console.log("Submitting EU Traces form data:", formData);
+      
+      // Simulate API call to create a new declaration in the EU Filed category
+      const response = await fetch('/api/declarations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to submit EU Traces form');
+      }
+      
+      // Show success toast
+      toast({
+        title: "Form submitted",
+        description: "EU-IS Filing: EUDR Declaration has been submitted successfully",
+      });
+      
+      // Close the form
+      onOpenChange(false);
+      
+      // Force a refresh of the declarations list to show the new EU filed declaration
+      window.location.href = '/#/declarations?tab=eu_filed';
+    } catch (error) {
+      console.error("Error submitting EU Traces form:", error);
+      toast({
+        title: "Submission failed",
+        description: "There was an error submitting the EU Traces form. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const addProduct = () => {

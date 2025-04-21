@@ -614,7 +614,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/declarations", async (req, res) => {
     try {
-      const type = req.query.type as string || "all"; // "inbound", "outbound", or "all"
+      const type = req.query.type as string || "all"; // "inbound", "outbound", "eu_filed" or "all"
+      console.log("Fetching declarations with type:", type);
+      
       const declarations = await storage.listDeclarations(type);
       
       // Load all suppliers to get their names
@@ -645,6 +647,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             supplier: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`,
             partnerName: supplierMap.get(declaration.supplierId) || `Supplier ${declaration.supplierId}`,
             partnerType: "supplier"
+          };
+        } else if (declaration.type === "eu_filed") {
+          // For EU filed declarations, include both the original declaration reference
+          // and any EU specific fields
+          const referencedDeclaration = declaration.declarationId ? 
+            declarations.find(d => d.id === declaration.declarationId) : null;
+          
+          return {
+            ...declaration,
+            // Include the original declaration data if available
+            originalSupplier: referencedDeclaration ? 
+              (supplierMap.get(referencedDeclaration.supplierId) || `Supplier ${referencedDeclaration.supplierId}`) : 
+              null,
+            // Add EU specific fields
+            eudrReference: declaration.eudrReference || `EUDR-${declaration.id}`,
+            verificationReference: declaration.verificationReference || `VER-${declaration.id}`,
+            inspectionReference: declaration.inspectionReference || `REF-${declaration.id}`,
+            // By default, use traderName from form submission
+            partnerName: declaration.traderName || "EU Trade Operator",
+            partnerType: "eu_operator"
           };
         } else {
           // For outbound declarations, use customer name
@@ -734,8 +756,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log the incoming request for debugging
       console.log("Declaration submission payload:", JSON.stringify(req.body, null, 2));
       
-      // Create a sanitized version of the request body with only the fields from our schema
-      // Ensure types match the schema exactly
+      // Handle EU filed declarations differently
+      if (req.body.type === "eu_filed") {
+        const sanitizedBody: any = {
+          type: "eu_filed",
+          supplierId: req.body.supplierId ? Number(req.body.supplierId) : 1,
+          productName: req.body.products && req.body.products.length > 0 
+            ? req.body.products.map((p: any) => p.name).join(", ")
+            : "EU Filed Declaration",
+          status: String(req.body.status || "pending"),
+          riskLevel: "low", // Default risk level for EU filed declarations
+          // Store the EU specific fields as additional data
+          eudrReference: req.body.eudrReference,
+          verificationReference: req.body.verificationReference,
+          inspectionReference: req.body.inspectionReference,
+          traderName: req.body.traderName,
+          traderCountry: req.body.traderCountry,
+          vatCode: req.body.vatCode,
+          countryOfActivity: req.body.countryOfActivity,
+          countryOfEntry: req.body.countryOfEntry,
+          additionalInfo: req.body.additionalInfo,
+          declarationId: req.body.declarationId ? Number(req.body.declarationId) : undefined,
+          activityType: req.body.activityType,
+          reference: req.body.reference,
+          submittedBy: req.body.submittedBy || "Current User",
+          submittedAt: req.body.submittedAt || new Date().toISOString(),
+          createdBy: 1, // Always set this to 1 for consistency
+        };
+        
+        console.log("Creating EU filed declaration:", sanitizedBody);
+        
+        // Create the declaration directly since it has special fields beyond the schema
+        const declaration = await storage.createDeclaration(sanitizedBody);
+        
+        // Create activity record
+        await storage.createActivity({
+          type: "declaration",
+          description: `New EU filed declaration with reference "${sanitizedBody.eudrReference}" was submitted`,
+          userId: 1, // Mock user ID
+          entityType: "declaration",
+          entityId: declaration.id,
+          metadata: null
+        });
+        
+        return res.status(201).json(declaration);
+      }
+      
+      // Handle regular inbound/outbound declarations
       const sanitizedBody: any = {
         type: String(req.body.type || ""),
         supplierId: Number(req.body.supplierId || 1),
