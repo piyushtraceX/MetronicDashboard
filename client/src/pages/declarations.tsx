@@ -30,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import EUTracesForm from "@/components/declarations/eu-traces-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -273,7 +274,10 @@ function DeclarationRow({
               <span>View Details</span>
             </DropdownMenuItem>
             
-            <DropdownMenuItem onClick={() => window.open('#', '_blank')}>
+            <DropdownMenuItem onClick={() => {
+              setSelectedTracesDeclarationId(declaration.id);
+              setEuTracesFormOpen(true);
+            }}>
               <FileText className="h-4 w-4 mr-2" />
               <span>File DDS in EU Traces</span>
             </DropdownMenuItem>
@@ -488,6 +492,10 @@ export default function Declarations() {
     isSupplier ? "outbound" : "inbound"
   );
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  
+  // EU Traces form state
+  const [euTracesFormOpen, setEuTracesFormOpen] = useState(false);
+  const [selectedTracesDeclarationId, setSelectedTracesDeclarationId] = useState<number | null>(null);
   const [simpleModalOpen, setSimpleModalOpen] = useState(false);
   const [wizardModalOpen, setWizardModalOpen] = useState(false);
   // For suppliers, always set declarationType to outbound, for customers to inbound

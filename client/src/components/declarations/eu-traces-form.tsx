@@ -1,0 +1,294 @@
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+interface EUTracesFormProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  declarationId?: number;
+}
+
+const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declarationId }) => {
+  const { toast } = useToast();
+  const [activityType, setActivityType] = useState<"import" | "export" | "domestic">("import");
+  const [copyOperatorCountry, setCopyOperatorCountry] = useState(false);
+  const [products, setProducts] = useState<{ id: string; name: string; hsCode: string; quantity: string; unit: string }[]>([
+    { id: "product-1", name: "", hsCode: "", quantity: "", unit: "kg" }
+  ]);
+  
+  // List of countries for the select elements
+  const countries = [
+    "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", 
+    "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", 
+    "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", 
+    "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", 
+    "Slovenia", "Spain", "Sweden"
+  ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Simulate form submission
+    toast({
+      title: "Form submitted",
+      description: "EU-IS Filing: EUDR Declaration has been submitted successfully",
+    });
+    
+    onOpenChange(false);
+  };
+
+  const addProduct = () => {
+    setProducts([
+      ...products,
+      { 
+        id: `product-${products.length + 1}`, 
+        name: "", 
+        hsCode: "", 
+        quantity: "", 
+        unit: "kg" 
+      }
+    ]);
+  };
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl">EU-IS Filing Form: EUDR Declaration for Operators/Traders</DialogTitle>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 1. Statement Details */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h3 className="font-medium mb-4">1. Statement Details</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="reference">Reference Number</Label>
+                <Input id="reference" placeholder="Enter reference number" />
+              </div>
+            </div>
+          </div>
+          
+          {/* 2. Activity Type */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h3 className="font-medium mb-4">2. Activity Type</h3>
+            <RadioGroup 
+              defaultValue="import" 
+              value={activityType}
+              onValueChange={(value) => setActivityType(value as "import" | "export" | "domestic")}
+              className="flex items-center space-x-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="import" id="import" />
+                <Label htmlFor="import">Import</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="export" id="export" />
+                <Label htmlFor="export">Export</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="domestic" id="domestic" />
+                <Label htmlFor="domestic">Domestic</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          {/* 3. Operator/Trader Information */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h3 className="font-medium mb-4">3. Operator/Trader Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="trader-name">Name</Label>
+                <Input id="trader-name" placeholder="Company name" />
+              </div>
+              <div>
+                <Label htmlFor="trader-country">Country</Label>
+                <Select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="vat-code">VAT Code</Label>
+                <Input id="vat-code" placeholder="VAT number" />
+              </div>
+            </div>
+          </div>
+          
+          {/* 4. Place of Activity */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h3 className="font-medium mb-4">4. Place of Activity</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="country-of-activity">Country of Activity</Label>
+                <Select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="country-of-entry">Country of Entry</Label>
+                <Select disabled={copyOperatorCountry}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="copy-country" 
+                    checked={copyOperatorCountry}
+                    onCheckedChange={(checked) => setCopyOperatorCountry(checked as boolean)}
+                  />
+                  <Label htmlFor="copy-country">Copy from Operator Country</Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* 5. Additional Information */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h3 className="font-medium mb-4">5. Additional Information</h3>
+            <div>
+              <Label htmlFor="additional-info">Enter additional information here...</Label>
+              <Textarea 
+                id="additional-info" 
+                placeholder="Provide any additional details about this filing"
+                className="h-24"
+              />
+            </div>
+          </div>
+          
+          {/* 6. Commodity(ies) or Product(s) */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h3 className="font-medium mb-4">6. Commodity(ies) or Product(s)</h3>
+            <div className="space-y-4">
+              {products.map((product, index) => (
+                <div key={product.id} className="bg-white p-3 rounded-md border">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor={`product-name-${index}`}>Product Name</Label>
+                      <Input 
+                        id={`product-name-${index}`} 
+                        value={product.name}
+                        onChange={(e) => {
+                          const newProducts = [...products];
+                          newProducts[index].name = e.target.value;
+                          setProducts(newProducts);
+                        }}
+                        placeholder="Product name" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`hs-code-${index}`}>HS Code</Label>
+                      <Input 
+                        id={`hs-code-${index}`} 
+                        value={product.hsCode}
+                        onChange={(e) => {
+                          const newProducts = [...products];
+                          newProducts[index].hsCode = e.target.value;
+                          setProducts(newProducts);
+                        }}
+                        placeholder="HS code" 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                        <Input 
+                          id={`quantity-${index}`} 
+                          value={product.quantity}
+                          onChange={(e) => {
+                            const newProducts = [...products];
+                            newProducts[index].quantity = e.target.value;
+                            setProducts(newProducts);
+                          }}
+                          placeholder="Amount" 
+                          type="number"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`unit-${index}`}>Unit</Label>
+                        <Select 
+                          value={product.unit}
+                          onValueChange={(value) => {
+                            const newProducts = [...products];
+                            newProducts[index].unit = value;
+                            setProducts(newProducts);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                            <SelectItem value="ton">Metric ton</SelectItem>
+                            <SelectItem value="liter">Liter</SelectItem>
+                            <SelectItem value="piece">Piece</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full"
+                onClick={addProduct}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            </div>
+          </div>
+          
+          <DialogFooter className="pt-4 border-t">
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="mr-2"
+            >
+              Cancel
+            </Button>
+            <Button type="submit">
+              Submit Declaration
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default EUTracesForm;
