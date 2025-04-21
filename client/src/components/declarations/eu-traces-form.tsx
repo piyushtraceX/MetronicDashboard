@@ -24,7 +24,21 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
   const [products, setProducts] = useState<{ id: string; name: string; hsCode: string; quantity: string; unit: string }[]>([
     { id: "product-1", name: "", hsCode: "", quantity: "", unit: "kg" }
   ]);
+  const [formData, setFormData] = useState({
+    reference: "",
+    traderName: "",
+    traderCountry: "",
+    vatCode: "",
+    countryOfActivity: "",
+    countryOfEntry: "",
+    additionalInfo: ""
+  });
   
+  // Function to handle form input changes
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   // List of countries for the select elements
   const countries = [
     "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", 
@@ -39,15 +53,9 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
     
     try {
       // Prepare the form data to submit
-      const formData = {
-        reference: document.getElementById('reference')?.value || '',
+      const submissionData = {
+        ...formData,
         activityType,
-        traderName: document.getElementById('trader-name')?.value || '',
-        traderCountry: document.querySelector('[id^="radix-:"]')?.textContent || '',
-        vatCode: document.getElementById('vat-code')?.value || '',
-        countryOfActivity: document.querySelector('[id^="radix-:"]')?.textContent || '',
-        countryOfEntry: document.querySelector('[id^="radix-:"]')?.textContent || '',
-        additionalInfo: document.getElementById('additional-info')?.value || '',
         products,
         // Add declaration ID reference
         declarationId,
@@ -63,7 +71,7 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
       
       // In a real implementation, this would make an API call
       // For this demo, we're simulating the API call
-      console.log("Submitting EU Traces form data:", formData);
+      console.log("Submitting EU Traces form data:", submissionData);
       
       // Simulate API call to create a new declaration in the EU Filed category
       const response = await fetch('/api/declarations', {
@@ -71,7 +79,7 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submissionData)
       });
       
       if (!response.ok) {
@@ -126,7 +134,12 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
             <div className="space-y-4">
               <div>
                 <Label htmlFor="reference">Reference Number</Label>
-                <Input id="reference" placeholder="Enter reference number" />
+                <Input 
+                  id="reference" 
+                  placeholder="Enter reference number" 
+                  value={formData.reference}
+                  onChange={(e) => handleInputChange('reference', e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -161,11 +174,19 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="trader-name">Name</Label>
-                <Input id="trader-name" placeholder="Company name" />
+                <Input 
+                  id="trader-name" 
+                  placeholder="Company name" 
+                  value={formData.traderName}
+                  onChange={(e) => handleInputChange('traderName', e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="trader-country">Country</Label>
-                <Select>
+                <Select 
+                  value={formData.traderCountry}
+                  onValueChange={(value) => handleInputChange('traderCountry', value)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -178,7 +199,12 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
               </div>
               <div>
                 <Label htmlFor="vat-code">VAT Code</Label>
-                <Input id="vat-code" placeholder="VAT number" />
+                <Input 
+                  id="vat-code" 
+                  placeholder="VAT number" 
+                  value={formData.vatCode}
+                  onChange={(e) => handleInputChange('vatCode', e.target.value)}
+                />
               </div>
             </div>
           </div>
