@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { CalendarIcon, Plus, Search, Trash2, Upload, User, Info } from "lucide-react";
+import { CalendarIcon, Plus, Search, Trash2, Upload, User, Info, AlertCircle, Check, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Label } from "@/components/ui/label";
@@ -50,6 +50,35 @@ interface DeclarationItem {
   quantity: string;
   unit: string;
   rmId?: string;
+}
+
+// Validation plot data structure
+type ValidationStatus = "compliant" | "non-compliant" | "warning";
+type CheckType = "geometry" | "satellite";
+
+interface ValidationIssue {
+  type: CheckType;
+  message: string;
+  details?: string;
+  severity: "error" | "warning";
+}
+
+interface ValidationPlot {
+  id: string;
+  name: string;
+  plotId: string;
+  area: number;
+  areaUnit: string;
+  perimeter: number;
+  perimeterUnit: string;
+  coordinates: string;
+  vertices: number;
+  status: ValidationStatus;
+  geometryStatus: ValidationStatus;
+  satelliteStatus: ValidationStatus;
+  lastValidated: string;
+  createdAt: string;
+  issues: ValidationIssue[];
 }
 
 interface WizardProps {
@@ -107,6 +136,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const [isValidating, setIsValidating] = useState(false);
   const [showValidationDetails, setShowValidationDetails] = useState<string | null>(null); // 'validation' or null
   const [selectedPlot, setSelectedPlot] = useState<string | null>(null); // To store which plot is selected in the details view
+  const [validationPlots, setValidationPlots] = useState<ValidationPlot[]>([]);
+  const [plotSearchTerm, setPlotSearchTerm] = useState("");
 
   // Create declaration mutation
   const createDeclaration = useMutation({
