@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,33 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    const missingFields: string[] = [];
+    
+    // Check required fields
+    if (!formData.reference) missingFields.push('Reference Number');
+    if (!formData.traderName) missingFields.push('Trader Name');
+    if (!formData.traderCountry) missingFields.push('Trader Country');
+    if (!formData.countryOfActivity) missingFields.push('Country of Activity');
+    if (!formData.countryOfEntry) missingFields.push('Country of Entry');
+    
+    // Check if at least one product is properly filled out
+    const validProduct = products.some(product => 
+      product.name && product.hsCode && product.quantity
+    );
+    
+    if (!validProduct) missingFields.push('At least one complete Product');
+    
+    // Show error if missing fields
+    if (missingFields.length > 0) {
+      toast({
+        title: "Missing required fields",
+        description: `Please fill out the following fields: ${missingFields.join(', ')}`,
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       // Prepare the form data to submit
@@ -106,6 +133,13 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
       });
     }
   };
+
+  // Update the country of entry when trader country changes and checkbox is checked
+  useEffect(() => {
+    if (copyOperatorCountry && formData.traderCountry) {
+      handleInputChange('countryOfEntry', formData.traderCountry);
+    }
+  }, [formData.traderCountry, copyOperatorCountry]);
 
   const addProduct = () => {
     setProducts([
@@ -215,7 +249,10 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="country-of-activity">Country of Activity</Label>
-                <Select>
+                <Select
+                  value={formData.countryOfActivity}
+                  onValueChange={(value) => handleInputChange('countryOfActivity', value)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -228,7 +265,11 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
               </div>
               <div>
                 <Label htmlFor="country-of-entry">Country of Entry</Label>
-                <Select disabled={copyOperatorCountry}>
+                <Select 
+                  disabled={copyOperatorCountry}
+                  value={formData.countryOfEntry}
+                  onValueChange={(value) => handleInputChange('countryOfEntry', value)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -244,7 +285,13 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
                   <Checkbox 
                     id="copy-country" 
                     checked={copyOperatorCountry}
-                    onCheckedChange={(checked) => setCopyOperatorCountry(checked as boolean)}
+                    onCheckedChange={(checked) => {
+                      setCopyOperatorCountry(checked as boolean);
+                      if (checked) {
+                        // Copy trader country to country of entry
+                        handleInputChange('countryOfEntry', formData.traderCountry);
+                      }
+                    }}
                   />
                   <Label htmlFor="copy-country">Copy from Operator Country</Label>
                 </div>
@@ -261,6 +308,8 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
                 id="additional-info" 
                 placeholder="Provide any additional details about this filing"
                 className="h-24"
+                value={formData.additionalInfo}
+                onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
               />
             </div>
           </div>
