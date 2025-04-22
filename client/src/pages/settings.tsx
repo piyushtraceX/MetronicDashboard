@@ -46,6 +46,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FaEdit, FaTrash, FaCheckCircle } from "react-icons/fa";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -136,6 +144,23 @@ export default function Settings() {
       avatar: ""
     }
   ]);
+  
+  // Create new role modal state
+  const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
+  const [newRole, setNewRole] = useState({
+    name: "",
+    description: "",
+    permissions: [
+      { module: "Dashboard", view: true, create: false, edit: false, delete: false, approve: false },
+      { module: "Supplier Management", view: true, create: true, edit: true, delete: false, approve: false },
+      { module: "Customer Management", view: true, create: true, edit: true, delete: false, approve: false },
+      { module: "SAQ Management", view: true, create: true, edit: true, delete: true, approve: true },
+      { module: "Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+      { module: "Documents", view: true, create: true, edit: false, delete: false, approve: false },
+      { module: "Risk Assessment", view: true, create: false, edit: false, delete: false, approve: false },
+      { module: "Reports", view: true, create: true, edit: false, delete: false, approve: false },
+    ]
+  });
   
   const [activeTab, setActiveTab] = useState("roles");
   const [selectedRoleFilter, setSelectedRoleFilter] = useState("All Roles");
@@ -1443,7 +1468,7 @@ export default function Settings() {
                           </SelectContent>
                         </Select>
                         
-                        <Button>
+                        <Button onClick={() => setShowCreateRoleModal(true)}>
                           <FaPlus className="mr-2" />
                           Create New Role
                         </Button>
@@ -1609,6 +1634,178 @@ export default function Settings() {
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Create New Role Modal */}
+      {showCreateRoleModal && (
+        <Dialog open={showCreateRoleModal} onOpenChange={setShowCreateRoleModal}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Create New Role</DialogTitle>
+              <DialogDescription>
+                Define role permissions for different modules in the application.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="roleName">Role Name</Label>
+                <Input 
+                  id="roleName" 
+                  placeholder="Enter role name" 
+                  value={newRole.name}
+                  onChange={(e) => setNewRole({...newRole, name: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="roleDescription">Description</Label>
+                <Textarea 
+                  id="roleDescription" 
+                  placeholder="Describe the role's purpose" 
+                  value={newRole.description}
+                  onChange={(e) => setNewRole({...newRole, description: e.target.value})}
+                />
+              </div>
+              
+              <div className="pt-4">
+                <h4 className="text-sm font-medium mb-4">Permissions</h4>
+                
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>MODULE</TableHead>
+                        <TableHead className="text-center">VIEW</TableHead>
+                        <TableHead className="text-center">CREATE</TableHead>
+                        <TableHead className="text-center">EDIT</TableHead>
+                        <TableHead className="text-center">DELETE</TableHead>
+                        <TableHead className="text-center">APPROVE</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {newRole.permissions.map((permission, index) => (
+                        <TableRow key={permission.module}>
+                          <TableCell>{permission.module}</TableCell>
+                          <TableCell className="text-center">
+                            <Switch 
+                              checked={permission.view} 
+                              onCheckedChange={(checked) => {
+                                const updatedPermissions = [...newRole.permissions];
+                                updatedPermissions[index] = { ...permission, view: checked };
+                                setNewRole({ ...newRole, permissions: updatedPermissions });
+                              }} 
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Switch 
+                              checked={permission.create} 
+                              onCheckedChange={(checked) => {
+                                const updatedPermissions = [...newRole.permissions];
+                                updatedPermissions[index] = { ...permission, create: checked };
+                                setNewRole({ ...newRole, permissions: updatedPermissions });
+                              }} 
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Switch 
+                              checked={permission.edit} 
+                              onCheckedChange={(checked) => {
+                                const updatedPermissions = [...newRole.permissions];
+                                updatedPermissions[index] = { ...permission, edit: checked };
+                                setNewRole({ ...newRole, permissions: updatedPermissions });
+                              }} 
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Switch 
+                              checked={permission.delete} 
+                              onCheckedChange={(checked) => {
+                                const updatedPermissions = [...newRole.permissions];
+                                updatedPermissions[index] = { ...permission, delete: checked };
+                                setNewRole({ ...newRole, permissions: updatedPermissions });
+                              }} 
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Switch 
+                              checked={permission.approve} 
+                              onCheckedChange={(checked) => {
+                                const updatedPermissions = [...newRole.permissions];
+                                updatedPermissions[index] = { ...permission, approve: checked };
+                                setNewRole({ ...newRole, permissions: updatedPermissions });
+                              }} 
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="flex justify-between">
+              <Button variant="outline" onClick={() => setShowCreateRoleModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateRole}>
+                Create Role
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
+  
+  function getInitials(name: string) {
+    return name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase();
+  }
+  
+  // Handle creating a new role
+  function handleCreateRole() {
+    if (!newRole.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Role name is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const newRoleObj = {
+      id: roles.length > 0 ? Math.max(...roles.map(r => r.id)) + 1 : 1,
+      name: newRole.name,
+      description: newRole.description,
+      users: 0,
+      status: "active" as const
+    };
+    
+    setRoles([...roles, newRoleObj]);
+    
+    toast({
+      title: "Role Created",
+      description: `Role "${newRole.name}" has been created successfully.`
+    });
+    
+    setShowCreateRoleModal(false);
+    setNewRole({
+      name: "",
+      description: "",
+      permissions: [
+        { module: "Dashboard", view: true, create: false, edit: false, delete: false, approve: false },
+        { module: "Supplier Management", view: true, create: true, edit: true, delete: false, approve: false },
+        { module: "Customer Management", view: true, create: true, edit: true, delete: false, approve: false },
+        { module: "SAQ Management", view: true, create: true, edit: true, delete: true, approve: true },
+        { module: "Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+        { module: "Documents", view: true, create: true, edit: false, delete: false, approve: false },
+        { module: "Risk Assessment", view: true, create: false, edit: false, delete: false, approve: false },
+        { module: "Reports", view: true, create: true, edit: false, delete: false, approve: false },
+      ]
+    });
+  }
 }
