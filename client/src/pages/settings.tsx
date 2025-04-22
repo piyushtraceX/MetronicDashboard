@@ -1741,7 +1741,7 @@ export default function Settings() {
       {/* Create New Role Modal */}
       {showCreateRoleModal && (
         <Dialog open={showCreateRoleModal} onOpenChange={setShowCreateRoleModal}>
-          <DialogContent className="sm:max-w-[800px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Role</DialogTitle>
               <DialogDescription>
@@ -1770,13 +1770,13 @@ export default function Settings() {
                 />
               </div>
               
-              <div className="pt-4 pb-2">
+              <div className="pt-2 pb-2">
                 <h4 className="text-sm font-medium mb-2">Permissions</h4>
                 <p className="text-xs text-gray-500 mb-4">Click on a module to view and configure specific feature permissions.</p>
                 
                 <div className="rounded-md border">
                   <Table>
-                    <TableHeader className="bg-white z-10">
+                    <TableHeader className="bg-white z-10 sticky top-0">
                       <TableRow>
                         <TableHead>MODULE / FEATURE</TableHead>
                         <TableHead className="text-center">VIEW</TableHead>
