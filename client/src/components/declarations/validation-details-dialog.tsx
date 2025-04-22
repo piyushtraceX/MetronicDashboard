@@ -43,7 +43,7 @@ interface ValidationDetailsDialogProps {
 export const ValidationDetailsDialog: React.FC<ValidationDetailsDialogProps> = ({ 
   open, 
   onOpenChange,
-  validationPlots 
+  validationPlots = [] // Default to empty array if not provided
 }) => {
   const [selectedPlot, setSelectedPlot] = useState<string>("");
   const [plotSearchTerm, setPlotSearchTerm] = useState("");
