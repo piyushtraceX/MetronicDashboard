@@ -1741,7 +1741,7 @@ export default function Settings() {
       {/* Create New Role Modal */}
       {showCreateRoleModal && (
         <Dialog open={showCreateRoleModal} onOpenChange={setShowCreateRoleModal}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogContent className="sm:max-w-[800px]">
             <DialogHeader>
               <DialogTitle>Create New Role</DialogTitle>
               <DialogDescription>
@@ -1749,7 +1749,7 @@ export default function Settings() {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4 py-2 flex-grow overflow-hidden">
+            <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <Label htmlFor="roleName">Role Name</Label>
                 <Input 
@@ -1774,9 +1774,9 @@ export default function Settings() {
                 <h4 className="text-sm font-medium mb-2">Permissions</h4>
                 <p className="text-xs text-gray-500 mb-4">Click on a module to view and configure specific feature permissions.</p>
                 
-                <div className="rounded-md border overflow-y-auto max-h-[350px]">
+                <div className="rounded-md border">
                   <Table>
-                    <TableHeader className="sticky top-0 bg-white z-10">
+                    <TableHeader className="bg-white z-10">
                       <TableRow>
                         <TableHead>MODULE / FEATURE</TableHead>
                         <TableHead className="text-center">VIEW</TableHead>
@@ -1788,9 +1788,8 @@ export default function Settings() {
                     </TableHeader>
                     <TableBody>
                       {newRole.permissions.map((permission, moduleIndex) => (
-                        <>
+                        <React.Fragment key={`module-${permission.module}`}>
                           <TableRow 
-                            key={permission.module} 
                             className="bg-gray-50 hover:bg-gray-100 cursor-pointer"
                             onClick={() => {
                               setExpandedModules({
@@ -1912,7 +1911,7 @@ export default function Settings() {
                           
                           {/* Feature rows (only shown when module is expanded) */}
                           {expandedModules[permission.module] && permission.features.map((feature, featureIndex) => (
-                            <TableRow key={`${permission.module}-${feature.name}`} className="bg-white">
+                            <TableRow key={`${permission.module}-${feature.name}-${featureIndex}`} className="bg-white">
                               <TableCell className="pl-10 text-sm">{feature.name}</TableCell>
                               <TableCell className="text-center">
                                 <Switch 
@@ -1981,7 +1980,7 @@ export default function Settings() {
                               </TableCell>
                             </TableRow>
                           ))}
-                        </>
+                        </React.Fragment>
                       ))}
                     </TableBody>
                   </Table>
