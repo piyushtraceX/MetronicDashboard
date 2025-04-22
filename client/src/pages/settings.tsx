@@ -162,6 +162,14 @@ export default function Settings() {
     ]
   });
   
+  // Add new user modal state
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    role: "",
+  });
+  
   const [activeTab, setActiveTab] = useState("roles");
   const [selectedRoleFilter, setSelectedRoleFilter] = useState("All Roles");
   
@@ -1562,7 +1570,7 @@ export default function Settings() {
                               </SelectContent>
                             </Select>
                             
-                            <Button>
+                            <Button onClick={() => setShowAddUserModal(true)}>
                               <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M12 5v14"></path>
                                 <path d="M5 12h14"></path>
@@ -1755,6 +1763,80 @@ export default function Settings() {
           </DialogContent>
         </Dialog>
       )}
+      
+      {/* Add New User Modal */}
+      {showAddUserModal && (
+        <Dialog open={showAddUserModal} onOpenChange={setShowAddUserModal}>
+          <DialogContent className="sm:max-w-[450px]">
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>
+                To add a user, please fill the mandatory fields below.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Label htmlFor="userName" className="flex-none">Name</Label>
+                  <span className="text-red-500 ml-1">*</span>
+                </div>
+                <Input 
+                  id="userName" 
+                  placeholder="Search and Select" 
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                />
+                <div className="text-xs text-gray-400 text-right">0/50</div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Label htmlFor="userEmail" className="flex-none">Email</Label>
+                  <span className="text-red-500 ml-1">*</span>
+                </div>
+                <Input 
+                  id="userEmail" 
+                  type="email"
+                  placeholder="Type the Email" 
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                />
+                <div className="text-xs text-gray-400 text-right">0/100</div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Label htmlFor="userRole" className="flex-none">Role</Label>
+                  <span className="text-red-500 ml-1">*</span>
+                </div>
+                <Select 
+                  value={newUser.role} 
+                  onValueChange={(value) => setNewUser({...newUser, role: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map(role => (
+                      <SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <DialogFooter className="flex justify-between">
+              <Button variant="outline" onClick={() => setShowAddUserModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddUser}>
+                Add User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
   
@@ -1806,6 +1888,70 @@ export default function Settings() {
         { module: "Risk Assessment", view: true, create: false, edit: false, delete: false, approve: false },
         { module: "Reports", view: true, create: true, edit: false, delete: false, approve: false },
       ]
+    });
+  }
+  
+  // Handle adding a new user
+  function handleAddUser() {
+    // Validate required fields
+    if (!newUser.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Name is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!newUser.email.trim()) {
+      toast({
+        title: "Error",
+        description: "Email is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!newUser.role) {
+      toast({
+        title: "Error",
+        description: "Role is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const newUserObj = {
+      id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      lastLogin: "Just now",
+      status: "active" as const,
+      avatar: ""
+    };
+    
+    setUsers([...users, newUserObj]);
+    
+    // Find the role and increment the users count
+    setRoles(
+      roles.map(role => 
+        role.name === newUser.role 
+          ? { ...role, users: role.users + 1 } 
+          : role
+      )
+    );
+    
+    toast({
+      title: "User Added",
+      description: `User "${newUser.name}" has been added successfully with role "${newUser.role}".`
+    });
+    
+    setShowAddUserModal(false);
+    setNewUser({
+      name: "",
+      email: "",
+      role: "",
     });
   }
 }
