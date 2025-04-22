@@ -970,7 +970,6 @@ export default function Declarations() {
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
               Download Product List
-              </div>
             </div>
             <p className="ml-1 text-gray-500 text-xs">
               Get Excel template with selected products
