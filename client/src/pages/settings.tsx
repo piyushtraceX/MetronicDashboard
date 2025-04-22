@@ -1393,6 +1393,110 @@ export default function Settings() {
             </div>
           )}
         </TabsContent>
+        <TabsContent value="roles">
+          <div className="grid gap-6 grid-cols-1">
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle>Role & Access Management</CardTitle>
+                    <CardDescription>
+                      Manage user roles and permissions across your organization
+                    </CardDescription>
+                  </div>
+                  <Button>
+                    <FaPlus className="mr-2" />
+                    Create New Role
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <Tabs defaultValue="roles" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
+                      <TabsTrigger value="users">User Assignment</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="roles">
+                      <div className="flex items-center justify-between mb-4">
+                        <Select 
+                          value={selectedRoleFilter} 
+                          onValueChange={setSelectedRoleFilter}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter roles" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="All Roles">All Roles</SelectItem>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[200px]">ROLE NAME</TableHead>
+                              <TableHead>DESCRIPTION</TableHead>
+                              <TableHead className="text-center">USERS</TableHead>
+                              <TableHead className="text-center">STATUS</TableHead>
+                              <TableHead className="text-center">ACTIONS</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {roles.map((role) => (
+                              <TableRow key={role.id}>
+                                <TableCell className="font-medium">{role.name}</TableCell>
+                                <TableCell>{role.description}</TableCell>
+                                <TableCell className="text-center">{role.users} users</TableCell>
+                                <TableCell className="text-center">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    role.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {role.status === 'active' ? (
+                                      <>
+                                        <FaCheckCircle className="mr-1 h-2 w-2" />
+                                        Active
+                                      </>
+                                    ) : 'Inactive'}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex items-center justify-center space-x-2">
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <FaEdit className="h-4 w-4 text-gray-500" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <FaEye className="h-4 w-4 text-gray-500" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <FaTrash className="h-4 w-4 text-red-500" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="users">
+                      <div className="p-4 bg-gray-50 border rounded-md">
+                        <p className="text-center text-gray-500">
+                          User assignment functionality will be implemented in the next update.
+                        </p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
