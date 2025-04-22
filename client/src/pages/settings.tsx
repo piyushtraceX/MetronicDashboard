@@ -147,18 +147,113 @@ export default function Settings() {
   
   // Create new role modal state
   const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [newRole, setNewRole] = useState({
     name: "",
     description: "",
     permissions: [
-      { module: "Dashboard", view: true, create: false, edit: false, delete: false, approve: false },
-      { module: "Supplier Management", view: true, create: true, edit: true, delete: false, approve: false },
-      { module: "Customer Management", view: true, create: true, edit: true, delete: false, approve: false },
-      { module: "SAQ Management", view: true, create: true, edit: true, delete: true, approve: true },
-      { module: "Declarations", view: true, create: true, edit: true, delete: false, approve: true },
-      { module: "Documents", view: true, create: true, edit: false, delete: false, approve: false },
-      { module: "Risk Assessment", view: true, create: false, edit: false, delete: false, approve: false },
-      { module: "Reports", view: true, create: true, edit: false, delete: false, approve: false },
+      { 
+        module: "Dashboard", 
+        view: true, 
+        create: false, 
+        edit: false, 
+        delete: false, 
+        approve: false,
+        features: [
+          { name: "Analytics Overview", view: true, create: false, edit: false, delete: false, approve: false },
+          { name: "Compliance Metrics", view: true, create: false, edit: false, delete: false, approve: false },
+          { name: "Activity Stream", view: true, create: false, edit: false, delete: false, approve: false }
+        ]
+      },
+      { 
+        module: "Supplier Management", 
+        view: true, 
+        create: true, 
+        edit: true, 
+        delete: false, 
+        approve: false,
+        features: [
+          { name: "Supplier Directory", view: true, create: true, edit: true, delete: false, approve: false },
+          { name: "Bulk Upload", view: true, create: true, edit: false, delete: false, approve: false },
+          { name: "Supplier Onboarding", view: true, create: true, edit: true, delete: false, approve: false }
+        ]
+      },
+      { 
+        module: "Customer Management", 
+        view: true, 
+        create: true, 
+        edit: true, 
+        delete: false, 
+        approve: false,
+        features: [
+          { name: "Customer Directory", view: true, create: true, edit: true, delete: false, approve: false },
+          { name: "Customer Communications", view: true, create: true, edit: false, delete: false, approve: false }
+        ]
+      },
+      { 
+        module: "SAQ Management", 
+        view: true, 
+        create: true, 
+        edit: true, 
+        delete: true, 
+        approve: true,
+        features: [
+          { name: "Questionnaire Builder", view: true, create: true, edit: true, delete: true, approve: false },
+          { name: "Response Review", view: true, create: false, edit: true, delete: false, approve: true },
+          { name: "Template Library", view: true, create: true, edit: true, delete: true, approve: false }
+        ]
+      },
+      { 
+        module: "Declarations", 
+        view: true, 
+        create: true, 
+        edit: true, 
+        delete: false, 
+        approve: true,
+        features: [
+          { name: "Inbound Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+          { name: "Outbound Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+          { name: "EU Filed Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+          { name: "GeoJSON Validation", view: true, create: false, edit: true, delete: false, approve: true }
+        ]
+      },
+      { 
+        module: "Documents", 
+        view: true, 
+        create: true, 
+        edit: false, 
+        delete: false, 
+        approve: false,
+        features: [
+          { name: "Document Library", view: true, create: true, edit: false, delete: false, approve: false },
+          { name: "Document Verification", view: true, create: false, edit: false, delete: false, approve: true }
+        ]
+      },
+      { 
+        module: "Risk Assessment", 
+        view: true, 
+        create: false, 
+        edit: false, 
+        delete: false, 
+        approve: false,
+        features: [
+          { name: "Risk Categories", view: true, create: false, edit: false, delete: false, approve: false },
+          { name: "Risk Scoring", view: true, create: false, edit: false, delete: false, approve: false }
+        ]
+      },
+      { 
+        module: "Reports", 
+        view: true, 
+        create: true, 
+        edit: false, 
+        delete: false, 
+        approve: false,
+        features: [
+          { name: "Compliance Reports", view: true, create: true, edit: false, delete: false, approve: false },
+          { name: "Supplier Reports", view: true, create: true, edit: false, delete: false, approve: false },
+          { name: "Export Data", view: true, create: true, edit: false, delete: false, approve: false }
+        ]
+      },
     ]
   });
   
@@ -1646,7 +1741,7 @@ export default function Settings() {
       {/* Create New Role Modal */}
       {showCreateRoleModal && (
         <Dialog open={showCreateRoleModal} onOpenChange={setShowCreateRoleModal}>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Create New Role</DialogTitle>
               <DialogDescription>
@@ -1654,7 +1749,7 @@ export default function Settings() {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 flex-grow overflow-hidden">
               <div className="space-y-2">
                 <Label htmlFor="roleName">Role Name</Label>
                 <Input 
@@ -1675,14 +1770,15 @@ export default function Settings() {
                 />
               </div>
               
-              <div className="pt-4">
-                <h4 className="text-sm font-medium mb-4">Permissions</h4>
+              <div className="pt-4 pb-2">
+                <h4 className="text-sm font-medium mb-2">Permissions</h4>
+                <p className="text-xs text-gray-500 mb-4">Click on a module to view and configure specific feature permissions.</p>
                 
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-y-auto max-h-[350px]">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 bg-white z-10">
                       <TableRow>
-                        <TableHead>MODULE</TableHead>
+                        <TableHead>MODULE / FEATURE</TableHead>
                         <TableHead className="text-center">VIEW</TableHead>
                         <TableHead className="text-center">CREATE</TableHead>
                         <TableHead className="text-center">EDIT</TableHead>
@@ -1691,60 +1787,201 @@ export default function Settings() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {newRole.permissions.map((permission, index) => (
-                        <TableRow key={permission.module}>
-                          <TableCell>{permission.module}</TableCell>
-                          <TableCell className="text-center">
-                            <Switch 
-                              checked={permission.view} 
-                              onCheckedChange={(checked) => {
-                                const updatedPermissions = [...newRole.permissions];
-                                updatedPermissions[index] = { ...permission, view: checked };
-                                setNewRole({ ...newRole, permissions: updatedPermissions });
-                              }} 
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Switch 
-                              checked={permission.create} 
-                              onCheckedChange={(checked) => {
-                                const updatedPermissions = [...newRole.permissions];
-                                updatedPermissions[index] = { ...permission, create: checked };
-                                setNewRole({ ...newRole, permissions: updatedPermissions });
-                              }} 
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Switch 
-                              checked={permission.edit} 
-                              onCheckedChange={(checked) => {
-                                const updatedPermissions = [...newRole.permissions];
-                                updatedPermissions[index] = { ...permission, edit: checked };
-                                setNewRole({ ...newRole, permissions: updatedPermissions });
-                              }} 
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Switch 
-                              checked={permission.delete} 
-                              onCheckedChange={(checked) => {
-                                const updatedPermissions = [...newRole.permissions];
-                                updatedPermissions[index] = { ...permission, delete: checked };
-                                setNewRole({ ...newRole, permissions: updatedPermissions });
-                              }} 
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Switch 
-                              checked={permission.approve} 
-                              onCheckedChange={(checked) => {
-                                const updatedPermissions = [...newRole.permissions];
-                                updatedPermissions[index] = { ...permission, approve: checked };
-                                setNewRole({ ...newRole, permissions: updatedPermissions });
-                              }} 
-                            />
-                          </TableCell>
-                        </TableRow>
+                      {newRole.permissions.map((permission, moduleIndex) => (
+                        <>
+                          <TableRow 
+                            key={permission.module} 
+                            className="bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setExpandedModules({
+                                ...expandedModules,
+                                [permission.module]: !expandedModules[permission.module]
+                              });
+                            }}
+                          >
+                            <TableCell className="font-medium flex items-center">
+                              <span className="mr-2">
+                                {expandedModules[permission.module] ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="m18 15-6-6-6 6"/>
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="m6 9 6 6 6-6"/>
+                                  </svg>
+                                )}
+                              </span>
+                              {permission.module}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch 
+                                checked={permission.view} 
+                                onCheckedChange={(checked) => {
+                                  const updatedPermissions = [...newRole.permissions];
+                                  // Update module level permission
+                                  updatedPermissions[moduleIndex] = { 
+                                    ...permission, 
+                                    view: checked,
+                                    // Also update all features to match module permission
+                                    features: permission.features.map(feature => ({
+                                      ...feature,
+                                      view: checked
+                                    }))
+                                  };
+                                  setNewRole({ ...newRole, permissions: updatedPermissions });
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch 
+                                checked={permission.create} 
+                                onCheckedChange={(checked) => {
+                                  const updatedPermissions = [...newRole.permissions];
+                                  // Update module level permission
+                                  updatedPermissions[moduleIndex] = { 
+                                    ...permission, 
+                                    create: checked,
+                                    // Also update all features to match module permission
+                                    features: permission.features.map(feature => ({
+                                      ...feature,
+                                      create: checked
+                                    }))
+                                  };
+                                  setNewRole({ ...newRole, permissions: updatedPermissions });
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch 
+                                checked={permission.edit} 
+                                onCheckedChange={(checked) => {
+                                  const updatedPermissions = [...newRole.permissions];
+                                  // Update module level permission
+                                  updatedPermissions[moduleIndex] = { 
+                                    ...permission, 
+                                    edit: checked,
+                                    // Also update all features to match module permission
+                                    features: permission.features.map(feature => ({
+                                      ...feature,
+                                      edit: checked
+                                    }))
+                                  };
+                                  setNewRole({ ...newRole, permissions: updatedPermissions });
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch 
+                                checked={permission.delete} 
+                                onCheckedChange={(checked) => {
+                                  const updatedPermissions = [...newRole.permissions];
+                                  // Update module level permission
+                                  updatedPermissions[moduleIndex] = { 
+                                    ...permission, 
+                                    delete: checked,
+                                    // Also update all features to match module permission
+                                    features: permission.features.map(feature => ({
+                                      ...feature,
+                                      delete: checked
+                                    }))
+                                  };
+                                  setNewRole({ ...newRole, permissions: updatedPermissions });
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch 
+                                checked={permission.approve} 
+                                onCheckedChange={(checked) => {
+                                  const updatedPermissions = [...newRole.permissions];
+                                  // Update module level permission
+                                  updatedPermissions[moduleIndex] = { 
+                                    ...permission, 
+                                    approve: checked,
+                                    // Also update all features to match module permission
+                                    features: permission.features.map(feature => ({
+                                      ...feature,
+                                      approve: checked
+                                    }))
+                                  };
+                                  setNewRole({ ...newRole, permissions: updatedPermissions });
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Feature rows (only shown when module is expanded) */}
+                          {expandedModules[permission.module] && permission.features.map((feature, featureIndex) => (
+                            <TableRow key={`${permission.module}-${feature.name}`} className="bg-white">
+                              <TableCell className="pl-10 text-sm">{feature.name}</TableCell>
+                              <TableCell className="text-center">
+                                <Switch 
+                                  checked={feature.view} 
+                                  onCheckedChange={(checked) => {
+                                    const updatedPermissions = [...newRole.permissions];
+                                    // Update only the specific feature
+                                    const updatedFeatures = [...permission.features];
+                                    updatedFeatures[featureIndex] = { ...feature, view: checked };
+                                    updatedPermissions[moduleIndex] = { ...permission, features: updatedFeatures };
+                                    setNewRole({ ...newRole, permissions: updatedPermissions });
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Switch 
+                                  checked={feature.create} 
+                                  onCheckedChange={(checked) => {
+                                    const updatedPermissions = [...newRole.permissions];
+                                    // Update only the specific feature
+                                    const updatedFeatures = [...permission.features];
+                                    updatedFeatures[featureIndex] = { ...feature, create: checked };
+                                    updatedPermissions[moduleIndex] = { ...permission, features: updatedFeatures };
+                                    setNewRole({ ...newRole, permissions: updatedPermissions });
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Switch 
+                                  checked={feature.edit} 
+                                  onCheckedChange={(checked) => {
+                                    const updatedPermissions = [...newRole.permissions];
+                                    // Update only the specific feature
+                                    const updatedFeatures = [...permission.features];
+                                    updatedFeatures[featureIndex] = { ...feature, edit: checked };
+                                    updatedPermissions[moduleIndex] = { ...permission, features: updatedFeatures };
+                                    setNewRole({ ...newRole, permissions: updatedPermissions });
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Switch 
+                                  checked={feature.delete} 
+                                  onCheckedChange={(checked) => {
+                                    const updatedPermissions = [...newRole.permissions];
+                                    // Update only the specific feature
+                                    const updatedFeatures = [...permission.features];
+                                    updatedFeatures[featureIndex] = { ...feature, delete: checked };
+                                    updatedPermissions[moduleIndex] = { ...permission, features: updatedFeatures };
+                                    setNewRole({ ...newRole, permissions: updatedPermissions });
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Switch 
+                                  checked={feature.approve} 
+                                  onCheckedChange={(checked) => {
+                                    const updatedPermissions = [...newRole.permissions];
+                                    // Update only the specific feature
+                                    const updatedFeatures = [...permission.features];
+                                    updatedFeatures[featureIndex] = { ...feature, approve: checked };
+                                    updatedPermissions[moduleIndex] = { ...permission, features: updatedFeatures };
+                                    setNewRole({ ...newRole, permissions: updatedPermissions });
+                                  }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </>
                       ))}
                     </TableBody>
                   </Table>
@@ -1752,7 +1989,7 @@ export default function Settings() {
               </div>
             </div>
             
-            <DialogFooter className="flex justify-between">
+            <DialogFooter className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setShowCreateRoleModal(false)}>
                 Cancel
               </Button>
@@ -1875,18 +2112,115 @@ export default function Settings() {
     });
     
     setShowCreateRoleModal(false);
+    setExpandedModules({}); // Reset expanded modules
+    
+    // Reset the form with default values that include the features
     setNewRole({
       name: "",
       description: "",
       permissions: [
-        { module: "Dashboard", view: true, create: false, edit: false, delete: false, approve: false },
-        { module: "Supplier Management", view: true, create: true, edit: true, delete: false, approve: false },
-        { module: "Customer Management", view: true, create: true, edit: true, delete: false, approve: false },
-        { module: "SAQ Management", view: true, create: true, edit: true, delete: true, approve: true },
-        { module: "Declarations", view: true, create: true, edit: true, delete: false, approve: true },
-        { module: "Documents", view: true, create: true, edit: false, delete: false, approve: false },
-        { module: "Risk Assessment", view: true, create: false, edit: false, delete: false, approve: false },
-        { module: "Reports", view: true, create: true, edit: false, delete: false, approve: false },
+        { 
+          module: "Dashboard", 
+          view: true, 
+          create: false, 
+          edit: false, 
+          delete: false, 
+          approve: false,
+          features: [
+            { name: "Analytics Overview", view: true, create: false, edit: false, delete: false, approve: false },
+            { name: "Compliance Metrics", view: true, create: false, edit: false, delete: false, approve: false },
+            { name: "Activity Stream", view: true, create: false, edit: false, delete: false, approve: false }
+          ]
+        },
+        { 
+          module: "Supplier Management", 
+          view: true, 
+          create: true, 
+          edit: true, 
+          delete: false, 
+          approve: false,
+          features: [
+            { name: "Supplier Directory", view: true, create: true, edit: true, delete: false, approve: false },
+            { name: "Bulk Upload", view: true, create: true, edit: false, delete: false, approve: false },
+            { name: "Supplier Onboarding", view: true, create: true, edit: true, delete: false, approve: false }
+          ]
+        },
+        { 
+          module: "Customer Management", 
+          view: true, 
+          create: true, 
+          edit: true, 
+          delete: false, 
+          approve: false,
+          features: [
+            { name: "Customer Directory", view: true, create: true, edit: true, delete: false, approve: false },
+            { name: "Customer Communications", view: true, create: true, edit: false, delete: false, approve: false }
+          ]
+        },
+        { 
+          module: "SAQ Management", 
+          view: true, 
+          create: true, 
+          edit: true, 
+          delete: true, 
+          approve: true,
+          features: [
+            { name: "Questionnaire Builder", view: true, create: true, edit: true, delete: true, approve: false },
+            { name: "Response Review", view: true, create: false, edit: true, delete: false, approve: true },
+            { name: "Template Library", view: true, create: true, edit: true, delete: true, approve: false }
+          ]
+        },
+        { 
+          module: "Declarations", 
+          view: true, 
+          create: true, 
+          edit: true, 
+          delete: false, 
+          approve: true,
+          features: [
+            { name: "Inbound Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+            { name: "Outbound Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+            { name: "EU Filed Declarations", view: true, create: true, edit: true, delete: false, approve: true },
+            { name: "GeoJSON Validation", view: true, create: false, edit: true, delete: false, approve: true }
+          ]
+        },
+        { 
+          module: "Documents", 
+          view: true, 
+          create: true, 
+          edit: false, 
+          delete: false, 
+          approve: false,
+          features: [
+            { name: "Document Library", view: true, create: true, edit: false, delete: false, approve: false },
+            { name: "Document Verification", view: true, create: false, edit: false, delete: false, approve: true }
+          ]
+        },
+        { 
+          module: "Risk Assessment", 
+          view: true, 
+          create: false, 
+          edit: false, 
+          delete: false, 
+          approve: false,
+          features: [
+            { name: "Risk Categories", view: true, create: false, edit: false, delete: false, approve: false },
+            { name: "Risk Scoring", view: true, create: false, edit: false, delete: false, approve: false }
+          ]
+        },
+        { 
+          module: "Reports", 
+          view: true, 
+          create: true, 
+          edit: false, 
+          delete: false, 
+          approve: false,
+          features: [
+            { name: "Compliance Reports", view: true, create: true, edit: false, delete: false, approve: false },
+            { name: "Supplier Reports", view: true, create: true, edit: false, delete: false, approve: false },
+            { name: "Export Data", view: true, create: true, edit: false, delete: false, approve: false }
+          ]
+        },
       ]
     });
   }
