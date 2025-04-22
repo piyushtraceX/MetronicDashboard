@@ -124,6 +124,19 @@ export default function Settings() {
     }
   ]);
   
+  // User assignment state
+  const [users, setUsers] = useState([
+    {
+      id: 1,
+      name: "Neeraj M.",
+      email: "neeraj@gigitech.com",
+      role: "Admin",
+      lastLogin: "2h ago",
+      status: "active",
+      avatar: ""
+    }
+  ]);
+  
   const [activeTab, setActiveTab] = useState("roles");
   const [selectedRoleFilter, setSelectedRoleFilter] = useState("All Roles");
   
@@ -1404,10 +1417,6 @@ export default function Settings() {
                       Manage user roles and permissions across your organization
                     </CardDescription>
                   </div>
-                  <Button>
-                    <FaPlus className="mr-2" />
-                    Create New Role
-                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1419,7 +1428,7 @@ export default function Settings() {
                     </TabsList>
                     
                     <TabsContent value="roles">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex justify-between items-center mb-6">
                         <Select 
                           value={selectedRoleFilter} 
                           onValueChange={setSelectedRoleFilter}
@@ -1433,6 +1442,11 @@ export default function Settings() {
                             <SelectItem value="Inactive">Inactive</SelectItem>
                           </SelectContent>
                         </Select>
+                        
+                        <Button>
+                          <FaPlus className="mr-2" />
+                          Create New Role
+                        </Button>
                       </div>
                       
                       <div className="rounded-md border">
@@ -1485,10 +1499,107 @@ export default function Settings() {
                     </TabsContent>
                     
                     <TabsContent value="users">
-                      <div className="p-4 bg-gray-50 border rounded-md">
-                        <p className="text-center text-gray-500">
-                          User assignment functionality will be implemented in the next update.
-                        </p>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div className="relative w-80">
+                            <Input 
+                              placeholder="Search by name or email" 
+                              className="pl-8"
+                            />
+                            <div className="absolute left-2 top-2.5 text-gray-500">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                              </svg>
+                            </div>
+                          </div>
+                          
+                          <div className="flex space-x-3">
+                            <Select>
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Filter by Role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Roles</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="auditor">Auditor</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            
+                            <Select>
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Filter by Status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            
+                            <Button>
+                              <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 5v14"></path>
+                                <path d="M5 12h14"></path>
+                              </svg>
+                              Assign User to Role
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="rounded-md border">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-[200px]">USER NAME</TableHead>
+                                <TableHead>EMAIL</TableHead>
+                                <TableHead>ROLE ASSIGNED</TableHead>
+                                <TableHead>LAST LOGIN</TableHead>
+                                <TableHead>STATUS</TableHead>
+                                <TableHead>ACTIONS</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {users.map((user) => (
+                                <TableRow key={user.id}>
+                                  <TableCell>
+                                    <div className="flex items-center space-x-2">
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarImage src={user.avatar} alt={user.name} />
+                                        <AvatarFallback className="text-xs">
+                                          {getInitials(user.name)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="font-medium">{user.name}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>{user.email}</TableCell>
+                                  <TableCell>
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      {user.role}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell>{user.lastLogin}</TableCell>
+                                  <TableCell>
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                      user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {user.status === 'active' ? (
+                                        <>
+                                          <FaCheckCircle className="mr-1 h-2 w-2" />
+                                          Active
+                                        </>
+                                      ) : 'Inactive'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button size="sm" variant="outline">Change Role</Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
                       </div>
                     </TabsContent>
                   </Tabs>
