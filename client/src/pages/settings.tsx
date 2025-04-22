@@ -37,6 +37,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { FaEdit, FaTrash, FaCheckCircle } from "react-icons/fa";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -96,6 +105,27 @@ export default function Settings() {
       active: false,
     }
   ]);
+  
+  // Role & Access Management state
+  const [roles, setRoles] = useState([
+    {
+      id: 1,
+      name: "Admin",
+      description: "Full system access with all permissions",
+      users: 12,
+      status: "active"
+    },
+    {
+      id: 2,
+      name: "Auditor",
+      description: "View-only access to compliance data",
+      users: 8,
+      status: "active"
+    }
+  ]);
+  
+  const [activeTab, setActiveTab] = useState("roles");
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState("All Roles");
   
   const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -336,6 +366,7 @@ export default function Settings() {
           <TabsTrigger value="api">API Access</TabsTrigger>
           <TabsTrigger value="display">Display & Language</TabsTrigger>
           <TabsTrigger value="questionnaires">Questionnaire Configuration</TabsTrigger>
+          <TabsTrigger value="roles">Role & Access</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
