@@ -1415,7 +1415,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                 variant="ghost" 
                                 size="sm" 
                                 className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
-                                onClick={() => setShowValidationDetails('geometry')}
+                                onClick={() => window.open("https://trace-x-technologies.orbify.app/d/report/47db8820-3e57-45a1-92ea-79b23c08c988?tab=259473", "_blank")}
                               >
                                 <svg 
                                   xmlns="http://www.w3.org/2000/svg" 
@@ -1441,7 +1441,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                 variant="ghost" 
                                 size="sm" 
                                 className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
-                                onClick={() => setShowValidationDetails('geometry')}
+                                onClick={() => window.open("https://trace-x-technologies.orbify.app/d/report/47db8820-3e57-45a1-92ea-79b23c08c988?tab=259473", "_blank")}
                               >
                                 <svg 
                                   xmlns="http://www.w3.org/2000/svg" 
@@ -1478,7 +1478,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                   variant="ghost" 
                                   size="sm" 
                                   className="p-0 h-6 text-green-600 hover:text-green-800 hover:bg-transparent"
-                                  onClick={() => setShowValidationDetails('satellite')}
+                                  onClick={() => window.open("https://trace-x-technologies.orbify.app/d/report/47db8820-3e57-45a1-92ea-79b23c08c988?tab=259473", "_blank")}
                                 >
                                   <svg 
                                     xmlns="http://www.w3.org/2000/svg" 
@@ -1504,7 +1504,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                   variant="ghost" 
                                   size="sm" 
                                   className="p-0 h-6 text-red-600 hover:text-red-800 hover:bg-transparent"
-                                  onClick={() => setShowValidationDetails('satellite')}
+                                  onClick={() => window.open("https://trace-x-technologies.orbify.app/d/report/47db8820-3e57-45a1-92ea-79b23c08c988?tab=259473", "_blank")}
                                 >
                                   <svg 
                                     xmlns="http://www.w3.org/2000/svg" 
