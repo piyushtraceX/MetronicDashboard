@@ -1167,14 +1167,17 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                         </div>
                       )}
                       
-                      {/* Single View Validation Details button */}
+                      {/* Single View Validation Details button with external link */}
                       {!isValidating && (geometryValid !== null || satelliteValid !== null) && (
                         <div className="mt-4 flex justify-center">
                           <Button 
                             variant="outline" 
                             size="sm"
                             className="flex items-center"
-                            onClick={() => setShowValidationDetails('validation')}
+                            onClick={() => {
+                              // Redirect to external URL
+                              window.open("https://trace-x-technologies.orbify.app/d/report/47db8820-3e57-45a1-92ea-79b23c08c988?tab=259473", "_blank");
+                            }}
                           >
                             <svg 
                               xmlns="http://www.w3.org/2000/svg" 
