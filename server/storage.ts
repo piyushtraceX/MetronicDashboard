@@ -989,6 +989,10 @@ export class MemStorage implements IStorage {
         createdBy: 1,
         industry: "Food & Beverage",
         complianceStatus: "compliant",
+        eudrReferenceNumber: "EUDR-100123",
+        eudrVerificationNumber: "VER-452788",
+        previousReferenceNumber: "REF-903421",
+        ddsStatus: "DDS Success",
       },
       {
         type: "inbound",
@@ -1105,6 +1109,10 @@ export class MemStorage implements IStorage {
         createdBy: 1,
         industry: "Food & Beverage",
         complianceStatus: "compliant",
+        eudrReferenceNumber: "EUDR-100367",
+        eudrVerificationNumber: "VER-981247",
+        previousReferenceNumber: "REF-775490",
+        ddsStatus: "Filed",
       },
       {
         type: "inbound",
@@ -1137,6 +1145,10 @@ export class MemStorage implements IStorage {
         createdBy: 1,
         industry: "Agriculture",
         complianceStatus: "non-compliant-geometry",
+        eudrReferenceNumber: "EUDR-100412",
+        eudrVerificationNumber: "VER-542178",
+        previousReferenceNumber: null,
+        ddsStatus: "DDS Failed",
       },
       {
         type: "inbound",
@@ -1235,6 +1247,10 @@ export class MemStorage implements IStorage {
         createdBy: 1,
         industry: "Food & Beverage",
         complianceStatus: "compliant",
+        eudrReferenceNumber: "EUDR-100584",
+        eudrVerificationNumber: "VER-823945",
+        previousReferenceNumber: "REF-612309",
+        ddsStatus: "DDS Success",
       },
       {
         type: "outbound",
@@ -1285,6 +1301,10 @@ export class MemStorage implements IStorage {
         createdBy: 1,
         industry: "Construction",
         complianceStatus: "compliant",
+        eudrReferenceNumber: "EUDR-100789",
+        eudrVerificationNumber: "VER-671234",
+        previousReferenceNumber: "REF-456789",
+        ddsStatus: "Filed",
       },
     ];
 
