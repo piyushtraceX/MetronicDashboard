@@ -40,6 +40,8 @@ interface ExistingDeclaration {
   product: string;
   quantity: string;
   status: string;
+  eudrReferenceNumber: string;
+  eudrVerificationNumber: string;
 }
 
 // Define the interface for customer objects
@@ -117,8 +119,26 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   
   // Mock data - in a real app, this would come from API requests
   const existingDeclarations: ExistingDeclaration[] = [
-    { id: 1, name: "ABC Declaration", code: "#A12345", product: "Palm Oil", quantity: "5,000 Tons", status: "Approved" },
-    { id: 2, name: "XYZ Declaration", code: "#B67890", product: "Rubber", quantity: "2,000 Tons", status: "Approved" }
+    { 
+      id: 1, 
+      name: "ABC Declaration", 
+      code: "#A12345", 
+      product: "Palm Oil", 
+      quantity: "5,000 Tons", 
+      status: "Approved",
+      eudrReferenceNumber: "EU-REF-2025-001423",
+      eudrVerificationNumber: "VER-2025-6734" 
+    },
+    { 
+      id: 2, 
+      name: "XYZ Declaration", 
+      code: "#B67890", 
+      product: "Rubber", 
+      quantity: "2,000 Tons", 
+      status: "Approved",
+      eudrReferenceNumber: "EU-REF-2025-001892",
+      eudrVerificationNumber: "VER-2025-8421" 
+    }
   ];
   
   // Fetch customers from API
@@ -969,13 +989,15 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                             <th className="py-3 px-4 text-left font-medium">Code</th>
                             <th className="py-3 px-4 text-left font-medium">Product</th>
                             <th className="py-3 px-4 text-left font-medium">Quantity</th>
+                            <th className="py-3 px-4 text-left font-medium">EUDR Reference Number</th>
+                            <th className="py-3 px-4 text-left font-medium">EUDR Verification Number</th>
                             <th className="py-3 px-4 text-left font-medium">Status</th>
                           </tr>
                         </thead>
                         <tbody>
                           {filteredDeclarations.length === 0 ? (
                             <tr>
-                              <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
+                              <td colSpan={7} className="py-4 px-4 text-center text-gray-500">
                                 No declarations found matching your search
                               </td>
                             </tr>
@@ -1017,6 +1039,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                                 <td className="py-3 px-4">{declaration.code}</td>
                                 <td className="py-3 px-4">{declaration.product}</td>
                                 <td className="py-3 px-4">{declaration.quantity}</td>
+                                <td className="py-3 px-4">{declaration.eudrReferenceNumber}</td>
+                                <td className="py-3 px-4">{declaration.eudrVerificationNumber}</td>
                                 <td className="py-3 px-4">
                                   <Badge className="bg-green-500">{declaration.status}</Badge>
                                 </td>
