@@ -1400,15 +1400,7 @@ export default function Declarations() {
                             Yes
                           </span>
                         </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          EUDR-100245
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          VER-673512
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          -
-                        </td>
+
                         <td className="px-1 py-4 text-sm whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             <span className="mr-1 h-2 w-2 rounded-full bg-blue-500"></span>
@@ -1464,15 +1456,7 @@ export default function Declarations() {
                             Invalid
                           </span>
                         </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          EUDR-100367
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          VER-981247
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          REF-775490
-                        </td>
+
                         <td className="px-1 py-4 text-sm whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             <span className="mr-1 h-2 w-2 rounded-full bg-red-500"></span>
@@ -1528,15 +1512,7 @@ export default function Declarations() {
                             Pending
                           </span>
                         </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          EUDR-100412
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          VER-542178
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          -
-                        </td>
+
                         <td className="px-1 py-4 text-sm whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                             <span className="mr-1 h-2 w-2 rounded-full bg-amber-500"></span>
@@ -1592,15 +1568,7 @@ export default function Declarations() {
                             Yes
                           </span>
                         </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          EUDR-100584
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          VER-823945
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          REF-612309
-                        </td>
+
                         <td className="px-1 py-4 text-sm whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             <span className="mr-1 h-2 w-2 rounded-full bg-green-500"></span>
@@ -1674,18 +1642,7 @@ export default function Declarations() {
                             </span>
                           )}
                         </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          {/* Simulated EUDR Reference */}
-                          EUDR-{String(declaration.id).padStart(6, '0')}
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          {/* Simulated EUDR Verification */}
-                          VER-{String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          {/* Simulated Previous Reference */}
-                          {declaration.id % 3 === 0 ? `REF-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}` : '-'}
-                        </td>
+
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           <a href="#" className="text-blue-500 hover:underline">View</a>
                         </td>
