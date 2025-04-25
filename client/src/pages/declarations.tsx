@@ -64,6 +64,10 @@ interface Declaration {
   lastUpdated: string;
   industry: string | null;
   rmId?: string | null;
+  eudrReferenceNumber?: string | null; // EUDR Reference Number
+  eudrVerificationNumber?: string | null; // EUDR Verification Number
+  previousReferenceNumber?: string | null; // Previous Reference Number
+  ddsStatus?: "Filed" | "DDS Success" | "DDS Failed" | null; // DDS Status
   complianceStatus?: "compliant" | "non-compliant" | "non-compliant-geometry" | "non-compliant-satellite";
 }
 
@@ -260,6 +264,35 @@ function DeclarationRow({
                 ? "Non-Compliant Satellite"
                 : "Non-Compliant"}
         </span>
+      </td>
+      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+        {declaration.eudrReferenceNumber || "—"}
+      </td>
+      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+        {declaration.eudrVerificationNumber || "—"}
+      </td>
+      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+        {declaration.previousReferenceNumber || "—"}
+      </td>
+      <td className="px-3 py-4 text-sm whitespace-nowrap">
+        {declaration.ddsStatus ? (
+          <span className={cn(
+            "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
+            declaration.ddsStatus === "Filed" ? "bg-blue-100 text-blue-800" : 
+            declaration.ddsStatus === "DDS Success" ? "bg-green-100 text-green-800" : 
+            "bg-red-100 text-red-800"
+          )}>
+            <span className={cn(
+              "mr-1 h-2 w-2 rounded-full",
+              declaration.ddsStatus === "Filed" ? "bg-blue-500" : 
+              declaration.ddsStatus === "DDS Success" ? "bg-green-500" : 
+              "bg-red-500"
+            )}></span>
+            {declaration.ddsStatus}
+          </span>
+        ) : (
+          <span className="text-gray-400">Not Filed</span>
+        )}
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
         {formatDate(declaration.lastUpdated)}
@@ -1714,6 +1747,18 @@ export default function Declarations() {
                       Compliance Status
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      EUDR Ref#
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      EUDR Verify#
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Prev Ref#
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      DDS Status
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Last Update
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
@@ -1724,13 +1769,13 @@ export default function Declarations() {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {isLoadingDeclarations ? (
                     <tr>
-                      <td colSpan={9} className="py-10 text-center text-gray-500">
+                      <td colSpan={12} className="py-10 text-center text-gray-500">
                         Loading declarations...
                       </td>
                     </tr>
                   ) : filteredDeclarations.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-10 text-center text-gray-500">
+                      <td colSpan={12} className="py-10 text-center text-gray-500">
                         No {activeTab === "inbound" ? "inbound" : "outbound"} declarations found
                       </td>
                     </tr>
