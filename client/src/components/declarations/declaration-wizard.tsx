@@ -45,7 +45,14 @@ interface Supplier {
   id: number;
   name: string;
   products?: string;
+  country?: string;
   countries?: string[];
+}
+
+interface ReferenceNumber {
+  id: string;
+  type: string;
+  value: string;
 }
 
 interface DeclarationItem {
