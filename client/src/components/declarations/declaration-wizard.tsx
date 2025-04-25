@@ -486,20 +486,29 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   
   // Handle adding a new reference number
   const addReferenceNumber = () => {
+    // Add both reference number and verification number
+    const newRefId = `ref-${Date.now()}`;
+    const verificationId = `ver-${Date.now()}`;
+    
     setReferenceNumbers(prev => [
       ...prev,
       {
-        id: `ref-${Date.now()}`,
+        id: newRefId,
         type: "EUDR Reference Number",
+        value: ""
+      },
+      {
+        id: verificationId,
+        type: "EUDR Verification Number",
         value: ""
       }
     ]);
   };
 
   // Handle updating a reference number
-  const updateReferenceNumber = (id: string, field: keyof ReferenceNumber, value: string) => {
+  const updateReferenceNumber = (id: string, field: keyof ReferenceNumber, value: string, type?: string) => {
     setReferenceNumbers(prev => prev.map(ref => 
-      ref.id === id ? { ...ref, [field]: value } : ref
+      ref.id === id ? { ...ref, [field]: value, type: type || ref.type } : ref
     ));
   };
 
@@ -1014,40 +1023,38 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </p>
 
                   <div className="space-y-3">
-                    {referenceNumbers.map((ref) => (
-                      <div key={ref.id} className="flex items-end gap-4 p-4 border rounded-md">
-                        <div className="flex-1">
-                          <Label htmlFor={`ref-type-${ref.id}`} className="text-sm">Reference Type</Label>
-                          <Select
-                            value={ref.type}
-                            onValueChange={(value) => updateReferenceNumber(ref.id, 'type', value)}
-                          >
-                            <SelectTrigger id={`ref-type-${ref.id}`} className="mt-1">
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="EUDR Reference Number">EUDR Reference Number</SelectItem>
-                              <SelectItem value="EUDR Verification Number">EUDR Verification Number</SelectItem>
-                              <SelectItem value="Previous Reference Number">Previous Reference Number</SelectItem>
-                              <SelectItem value="Import License Number">Import License Number</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex-1">
-                          <Label htmlFor={`ref-value-${ref.id}`} className="text-sm">Reference Value</Label>
+                    {referenceNumbers.map((ref, index) => (
+                      <div key={ref.id} className="grid grid-cols-2 gap-4 p-4 border rounded-md items-end relative">
+                        <div>
+                          <Label htmlFor={`ref-eudr-${ref.id}`} className="text-sm">EUDR Reference Number</Label>
                           <Input
-                            id={`ref-value-${ref.id}`}
-                            placeholder="Enter reference number"
-                            value={ref.value}
-                            onChange={(e) => updateReferenceNumber(ref.id, 'value', e.target.value)}
+                            id={`ref-eudr-${ref.id}`}
+                            placeholder="Enter EUDR reference number"
+                            value={ref.type === "EUDR Reference Number" ? ref.value : ""}
+                            onChange={(e) => {
+                              updateReferenceNumber(ref.id, 'value', e.target.value);
+                              updateReferenceNumber(ref.id, 'type', "EUDR Reference Number");
+                            }}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`ref-verification-${ref.id}`} className="text-sm">EUDR Verification Number</Label>
+                          <Input
+                            id={`ref-verification-${ref.id}`}
+                            placeholder="Enter EUDR verification number"
+                            value={ref.type === "EUDR Verification Number" ? ref.value : ""}
+                            onChange={(e) => {
+                              updateReferenceNumber(ref.id, 'value', e.target.value);
+                              updateReferenceNumber(ref.id, 'type', "EUDR Verification Number");
+                            }}
                             className="mt-1"
                           />
                         </div>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-10 w-10 p-0 text-gray-500"
+                          className="h-8 w-8 p-0 text-gray-500 absolute top-2 right-2"
                           onClick={() => removeReferenceNumber(ref.id)}
                         >
                           <Trash2 className="h-4 w-4" />
