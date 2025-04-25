@@ -677,7 +677,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       unit: formattedItems[0]?.unit || "kg",
       status: status,
       riskLevel: "medium",
-      industry: "Food & Beverage" // Default industry
+      industry: "Food & Beverage", // Default industry
+      referenceNumbers: showReferenceNumbers ? referenceNumbers.filter(ref => ref.value.trim() !== '') : []
     };
 
     createDeclaration.mutate(payload);
@@ -714,12 +715,18 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setShipmentNumber("");
     setSelectedCustomer(null);
     setComments("");
+    // Reset reference numbers
+    setReferenceNumbers([]);
+    setShowReferenceNumbers(false);
+    // Reset GeoJSON and validation state
     setHasUploadedGeoJSON(false);
     setGeometryValid(null);
     setSatelliteValid(null);
     setIsValidating(false);
     setShowValidationDetails(null);
     setSelectedPlot(null);
+    setValidationPlots([]);
+    setPlotSearchTerm("");
   };
 
   // Set validity period presets
@@ -1563,6 +1570,23 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                       ))}
                     </div>
                   </div>
+
+                  {/* Reference Numbers in review panel */}
+                  {showReferenceNumbers && referenceNumbers.length > 0 && (
+                    <div className="col-span-2">
+                      <h4 className="text-sm font-medium text-gray-500">Upstream Reference Numbers</h4>
+                      <div className="mt-1 space-y-1">
+                        {referenceNumbers.filter(ref => ref.value.trim() !== '').map((ref) => (
+                          <div key={ref.id} className="text-sm">
+                            <span className="font-medium">{ref.type}:</span> {ref.value}
+                          </div>
+                        ))}
+                        {referenceNumbers.filter(ref => ref.value.trim() !== '').length === 0 && (
+                          <div className="text-sm text-amber-600">No reference numbers provided</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="col-span-2">
                     <h4 className="text-sm font-medium text-gray-500">Evidence Documents</h4>
