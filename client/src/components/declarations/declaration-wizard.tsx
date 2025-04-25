@@ -1565,7 +1565,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </div>
 
                   {/* Reference Numbers in review panel */}
-                  {showReferenceNumbers && referenceNumbers.length > 0 && (
+                  {showReferenceNumbers && referenceNumberPairs.length > 0 && (
                     <div className="col-span-2">
                       <h4 className="text-sm font-medium text-gray-500">Upstream Reference Numbers</h4>
                       <div className="mt-1 space-y-1">
