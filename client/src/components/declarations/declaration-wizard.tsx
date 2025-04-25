@@ -49,10 +49,10 @@ interface Supplier {
   countries?: string[];
 }
 
-interface ReferenceNumber {
+interface ReferenceNumberPair {
   id: string;
-  type: string;
-  value: string;
+  referenceNumber: string;
+  verificationNumber: string;
 }
 
 interface DeclarationItem {
@@ -116,7 +116,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
   // Upstream reference numbers
-  const [referenceNumbers, setReferenceNumbers] = useState<ReferenceNumber[]>([]);
+  const [referenceNumberPairs, setReferenceNumberPairs] = useState<ReferenceNumberPair[]>([]);
   const [showReferenceNumbers, setShowReferenceNumbers] = useState(false);
   
   // GeoJSON upload state
@@ -484,53 +484,43 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setUploadedFiles(prev => prev.filter(file => file !== filename));
   };
   
-  // Handle adding a new reference number
-  const addReferenceNumber = () => {
-    // Add both reference number and verification number
-    const newRefId = `ref-${Date.now()}`;
-    const verificationId = `ver-${Date.now()}`;
-    
-    setReferenceNumbers(prev => [
+  // Handle adding a new reference number pair
+  const addReferenceNumberPair = () => {
+    setReferenceNumberPairs(prev => [
       ...prev,
       {
-        id: newRefId,
-        type: "EUDR Reference Number",
-        value: ""
-      },
-      {
-        id: verificationId,
-        type: "EUDR Verification Number",
-        value: ""
+        id: `ref-${Date.now()}`,
+        referenceNumber: "",
+        verificationNumber: ""
       }
     ]);
   };
 
-  // Handle updating a reference number
-  const updateReferenceNumber = (id: string, field: keyof ReferenceNumber, value: string, type?: string) => {
-    setReferenceNumbers(prev => prev.map(ref => 
-      ref.id === id ? { ...ref, [field]: value, type: type || ref.type } : ref
+  // Handle updating a reference number pair
+  const updateReferenceNumberPair = (id: string, field: keyof ReferenceNumberPair, value: string) => {
+    setReferenceNumberPairs(prev => prev.map(pair => 
+      pair.id === id ? { ...pair, [field]: value } : pair
     ));
   };
 
-  // Handle removing a reference number
-  const removeReferenceNumber = (id: string) => {
-    setReferenceNumbers(prev => prev.filter(ref => ref.id !== id));
+  // Handle removing a reference number pair
+  const removeReferenceNumberPair = (id: string) => {
+    setReferenceNumberPairs(prev => prev.filter(pair => pair.id !== id));
   };
 
   // Check if reference numbers should be shown based on supplier country
   const checkForReferenceNumbers = (supplier: Supplier | null) => {
-    if (supplier?.country === "Germany" || supplier?.country === "France" || 
-        supplier?.country === "Italy" || supplier?.country === "Spain" || 
-        supplier?.country === "Netherlands") {
+    const europeanCountries = ["Germany", "France", "Italy", "Spain", "Netherlands"];
+    if (supplier && europeanCountries.includes(supplier.country || "")) {
       setShowReferenceNumbers(true);
       
-      // If no reference numbers yet, add an initial one
-      if (referenceNumbers.length === 0) {
-        addReferenceNumber();
+      // If no reference number pairs yet, add an initial one
+      if (referenceNumberPairs.length === 0) {
+        addReferenceNumberPair();
       }
     } else {
       setShowReferenceNumbers(false);
-      setReferenceNumbers([]);
+      setReferenceNumberPairs([]);
     }
   };
 
@@ -687,7 +677,9 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
       status: status,
       riskLevel: "medium",
       industry: "Food & Beverage", // Default industry
-      referenceNumbers: showReferenceNumbers ? referenceNumbers.filter(ref => ref.value.trim() !== '') : []
+      referenceNumberPairs: showReferenceNumbers ? referenceNumberPairs.filter(pair => 
+        pair.referenceNumber.trim() !== '' || pair.verificationNumber.trim() !== ''
+      ) : []
     };
 
     createDeclaration.mutate(payload);
@@ -725,7 +717,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
     setSelectedCustomer(null);
     setComments("");
     // Reset reference numbers
-    setReferenceNumbers([]);
+    setReferenceNumberPairs([]);
     setShowReferenceNumbers(false);
     // Reset GeoJSON and validation state
     setHasUploadedGeoJSON(false);
@@ -1011,7 +1003,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     <Button 
                       variant="default" 
                       size="sm"
-                      onClick={addReferenceNumber}
+                      onClick={addReferenceNumberPair}
                       className="h-8 bg-blue-600 hover:bg-blue-700"
                     >
                       <Plus className="h-4 w-4 mr-1" />
@@ -1023,31 +1015,25 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </p>
 
                   <div className="space-y-3">
-                    {referenceNumbers.map((ref, index) => (
-                      <div key={ref.id} className="grid grid-cols-2 gap-4 p-4 border rounded-md items-end relative">
+                    {referenceNumberPairs.map((pair, index) => (
+                      <div key={pair.id} className="grid grid-cols-2 gap-4 p-4 border rounded-md items-end relative">
                         <div>
-                          <Label htmlFor={`ref-eudr-${ref.id}`} className="text-sm">EUDR Reference Number</Label>
+                          <Label htmlFor={`ref-eudr-${pair.id}`} className="text-sm">EUDR Reference Number</Label>
                           <Input
-                            id={`ref-eudr-${ref.id}`}
+                            id={`ref-eudr-${pair.id}`}
                             placeholder="Enter EUDR reference number"
-                            value={ref.type === "EUDR Reference Number" ? ref.value : ""}
-                            onChange={(e) => {
-                              updateReferenceNumber(ref.id, 'value', e.target.value);
-                              updateReferenceNumber(ref.id, 'type', "EUDR Reference Number");
-                            }}
+                            value={pair.referenceNumber}
+                            onChange={(e) => updateReferenceNumberPair(pair.id, 'referenceNumber', e.target.value)}
                             className="mt-1"
                           />
                         </div>
                         <div>
-                          <Label htmlFor={`ref-verification-${ref.id}`} className="text-sm">EUDR Verification Number</Label>
+                          <Label htmlFor={`ref-verification-${pair.id}`} className="text-sm">EUDR Verification Number</Label>
                           <Input
-                            id={`ref-verification-${ref.id}`}
+                            id={`ref-verification-${pair.id}`}
                             placeholder="Enter EUDR verification number"
-                            value={ref.type === "EUDR Verification Number" ? ref.value : ""}
-                            onChange={(e) => {
-                              updateReferenceNumber(ref.id, 'value', e.target.value);
-                              updateReferenceNumber(ref.id, 'type', "EUDR Verification Number");
-                            }}
+                            value={pair.verificationNumber}
+                            onChange={(e) => updateReferenceNumberPair(pair.id, 'verificationNumber', e.target.value)}
                             className="mt-1"
                           />
                         </div>
@@ -1055,7 +1041,7 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                           variant="ghost" 
                           size="sm" 
                           className="h-8 w-8 p-0 text-gray-500 absolute top-2 right-2"
-                          onClick={() => removeReferenceNumber(ref.id)}
+                          onClick={() => removeReferenceNumberPair(pair.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -1583,12 +1569,13 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                     <div className="col-span-2">
                       <h4 className="text-sm font-medium text-gray-500">Upstream Reference Numbers</h4>
                       <div className="mt-1 space-y-1">
-                        {referenceNumbers.filter(ref => ref.value.trim() !== '').map((ref) => (
-                          <div key={ref.id} className="text-sm">
-                            <span className="font-medium">{ref.type}:</span> {ref.value}
+                        {referenceNumberPairs.filter(pair => pair.referenceNumber.trim() !== '' || pair.verificationNumber.trim() !== '').map((pair) => (
+                          <div key={pair.id} className="text-sm space-y-1">
+                            {pair.referenceNumber && <div><span className="font-medium">EUDR Reference Number:</span> {pair.referenceNumber}</div>}
+                            {pair.verificationNumber && <div><span className="font-medium">EUDR Verification Number:</span> {pair.verificationNumber}</div>}
                           </div>
                         ))}
-                        {referenceNumbers.filter(ref => ref.value.trim() !== '').length === 0 && (
+                        {referenceNumberPairs.filter(pair => pair.referenceNumber.trim() !== '' || pair.verificationNumber.trim() !== '').length === 0 && (
                           <div className="text-sm text-amber-600">No reference numbers provided</div>
                         )}
                       </div>
