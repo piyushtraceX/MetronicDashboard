@@ -100,6 +100,11 @@ export const declarations = pgTable("declarations", {
   lastUpdated: timestamp("last_updated").defaultNow(),
   industry: text("industry"),
   rmId: text("rm_id"),
+  eudrReferenceNumber: text("eudr_reference_number"),
+  eudrVerificationNumber: text("eudr_verification_number"),
+  previousReferenceNumber: text("previous_reference_number"),
+  ddsStatus: text("dds_status"),
+  complianceStatus: text("compliance_status"),
 });
 
 export const insertDeclarationSchema = createInsertSchema(declarations).pick({
@@ -119,6 +124,11 @@ export const insertDeclarationSchema = createInsertSchema(declarations).pick({
   createdBy: true,
   industry: true,
   rmId: true,
+  eudrReferenceNumber: true,
+  eudrVerificationNumber: true,
+  previousReferenceNumber: true,
+  ddsStatus: true,
+  complianceStatus: true,
 });
 
 // Documents
