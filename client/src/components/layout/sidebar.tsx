@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
 
 interface SidebarItemProps {
   icon: string;
@@ -28,17 +29,78 @@ const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => {
   );
 };
 
-interface SidebarSectionProps {
-  icon: string;
+interface SidebarSubItemProps {
   label: string;
   href: string;
   active?: boolean;
 }
 
-const SidebarSection = ({ icon, label, href, active }: SidebarSectionProps) => {
+const SidebarSubItem = ({ label, href, active }: SidebarSubItemProps) => {
+  return (
+    <div className="sidebar-sub-item ml-7">
+      <Link href={href}>
+        <div
+          className={cn(
+            "group flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-[#1b1b28] cursor-pointer",
+            active ? "bg-[#1b1b28] text-white" : "text-[#9899ac]"
+          )}
+        >
+          <span className="w-1.5 h-1.5 bg-gray-500 rounded-full mr-3"></span>
+          {label}
+        </div>
+      </Link>
+    </div>
+  );
+};
+
+interface SidebarSectionProps {
+  icon: string;
+  label: string;
+  href?: string;
+  active?: boolean;
+  subItems?: { label: string; href: string; active?: boolean }[];
+  defaultOpen?: boolean;
+}
+
+const SidebarSection = ({ icon, label, href, active, subItems, defaultOpen = false }: SidebarSectionProps) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen || active);
+  
+  if (subItems && subItems.length > 0) {
+    return (
+      <div className="sidebar-section">
+        <div
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "sidebar-menu-item flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md hover:bg-[#1b1b28] cursor-pointer",
+            (active || subItems.some(item => item.active)) ? "bg-[#1b1b28] text-white" : "text-[#9899ac]"
+          )}
+        >
+          <div className="flex items-center">
+            <i className={cn(`fas ${icon} w-5 h-5 mr-3`)}></i>
+            {label}
+          </div>
+          <i className={`fas fa-chevron-${isOpen ? 'down' : 'right'} text-xs`}></i>
+        </div>
+        
+        {isOpen && (
+          <div className="mt-1 mb-1">
+            {subItems.map((item, index) => (
+              <SidebarSubItem 
+                key={index}
+                label={item.label}
+                href={item.href}
+                active={item.active}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  
   return (
     <div className="sidebar-section">
-      <Link href={href}>
+      <Link href={href || "#"}>
         <div
           className={cn(
             "sidebar-menu-item flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md hover:bg-[#1b1b28] cursor-pointer",
@@ -107,18 +169,23 @@ export default function Sidebar() {
           
           {/* Risk Assessment and Documents tabs removed as requested */}
           
-          {/* Declarations - Available to all with role-specific labels */}
+          {/* Compliance section with EUDR Declarations submenu */}
           <SidebarSection
-            icon="fa-file-signature"
-            label={
-              isSupplier 
-                ? "Outbound Declarations" 
-                : isCustomer 
-                  ? "Inbound Declarations" 
-                  : "Declarations"
-            }
-            href="/declarations"
+            icon="fa-check-circle"
+            label="Compliance"
             active={location === "/declarations"}
+            subItems={[
+              {
+                label: isSupplier 
+                  ? "Outbound EUDR Declarations" 
+                  : isCustomer 
+                    ? "Inbound EUDR Declarations" 
+                    : "EUDR Declarations",
+                href: "/declarations",
+                active: location === "/declarations"
+              }
+            ]}
+            defaultOpen={true}
           />
           
           {/* Customers - Not available to suppliers or customers */}
