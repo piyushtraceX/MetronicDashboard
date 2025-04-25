@@ -1295,10 +1295,13 @@ export default function Declarations() {
                       EUDR Ref#
                     </th>
                     <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
-                      Verify#
+                      EUDR Verify#
                     </th>
                     <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
                       Prev Ref#
+                    </th>
+                    <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
+                      DDS Status
                     </th>
                     <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
                       Docs
@@ -1367,6 +1370,12 @@ export default function Declarations() {
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           REF-903421
                         </td>
+                        <td className="px-1 py-4 text-sm whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span className="mr-1 h-2 w-2 rounded-full bg-green-500"></span>
+                            DDS Success
+                          </span>
+                        </td>
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           <a href="#" className="text-blue-500 hover:underline">View</a>
                         </td>
@@ -1424,6 +1433,12 @@ export default function Declarations() {
                         </td>
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           -
+                        </td>
+                        <td className="px-1 py-4 text-sm whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="mr-1 h-2 w-2 rounded-full bg-blue-500"></span>
+                            Filed
+                          </span>
                         </td>
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           <a href="#" className="text-blue-500 hover:underline">View</a>
@@ -1483,6 +1498,12 @@ export default function Declarations() {
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           REF-775490
                         </td>
+                        <td className="px-1 py-4 text-sm whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="mr-1 h-2 w-2 rounded-full bg-red-500"></span>
+                            DDS Failed
+                          </span>
+                        </td>
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           <a href="#" className="text-blue-500 hover:underline">View</a>
                         </td>
@@ -1541,6 +1562,12 @@ export default function Declarations() {
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           -
                         </td>
+                        <td className="px-1 py-4 text-sm whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            <span className="mr-1 h-2 w-2 rounded-full bg-amber-500"></span>
+                            Filed
+                          </span>
+                        </td>
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           <a href="#" className="text-blue-500 hover:underline">View</a>
                         </td>
@@ -1598,6 +1625,12 @@ export default function Declarations() {
                         </td>
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           REF-612309
+                        </td>
+                        <td className="px-1 py-4 text-sm whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span className="mr-1 h-2 w-2 rounded-full bg-green-500"></span>
+                            DDS Success
+                          </span>
                         </td>
                         <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
                           <a href="#" className="text-blue-500 hover:underline">View</a>
