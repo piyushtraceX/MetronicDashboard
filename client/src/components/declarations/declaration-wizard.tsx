@@ -115,6 +115,10 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
   // Step 4: Customer Selection (for outbound only)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
+  // Upstream reference numbers
+  const [referenceNumbers, setReferenceNumbers] = useState<ReferenceNumber[]>([]);
+  const [showReferenceNumbers, setShowReferenceNumbers] = useState(false);
+  
   // GeoJSON upload state
   const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
   const [geometryValid, setGeometryValid] = useState<boolean | null>(null);
@@ -477,7 +481,48 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
 
   // Remove uploaded file
   const removeFile = (filename: string) => {
-    setUploadedFiles(prev => prev.filter(file => file !== file));
+    setUploadedFiles(prev => prev.filter(file => file !== filename));
+  };
+  
+  // Handle adding a new reference number
+  const addReferenceNumber = () => {
+    setReferenceNumbers(prev => [
+      ...prev,
+      {
+        id: `ref-${Date.now()}`,
+        type: "EUDR Reference Number",
+        value: ""
+      }
+    ]);
+  };
+
+  // Handle updating a reference number
+  const updateReferenceNumber = (id: string, field: keyof ReferenceNumber, value: string) => {
+    setReferenceNumbers(prev => prev.map(ref => 
+      ref.id === id ? { ...ref, [field]: value } : ref
+    ));
+  };
+
+  // Handle removing a reference number
+  const removeReferenceNumber = (id: string) => {
+    setReferenceNumbers(prev => prev.filter(ref => ref.id !== id));
+  };
+
+  // Check if reference numbers should be shown based on supplier country
+  const checkForReferenceNumbers = (supplier: Supplier | null) => {
+    if (supplier?.country === "Germany" || supplier?.country === "France" || 
+        supplier?.country === "Italy" || supplier?.country === "Spain" || 
+        supplier?.country === "Netherlands") {
+      setShowReferenceNumbers(true);
+      
+      // If no reference numbers yet, add an initial one
+      if (referenceNumbers.length === 0) {
+        addReferenceNumber();
+      }
+    } else {
+      setShowReferenceNumbers(false);
+      setReferenceNumbers([]);
+    }
   };
 
   // Navigate to next step
@@ -905,6 +950,8 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                             setSelectedSupplier(supplier);
                             setSupplierSearchTerm(supplier.name);
                             setShowSupplierDropdown(false);
+                            // Check if reference numbers should be shown for this supplier
+                            checkForReferenceNumbers(supplier);
                           }}
                         >
                           <div className="font-medium">{supplier.name}</div>
@@ -939,6 +986,70 @@ export default function DeclarationWizard({ open, onOpenChange }: WizardProps) {
                   </div>
                 )}
               </div>
+
+              {/* Upstream Reference Numbers section - only visible for EU suppliers */}
+              {showReferenceNumbers && (
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <Label className="text-base font-medium">Upstream Reference Numbers</Label>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={addReferenceNumber}
+                      className="h-8 bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Reference
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Add reference numbers from upstream supplier documentation
+                  </p>
+
+                  <div className="space-y-3">
+                    {referenceNumbers.map((ref) => (
+                      <div key={ref.id} className="flex items-end gap-4 p-4 border rounded-md">
+                        <div className="flex-1">
+                          <Label htmlFor={`ref-type-${ref.id}`} className="text-sm">Reference Type</Label>
+                          <Select
+                            value={ref.type}
+                            onValueChange={(value) => updateReferenceNumber(ref.id, 'type', value)}
+                          >
+                            <SelectTrigger id={`ref-type-${ref.id}`} className="mt-1">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="EUDR Reference Number">EUDR Reference Number</SelectItem>
+                              <SelectItem value="EUDR Verification Number">EUDR Verification Number</SelectItem>
+                              <SelectItem value="Previous Reference Number">Previous Reference Number</SelectItem>
+                              <SelectItem value="Import License Number">Import License Number</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex-1">
+                          <Label htmlFor={`ref-value-${ref.id}`} className="text-sm">Reference Value</Label>
+                          <Input
+                            id={`ref-value-${ref.id}`}
+                            placeholder="Enter reference number"
+                            value={ref.value}
+                            onChange={(e) => updateReferenceNumber(ref.id, 'value', e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-10 w-10 p-0 text-gray-500"
+                          onClick={() => removeReferenceNumber(ref.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-4">
