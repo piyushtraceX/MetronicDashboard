@@ -265,15 +265,7 @@ function DeclarationRow({
                 : "Non-Compliant"}
         </span>
       </td>
-      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
-        {declaration.eudrReferenceNumber || "—"}
-      </td>
-      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
-        {declaration.eudrVerificationNumber || "—"}
-      </td>
-      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
-        {declaration.previousReferenceNumber || "—"}
-      </td>
+
       <td className="px-3 py-4 text-sm whitespace-nowrap">
         {declaration.ddsStatus ? (
           <span className={cn(
@@ -1292,15 +1284,6 @@ export default function Declarations() {
                       GeoJSON
                     </th>
                     <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
-                      EUDR Ref#
-                    </th>
-                    <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
-                      EUDR Verify#
-                    </th>
-                    <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
-                      Prev Ref#
-                    </th>
-                    <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
                       DDS Status
                     </th>
                     <th scope="col" className="px-1 py-3.5 text-left text-xs font-semibold text-gray-900">
@@ -1361,15 +1344,7 @@ export default function Declarations() {
                             Yes
                           </span>
                         </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          EUDR-100123
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          VER-452788
-                        </td>
-                        <td className="px-1 py-4 text-sm text-gray-500 whitespace-nowrap">
-                          REF-903421
-                        </td>
+
                         <td className="px-1 py-4 text-sm whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             <span className="mr-1 h-2 w-2 rounded-full bg-green-500"></span>
@@ -1778,15 +1753,6 @@ export default function Declarations() {
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       Compliance Status
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      EUDR Ref#
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      EUDR Verify#
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Prev Ref#
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                       DDS Status
