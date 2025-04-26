@@ -220,7 +220,7 @@ function DeclarationRow({
         )}
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
-        {declaration.industry || "Not specified"} / {declaration.productName}
+        {declaration.industry ? `${declaration.industry} / ${declaration.productName}` : declaration.productName}
       </td>
       <td className="px-3 py-4 text-sm whitespace-nowrap">
         <StatusBadge status={declaration.status} />
