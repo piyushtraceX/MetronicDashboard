@@ -802,6 +802,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(201).json(declaration);
       }
       
+      // Handle outbound declarations that are based on existing declarations
+      if (req.body.type === "outbound" && req.body.basedOnDeclarationIds && Array.isArray(req.body.basedOnDeclarationIds)) {
+        const basedOnIds = req.body.basedOnDeclarationIds;
+        
+        // Get the first declaration to use its data
+        if (basedOnIds.length > 0) {
+          const sourceDeclaration = await storage.getDeclaration(Number(basedOnIds[0]));
+          
+          if (sourceDeclaration) {
+            // Create outbound declaration based on the source declaration data
+            const sanitizedBody: any = {
+              type: "outbound",
+              supplierId: Number(req.body.supplierId || sourceDeclaration.supplierId || 1),
+              productName: sourceDeclaration.productName || "",
+              productDescription: sourceDeclaration.productDescription,
+              hsnCode: sourceDeclaration.hsnCode,
+              quantity: sourceDeclaration.quantity,
+              unit: sourceDeclaration.unit,
+              status: String(req.body.status || "pending"),
+              riskLevel: sourceDeclaration.riskLevel || "medium",
+              industry: sourceDeclaration.industry, // Copy industry from source declaration
+              createdBy: 1,
+              customerId: req.body.customerId ? Number(req.body.customerId) : undefined,
+            };
+            
+            console.log("Sanitized payload (based on existing):", JSON.stringify(sanitizedBody, null, 2));
+            
+            const declarationInput = insertDeclarationSchema.parse(sanitizedBody);
+            const declaration = await storage.createDeclaration(declarationInput);
+            
+            // Create activity record
+            await storage.createActivity({
+              type: "declaration",
+              description: `New outbound declaration based on existing declaration #${sourceDeclaration.id} was created`,
+              userId: 1,
+              entityType: "declaration",
+              entityId: declaration.id,
+              metadata: null
+            });
+            
+            return res.status(201).json(declaration);
+          }
+        }
+      }
+      
       // Handle regular inbound/outbound declarations
       const sanitizedBody: any = {
         type: String(req.body.type || ""),
