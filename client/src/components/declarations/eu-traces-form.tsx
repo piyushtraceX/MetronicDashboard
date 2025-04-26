@@ -7,9 +7,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+
+interface Declaration {
+  id: number;
+  type: "inbound" | "outbound";
+  supplierId: number;
+  supplier?: string;
+  productName: string;
+  productDescription: string | null;
+  hsnCode: string | null;
+  quantity: number | null;
+  unit: string | null;
+}
 
 interface EUTracesFormProps {
   open: boolean;
@@ -33,6 +46,7 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
     countryOfEntry: "",
     additionalInfo: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
   
   // Function to handle form input changes
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -141,6 +155,56 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
     }
   }, [formData.traderCountry, copyOperatorCountry]);
 
+  // Fetch declaration data when the form opens
+  useEffect(() => {
+    const fetchDeclarationData = async () => {
+      if (declarationId && open) {
+        setIsLoading(true);
+        try {
+          const data = await apiRequest(`/api/declarations/${declarationId}`);
+          
+          // Auto-fill commodity/product information based on the declaration
+          if (data) {
+            // Create a product entry with the declaration data
+            setProducts([
+              {
+                id: "product-1",
+                name: data.productName || "",
+                hsCode: data.hsnCode || "",
+                quantity: data.quantity ? String(data.quantity) : "",
+                unit: data.unit || "kg"
+              }
+            ]);
+            
+            // Pre-fill other form fields if available
+            if (data.supplier) {
+              handleInputChange('traderName', data.supplier);
+            }
+            
+            // Set appropriate activity type based on declaration type
+            if (data.type) {
+              setActivityType(data.type === "inbound" ? "import" : "export");
+            }
+            
+            // Generate a reference number based on declaration ID
+            handleInputChange('reference', `REF-${declarationId}-${Math.floor(Math.random() * 1000)}`);
+          }
+        } catch (error) {
+          console.error("Error fetching declaration data:", error);
+          toast({
+            title: "Error",
+            description: "Could not load declaration data",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchDeclarationData();
+  }, [declarationId, open, toast]);
+
   const addProduct = () => {
     setProducts([
       ...products,
@@ -161,259 +225,266 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
           <DialogTitle className="text-xl">EU-IS Filing Form: EUDR Declaration for Operators/Traders</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 1. Statement Details */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="font-medium mb-4">1. Statement Details</h3>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="reference">Reference Number</Label>
-                <Input 
-                  id="reference" 
-                  placeholder="Enter reference number" 
-                  value={formData.reference}
-                  onChange={(e) => handleInputChange('reference', e.target.value)}
-                />
-              </div>
-            </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <p className="text-sm text-gray-500">Loading declaration data...</p>
           </div>
-          
-          {/* 2. Activity Type */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="font-medium mb-4">2. Activity Type</h3>
-            <RadioGroup 
-              defaultValue="import" 
-              value={activityType}
-              onValueChange={(value) => setActivityType(value as "import" | "export" | "domestic")}
-              className="flex items-center space-x-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="import" id="import" />
-                <Label htmlFor="import">Import</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="export" id="export" />
-                <Label htmlFor="export">Export</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="domestic" id="domestic" />
-                <Label htmlFor="domestic">Domestic</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          {/* 3. Operator/Trader Information */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="font-medium mb-4">3. Operator/Trader Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="trader-name">Name</Label>
-                <Input 
-                  id="trader-name" 
-                  placeholder="Company name" 
-                  value={formData.traderName}
-                  onChange={(e) => handleInputChange('traderName', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="trader-country">Country</Label>
-                <Select 
-                  value={formData.traderCountry}
-                  onValueChange={(value) => handleInputChange('traderCountry', value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country} value={country}>{country}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="vat-code">VAT Code</Label>
-                <Input 
-                  id="vat-code" 
-                  placeholder="VAT number" 
-                  value={formData.vatCode}
-                  onChange={(e) => handleInputChange('vatCode', e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* 4. Place of Activity */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="font-medium mb-4">4. Place of Activity</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="country-of-activity">Country of Activity</Label>
-                <Select
-                  value={formData.countryOfActivity}
-                  onValueChange={(value) => handleInputChange('countryOfActivity', value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country} value={country}>{country}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="country-of-entry">Country of Entry</Label>
-                <Select 
-                  disabled={copyOperatorCountry}
-                  value={formData.countryOfEntry}
-                  onValueChange={(value) => handleInputChange('countryOfEntry', value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country} value={country}>{country}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-1 md:col-span-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="copy-country" 
-                    checked={copyOperatorCountry}
-                    onCheckedChange={(checked) => {
-                      setCopyOperatorCountry(checked as boolean);
-                      if (checked) {
-                        // Copy trader country to country of entry
-                        handleInputChange('countryOfEntry', formData.traderCountry);
-                      }
-                    }}
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* 1. Statement Details */}
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="font-medium mb-4">1. Statement Details</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="reference">Reference Number</Label>
+                  <Input 
+                    id="reference" 
+                    placeholder="Enter reference number" 
+                    value={formData.reference}
+                    onChange={(e) => handleInputChange('reference', e.target.value)}
                   />
-                  <Label htmlFor="copy-country">Copy from Operator Country</Label>
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* 5. Additional Information */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="font-medium mb-4">5. Additional Information</h3>
-            <div>
-              <Label htmlFor="additional-info">Enter additional information here...</Label>
-              <Textarea 
-                id="additional-info" 
-                placeholder="Provide any additional details about this filing"
-                className="h-24"
-                value={formData.additionalInfo}
-                onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
-              />
+            
+            {/* 2. Activity Type */}
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="font-medium mb-4">2. Activity Type</h3>
+              <RadioGroup 
+                defaultValue="import" 
+                value={activityType}
+                onValueChange={(value) => setActivityType(value as "import" | "export" | "domestic")}
+                className="flex items-center space-x-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="import" id="import" />
+                  <Label htmlFor="import">Import</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="export" id="export" />
+                  <Label htmlFor="export">Export</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="domestic" id="domestic" />
+                  <Label htmlFor="domestic">Domestic</Label>
+                </div>
+              </RadioGroup>
             </div>
-          </div>
-          
-          {/* 6. Commodity(ies) or Product(s) */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h3 className="font-medium mb-4">6. Commodity(ies) or Product(s)</h3>
-            <div className="space-y-4">
-              {products.map((product, index) => (
-                <div key={product.id} className="bg-white p-3 rounded-md border">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor={`product-name-${index}`}>Product Name</Label>
-                      <Input 
-                        id={`product-name-${index}`} 
-                        value={product.name}
-                        onChange={(e) => {
-                          const newProducts = [...products];
-                          newProducts[index].name = e.target.value;
-                          setProducts(newProducts);
-                        }}
-                        placeholder="Product name" 
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`hs-code-${index}`}>HS Code</Label>
-                      <Input 
-                        id={`hs-code-${index}`} 
-                        value={product.hsCode}
-                        onChange={(e) => {
-                          const newProducts = [...products];
-                          newProducts[index].hsCode = e.target.value;
-                          setProducts(newProducts);
-                        }}
-                        placeholder="HS code" 
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+            
+            {/* 3. Operator/Trader Information */}
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="font-medium mb-4">3. Operator/Trader Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="trader-name">Name</Label>
+                  <Input 
+                    id="trader-name" 
+                    placeholder="Company name" 
+                    value={formData.traderName}
+                    onChange={(e) => handleInputChange('traderName', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="trader-country">Country</Label>
+                  <Select 
+                    value={formData.traderCountry}
+                    onValueChange={(value) => handleInputChange('traderCountry', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country}>{country}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="vat-code">VAT Code</Label>
+                  <Input 
+                    id="vat-code" 
+                    placeholder="VAT number" 
+                    value={formData.vatCode}
+                    onChange={(e) => handleInputChange('vatCode', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* 4. Place of Activity */}
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="font-medium mb-4">4. Place of Activity</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="country-of-activity">Country of Activity</Label>
+                  <Select
+                    value={formData.countryOfActivity}
+                    onValueChange={(value) => handleInputChange('countryOfActivity', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country}>{country}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="country-of-entry">Country of Entry</Label>
+                  <Select 
+                    disabled={copyOperatorCountry}
+                    value={formData.countryOfEntry}
+                    onValueChange={(value) => handleInputChange('countryOfEntry', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country}>{country}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-1 md:col-span-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="copy-country" 
+                      checked={copyOperatorCountry}
+                      onCheckedChange={(checked) => {
+                        setCopyOperatorCountry(checked as boolean);
+                        if (checked) {
+                          // Copy trader country to country of entry
+                          handleInputChange('countryOfEntry', formData.traderCountry);
+                        }
+                      }}
+                    />
+                    <Label htmlFor="copy-country">Copy from Operator Country</Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* 5. Additional Information */}
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="font-medium mb-4">5. Additional Information</h3>
+              <div>
+                <Label htmlFor="additional-info">Enter additional information here...</Label>
+                <Textarea 
+                  id="additional-info" 
+                  placeholder="Provide any additional details about this filing"
+                  className="h-24"
+                  value={formData.additionalInfo}
+                  onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
+                />
+              </div>
+            </div>
+            
+            {/* 6. Commodity(ies) or Product(s) */}
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h3 className="font-medium mb-4">6. Commodity(ies) or Product(s)</h3>
+              <div className="space-y-4">
+                {products.map((product, index) => (
+                  <div key={product.id} className="bg-white p-3 rounded-md border">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                        <Label htmlFor={`product-name-${index}`}>Product Name</Label>
                         <Input 
-                          id={`quantity-${index}`} 
-                          value={product.quantity}
+                          id={`product-name-${index}`} 
+                          value={product.name}
                           onChange={(e) => {
                             const newProducts = [...products];
-                            newProducts[index].quantity = e.target.value;
+                            newProducts[index].name = e.target.value;
                             setProducts(newProducts);
                           }}
-                          placeholder="Amount" 
-                          type="number"
+                          placeholder="Product name" 
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`unit-${index}`}>Unit</Label>
-                        <Select 
-                          value={product.unit}
-                          onValueChange={(value) => {
+                        <Label htmlFor={`hs-code-${index}`}>HS Code</Label>
+                        <Input 
+                          id={`hs-code-${index}`} 
+                          value={product.hsCode}
+                          onChange={(e) => {
                             const newProducts = [...products];
-                            newProducts[index].unit = value;
+                            newProducts[index].hsCode = e.target.value;
                             setProducts(newProducts);
                           }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="kg">Kilogram (kg)</SelectItem>
-                            <SelectItem value="ton">Metric ton</SelectItem>
-                            <SelectItem value="liter">Liter</SelectItem>
-                            <SelectItem value="piece">Piece</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          placeholder="HS code" 
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                          <Input 
+                            id={`quantity-${index}`} 
+                            value={product.quantity}
+                            onChange={(e) => {
+                              const newProducts = [...products];
+                              newProducts[index].quantity = e.target.value;
+                              setProducts(newProducts);
+                            }}
+                            placeholder="Amount" 
+                            type="number"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`unit-${index}`}>Unit</Label>
+                          <Select 
+                            value={product.unit}
+                            onValueChange={(value) => {
+                              const newProducts = [...products];
+                              newProducts[index].unit = value;
+                              setProducts(newProducts);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select unit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                              <SelectItem value="ton">Metric ton</SelectItem>
+                              <SelectItem value="liter">Liter</SelectItem>
+                              <SelectItem value="piece">Piece</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full"
-                onClick={addProduct}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
+                ))}
+                
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={addProduct}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+              </div>
             </div>
-          </div>
-          
-          <DialogFooter className="pt-4 border-t">
-            <Button 
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="mr-2"
-            >
-              Cancel
-            </Button>
-            <Button type="submit">
-              Submit Declaration
-            </Button>
-          </DialogFooter>
-        </form>
+            
+            <DialogFooter className="pt-4 border-t">
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="mr-2"
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                Submit Declaration
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
