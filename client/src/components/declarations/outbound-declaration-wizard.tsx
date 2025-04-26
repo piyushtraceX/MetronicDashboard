@@ -90,6 +90,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     }
   ]);
   
+  // Industry selection for fresh declarations
+  const [selectedIndustry, setSelectedIndustry] = useState<string>("Food & Beverage");
+  
   // Dates state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -508,7 +511,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         unit: formattedItems[0]?.unit || "kg",
         status: status,
         riskLevel: "medium",
-        industry: "Food & Beverage"
+        industry: selectedIndustry // Use the selected industry from the dropdown
       };
     }
     
@@ -539,6 +542,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
     setEndDate(undefined);
     setValidityPeriod("custom");
     setShowCustomDates(true);
+    setSelectedIndustry("Food & Beverage");
     setSelectedCustomer(null);
     setCustomerSearchTerm("");
     setShowCustomerResults(false);
@@ -807,6 +811,29 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                         </div>
                       </div>
                     )}
+                  </div>
+                  
+                  {/* Industry Selection */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-4">Industry</h3>
+                    <div className="w-full md:w-1/2">
+                      <Select
+                        value={selectedIndustry}
+                        onValueChange={setSelectedIndustry}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select industry" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Food & Beverage">Food & Beverage</SelectItem>
+                          <SelectItem value="Agriculture">Agriculture</SelectItem>
+                          <SelectItem value="Forestry">Forestry</SelectItem>
+                          <SelectItem value="Textiles">Textiles</SelectItem>
+                          <SelectItem value="Rubber">Rubber</SelectItem>
+                          <SelectItem value="Paper">Paper</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
                   {/* Declaration Items - SECOND */}
