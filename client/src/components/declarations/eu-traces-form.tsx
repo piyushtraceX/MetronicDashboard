@@ -161,9 +161,9 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
       if (declarationId && open) {
         setIsLoading(true);
         try {
-          const data = await apiRequest(`/api/declarations/${declarationId}`);
+          const data = await apiRequest(`/api/declarations/${declarationId}`, { method: 'GET' });
           
-          // Auto-fill commodity/product information based on the declaration
+          // Auto-fill only commodity/product information based on the declaration
           if (data) {
             // Create a product entry with the declaration data
             setProducts([
@@ -175,19 +175,6 @@ const EUTracesForm: React.FC<EUTracesFormProps> = ({ open, onOpenChange, declara
                 unit: data.unit || "kg"
               }
             ]);
-            
-            // Pre-fill other form fields if available
-            if (data.supplier) {
-              handleInputChange('traderName', data.supplier);
-            }
-            
-            // Set appropriate activity type based on declaration type
-            if (data.type) {
-              setActivityType(data.type === "inbound" ? "import" : "export");
-            }
-            
-            // Generate a reference number based on declaration ID
-            handleInputChange('reference', `REF-${declarationId}-${Math.floor(Math.random() * 1000)}`);
           }
         } catch (error) {
           console.error("Error fetching declaration data:", error);
