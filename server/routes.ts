@@ -807,7 +807,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const basedOnIds = req.body.basedOnDeclarationIds;
         
         // Get the first declaration to use its data
-        if (basedOnIds.length > 0) {
+        if (basedOnIds.length > 0 && !req.body.productName) {
+          // Only use source declaration data if no custom product name is provided
+          // This indicates we're creating from existing declaration without overrides
           const sourceDeclaration = await storage.getDeclaration(Number(basedOnIds[0]));
           
           if (sourceDeclaration) {
