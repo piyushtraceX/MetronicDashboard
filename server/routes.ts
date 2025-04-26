@@ -824,7 +824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               unit: sourceDeclaration.unit,
               status: String(req.body.status || "pending"),
               riskLevel: sourceDeclaration.riskLevel || "medium",
-              industry: sourceDeclaration.industry, // Copy industry from source declaration
+              industry: sourceDeclaration.productName, // Use product name as industry for display in table
               createdBy: 1,
               customerId: req.body.customerId ? Number(req.body.customerId) : undefined,
             };
