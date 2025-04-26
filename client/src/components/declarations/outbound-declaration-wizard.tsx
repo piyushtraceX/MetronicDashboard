@@ -1835,20 +1835,51 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   </div>
                   
                   {declarationSource === "existing" ? (
-                    <div className="col-span-2">
-                      <h4 className="text-sm font-medium text-gray-500">Based On ({selectedDeclarationIds.length})</h4>
-                      <div className="mt-1 space-y-2">
-                        {selectedDeclarationIds.length > 0 ? (
-                          selectedDeclarationIds.map(id => (
-                            <div key={id} className="p-2 bg-gray-50 rounded-md">
-                              {existingDeclarations.find(d => d.id === id)?.name || "Unknown declaration"}
-                            </div>
-                          ))
-                        ) : (
-                          <p>No declarations selected</p>
-                        )}
+                    <>
+                      <div className="col-span-2">
+                        <h4 className="text-sm font-medium text-gray-500">Based On ({selectedDeclarationIds.length})</h4>
+                        <div className="mt-1 space-y-2">
+                          {selectedDeclarationIds.length > 0 ? (
+                            selectedDeclarationIds.map(id => (
+                              <div key={id} className="p-2 bg-gray-50 rounded-md">
+                                {existingDeclarations.find(d => d.id === id)?.name || "Unknown declaration"}
+                              </div>
+                            ))
+                          ) : (
+                            <p>No declarations selected</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                      
+                      {selectedDeclarationIds.length > 0 && (
+                        <div className="col-span-2">
+                          <h4 className="text-sm font-medium text-gray-500">Product Information</h4>
+                          <div className="mt-1 bg-gray-50 p-3 rounded-md">
+                            {selectedDeclarationIds.map(id => {
+                              const declaration = existingDeclarations.find(d => d.id === id);
+                              if (!declaration) return null;
+                              
+                              return (
+                                <div key={id} className="mb-3 border-b pb-2 last:border-b-0 last:pb-0">
+                                  <div className="mb-1">
+                                    <span className="font-medium">Product Name:</span> {declaration.product || "Not specified"}
+                                  </div>
+                                  <div className="mb-1">
+                                    <span className="font-medium">Quantity:</span> {declaration.quantity || "Not specified"}
+                                  </div>
+                                  <div className="mb-1">
+                                    <span className="font-medium">EUDR Reference Number:</span> {declaration.eudrReferenceNumber || "Not specified"}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">EUDR Verification Number:</span> {declaration.eudrVerificationNumber || "Not specified"}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <>
                       <div>
