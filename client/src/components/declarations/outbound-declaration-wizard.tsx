@@ -29,7 +29,8 @@ interface DeclarationItem {
   scientificName: string;
   quantity: string;
   unit: string;
-  rmId?: string;
+  batchId?: string;
+  sku?: string;
 }
 
 // Define the interface for existing declaration objects
@@ -86,7 +87,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       scientificName: "",
       quantity: "",
       unit: "kg",
-      rmId: ""
+      batchId: "",
+      sku: ""
     }
   ]);
   
@@ -206,7 +208,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       scientificName: "",
       quantity: "",
       unit: "kg",
-      rmId: ""
+      batchId: "",
+      sku: ""
     };
     setItems([...items, newItem]);
   };
@@ -490,7 +493,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         scientificName: item.scientificName,
         quantity: parseFloat(item.quantity),
         unit: item.unit,
-        rmId: item.rmId || null
+        batchId: item.batchId || null,
+        sku: item.sku || null
       }));
       
       // Get the first product name as the primary name for the declaration
@@ -528,7 +532,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         scientificName: "",
         quantity: "",
         unit: "kg",
-        rmId: ""
+        batchId: "",
+        sku: ""
       }
     ]);
     setSelectedDeclarationIds([]);
