@@ -18,8 +18,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import satelliteMapImage from "../../assets/satellite-map.png";
-import { DeclarationItem } from "./declaration-items-table";
-import OutboundItemsSection from "./outbound-items-section";
+import DeclarationItemsTable from "./declaration-items-table";
 
 type DeclarationSourceType = "existing" | "fresh";
 
