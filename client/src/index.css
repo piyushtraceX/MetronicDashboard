@@ -2,12 +2,212 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  * {
-    @apply border-border;
-  }
+/* ===== Global Base Styles ===== */
 
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
-  }
+body {
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #1F2937;
+  /* Gray-800 */
+  background-color: #F9FAFB;
+  /* Light Gray Background */
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== Headings ===== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  color: #111827;
+  /* Gray-900 */
+  margin: 0 0 0.5rem 0;
+  line-height: 1.25;
+}
+
+/* ===== Links ===== */
+
+a {
+  color: #2563EB;
+  /* Blue-600 */
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Buttons ===== */
+
+button,
+.p-button {
+  padding: 0.4rem 1rem;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.p-button-primary {
+  background-color: #1E3A8A;
+  /* Navy Blue */
+  color: #ffffff;
+  border: none;
+}
+
+.p-button-primary:hover {
+  background-color: #1D4ED8;
+  /* Brighter Blue */
+}
+
+/* ===== Tables (PrimeNG DataTable) ===== */
+
+.p-datatable {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.p-datatable thead th {
+  background-color: #F3F4F6;
+  /* Light Gray Header */
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0.75rem;
+  color: #374151;
+  /* Gray-700 */
+}
+
+.p-datatable tbody td {
+  padding: 0.65rem;
+  font-size: 14px;
+  color: #4B5563;
+  /* Gray-600 */
+}
+
+.p-datatable tbody tr:hover {
+  background-color: #F1F5F9;
+  /* Slight Hover Background */
+}
+
+/* ===== Forms and Inputs ===== */
+
+input,
+textarea,
+select,
+.p-inputtext {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #D1D5DB;
+  /* Light Gray Border */
+  border-radius: 0.5rem;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.p-inputtext:focus {
+  border-color: #2563EB;
+  /* Focused Blue Border */
+  outline: none;
+}
+
+/* ===== Toasts and Notifications ===== */
+
+.p-toast {
+  font-size: 14px;
+}
+
+.p-toast-message {
+  border-radius: 0.5rem;
+}
+
+/* ===== Validation Messages ===== */
+
+.error-message {
+  color: #EF4444;
+  /* Red-500 */
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ===== Section Titles ===== */
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+/* ===== Cards ===== */
+
+.card {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+/* ===== Utility Classes ===== */
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.rounded {
+  border-radius: 0.5rem;
+}
+
+/* ===== Scrollbar Polishing (Optional) ===== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  /* Light Gray Scroll Thumb */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+  /* Darker on hover */
 }
