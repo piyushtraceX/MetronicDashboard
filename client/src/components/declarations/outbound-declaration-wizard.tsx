@@ -478,7 +478,6 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       ).map(item => ({
         hsnCode: item.hsnCode,
         productName: item.productName,
-        scientificName: item.scientificName,
         quantity: parseFloat(item.quantity),
         unit: item.unit,
         rmId: item.rmId || null,
@@ -494,7 +493,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         supplierId: 1, // Always use default supplier ID for outbound declarations
         customerId: selectedCustomer?.id || null, // Include customerId for outbound declarations
         productName: firstProduct,
-        productDescription: formattedItems[0]?.scientificName || "",
+        productDescription: "", // Removed scientificName reference
         hsnCode: formattedItems[0]?.hsnCode || "",
         quantity: Number(formattedItems[0]?.quantity) || 0,
         unit: formattedItems[0]?.unit || "kg",
@@ -1167,17 +1166,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                               />
                             </div>
                             
-                            <div>
-                              <Label htmlFor={`scientific-name-${item.id}`} className="mb-2">
-                                Scientific Name
-                              </Label>
-                              <Input
-                                id={`scientific-name-${item.id}`}
-                                placeholder="e.g. Elaeis guineensis"
-                                value={item.scientificName}
-                                onChange={(e) => updateItem(item.id, 'scientificName', e.target.value)}
-                              />
-                            </div>
+                            {/* Scientific Name field removed as requested */}
                             
                             <div>
                               <Label htmlFor={`quantity-${item.id}`} className="flex items-center mb-2">
@@ -1751,7 +1740,6 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                           {items.filter(item => item.productName).map((item, index) => (
                             <div key={item.id} className="text-sm">
                               {index + 1}. {item.productName} ({item.quantity} {item.unit}) - HSN: {item.hsnCode}
-                              {item.scientificName && ` - ${item.scientificName}`}
                             </div>
                           ))}
                         </div>
