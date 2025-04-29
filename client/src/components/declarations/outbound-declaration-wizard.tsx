@@ -885,7 +885,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                             )}
                           </div>
                           
-                          <div className="grid grid-cols-6 gap-4">
+                          <div className="grid grid-cols-7 gap-4">
                             <div>
                               <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center mb-2">
                                 HSN Code <span className="text-red-500 ml-1">*</span>
@@ -900,7 +900,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                             
                             <div>
                               <Label htmlFor={`rm-id-${item.id}`} className="flex items-center mb-2">
-                                RM ID 
+                                Outbound Batch ID 
                                 <span className="ml-1 text-gray-400">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -911,7 +911,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                               </Label>
                               <Input
                                 id={`rm-id-${item.id}`}
-                                placeholder="e.g. RM12345"
+                                placeholder="e.g. OB12345"
                                 value={item.rmId || ''}
                                 onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
                               />
@@ -1286,7 +1286,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                             )}
                           </div>
                           
-                          <div className="grid grid-cols-6 gap-4">
+                          <div className="grid grid-cols-7 gap-4">
                             <div>
                               <Label htmlFor={`hsn-code-${item.id}`} className="flex items-center mb-2">
                                 HSN Code <span className="text-red-500 ml-1">*</span>
@@ -1301,7 +1301,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                             
                             <div>
                               <Label htmlFor={`rm-id-${item.id}`} className="flex items-center mb-2">
-                                RM ID 
+                                Outbound Batch ID 
                                 <span className="ml-1 text-gray-400">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -1312,7 +1312,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                               </Label>
                               <Input
                                 id={`rm-id-${item.id}`}
-                                placeholder="e.g. RM12345"
+                                placeholder="e.g. OB12345"
                                 value={item.rmId || ''}
                                 onChange={(e) => updateItem(item.id, 'rmId', e.target.value)}
                               />
