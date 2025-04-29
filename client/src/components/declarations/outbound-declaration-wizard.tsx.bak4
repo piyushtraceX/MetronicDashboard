@@ -84,6 +84,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       id: "item-1",
       hsnCode: "",
       productName: "",
+      scientificName: "",
       quantity: "",
       unit: "kg",
       rmId: "",
