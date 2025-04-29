@@ -300,7 +300,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       case 1: // Declaration Type
         return true; // Always valid as we have a default type
         
-      case 2: // Select Declaration or Fresh Declaration Details
+      case 2: // Select Inbound Declaration or Fresh Declaration Details
         if (declarationSource === "existing") {
           if (selectedDeclarationIds.length === 0) {
             toast({
@@ -566,7 +566,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
   // Get step labels
   const stepLabels = [
     "Declaration Type", 
-    declarationSource === "existing" ? "Select Declaration" : "Declaration Details", 
+    declarationSource === "existing" ? "Select Inbound Declaration" : "Declaration Details", 
     "Upload Data", 
     "Additional Data",
     "Review"
@@ -640,7 +640,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
             </div>
           )}
           
-          {/* Step 2: Select Declaration (for Based on Existing) or Declaration Details (for Fresh) */}
+          {/* Step 2: Select Inbound Declaration (for Based on Existing) or Declaration Details (for Fresh) */}
           {currentStep === 2 && (
             <div>
               {declarationSource === "existing" ? (
@@ -820,9 +820,9 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                     addItem={addItem}
                   />
 
-                  {/* Select Declaration - THIRD */}
+                  {/* Select Inbound Declaration - THIRD */}
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Select Declaration</h3>
+                    <h3 className="text-lg font-medium mb-4">Select Inbound Declaration</h3>
                     <div className="relative mb-4">
                       <Input 
                         type="text" 
