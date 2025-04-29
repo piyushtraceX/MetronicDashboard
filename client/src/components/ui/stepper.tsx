@@ -37,30 +37,21 @@ function Step({ index, title, isActive, isCompleted }: StepProps) {
 
 interface StepConfig {
   label: string;
-  completed?: boolean;
 }
 
 interface StepperProps {
   steps: (string | StepConfig)[];
   currentStep: number;
-  completedSteps?: number[];
+  completedSteps: number[];
 }
 
-export default function Stepper({ steps, currentStep, completedSteps = [] }: StepperProps) {
+export default function Stepper({ steps, currentStep, completedSteps }: StepperProps) {
   return (
     <div className="flex justify-between items-start w-full">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
         const isActive = currentStep === stepNumber;
-        
-        // Handle both formats of completed steps
-        let isCompleted = false;
-        if (typeof step === 'object' && 'completed' in step) {
-          isCompleted = !!step.completed;
-        } else if (completedSteps) {
-          isCompleted = completedSteps.includes(stepNumber);
-        }
-        
+        const isCompleted = completedSteps.includes(stepNumber);
         const stepTitle = typeof step === 'string' ? step : step.label;
         
         return (
@@ -76,7 +67,7 @@ export default function Stepper({ steps, currentStep, completedSteps = [] }: Ste
               <div 
                 className={cn(
                   "flex-1 h-0.5 mx-2",
-                  isCompleted || (completedSteps && completedSteps.includes(stepNumber) && isActive) ? 
+                  isCompleted || (completedSteps.includes(stepNumber) && isActive) ? 
                   "bg-primary" : "bg-gray-200"
                 )}
               />
