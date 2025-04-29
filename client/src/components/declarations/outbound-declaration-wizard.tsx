@@ -667,6 +667,18 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                     {/* Period options */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       <Button 
+                        variant={validityPeriod === "na" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => {
+                          setValidityPeriod("na");
+                          setShowCustomDates(false);
+                          setStartDate(undefined);
+                          setEndDate(undefined);
+                        }}
+                      >
+                        NA
+                      </Button>
+                      <Button 
                         variant={validityPeriod === "30days" ? "default" : "outline"} 
                         size="sm"
                         onClick={() => {
@@ -817,7 +829,7 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
                   {/* Declaration Items - SECOND */}
                   <div className="mb-6">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium">Declaration Items</h3>
+                      <h3 className="text-lg font-medium">Outbound Declaration Items</h3>
                       <div className="flex gap-2">
                         <Button 
                           variant="outline" 
