@@ -18,6 +18,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import satelliteMapImage from "../../assets/satellite-map.png";
+import DeclarationItemsTable from "./declaration-items-table";
 
 type DeclarationSourceType = "existing" | "fresh";
 
@@ -204,7 +205,6 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       id: `item-${items.length + 1}`,
       hsnCode: "",
       productName: "",
-      scientificName: "",
       quantity: "",
       unit: "kg",
       rmId: "",
@@ -528,7 +528,6 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         id: "item-1",
         hsnCode: "",
         productName: "",
-        scientificName: "",
         quantity: "",
         unit: "kg",
         rmId: "",
