@@ -29,7 +29,8 @@ interface DeclarationItem {
   scientificName: string;
   quantity: string;
   unit: string;
-  rmId?: string;
+  rmId?: string; // Outbound Batch ID
+  skuCode?: string; // SKU Code
 }
 
 // Define the interface for existing declaration objects
@@ -86,15 +87,16 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       scientificName: "",
       quantity: "",
       unit: "kg",
-      rmId: ""
+      rmId: "",
+      skuCode: ""
     }
   ]);
   
   // Dates state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [validityPeriod, setValidityPeriod] = useState<string>("custom");
-  const [showCustomDates, setShowCustomDates] = useState(true);
+  const [validityPeriod, setValidityPeriod] = useState<string>("na"); // Default to "NA"
+  const [showCustomDates, setShowCustomDates] = useState(false);
   
   // GeoJSON upload state for fresh declarations
   const [hasUploadedGeoJSON, setHasUploadedGeoJSON] = useState(false);
@@ -206,7 +208,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
       scientificName: "",
       quantity: "",
       unit: "kg",
-      rmId: ""
+      rmId: "",
+      skuCode: ""
     };
     setItems([...items, newItem]);
   };
@@ -490,7 +493,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         scientificName: item.scientificName,
         quantity: parseFloat(item.quantity),
         unit: item.unit,
-        rmId: item.rmId || null
+        rmId: item.rmId || null,
+        skuCode: item.skuCode || null
       }));
       
       // Get the first product name as the primary name for the declaration
@@ -528,7 +532,8 @@ export default function OutboundDeclarationWizard({ open, onOpenChange }: Outbou
         scientificName: "",
         quantity: "",
         unit: "kg",
-        rmId: ""
+        rmId: "",
+        skuCode: ""
       }
     ]);
     setSelectedDeclarationIds([]);
